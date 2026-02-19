@@ -80,6 +80,7 @@ app.use(express.json());
 app.use(basicAuth);
 app.use('/css', express.static(path.join(__dirname, 'public', 'css')));
 app.use('/js', express.static(path.join(__dirname, 'public', 'js')));
+app.use('/preview', express.static(path.join(__dirname, 'preview')));
 
 // ─── HTML views ───────────────────────────────────────────────────────────────
 app.get('/', viewLimiter, (_req, res) => {

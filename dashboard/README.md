@@ -2,6 +2,24 @@
 
 A web-based HR employee dashboard for a dental practice, built with Node.js/Express and connected to a PostgreSQL database.
 
+## Instant Preview (no server needed)
+
+Want to see the forms right now — without installing anything?
+Download either file and open it in any web browser:
+
+| File | What it shows |
+|---|---|
+| [`preview/dashboard-preview.html`](preview/dashboard-preview.html) | Employee list with tabs, colour-coded rows, filters, pagination |
+| [`preview/employee-form-preview.html`](preview/employee-form-preview.html) | Individual employee detail form with Edit / Save / PREV / NEXT |
+
+Both files are **fully self-contained** (CSS and JavaScript inlined, realistic sample data baked in).
+Click **EDIT** on any dashboard row to open the corresponding employee form.
+
+> **GitHub tip:** click the file link above → click the **Raw** button →
+> right-click → *Save As* → open the saved `.html` file in your browser.
+
+---
+
 ## Overview
 
 The dashboard provides a read-friendly view of employee data sourced from the `vw_hr_employee_dashboard` database view. It supports:
