@@ -91,7 +91,7 @@
   function populateForm(data) {
     const id = data.id || data.employee_id || employeeId || '—';
     hdrEmpId.textContent = id;
-    document.title = `EMPINFO – ${data.surname || ''}, ${data.first_name || ''}`;
+    document.title = `EMPINFO – ${esc(data.surname || '')}, ${esc(data.first_name || '')}`;
 
     const status = (data.employment_status || 'CURRENT').toUpperCase();
     statusBadge.textContent = status === 'CURRENT' ? 'ACTIVE' : status;

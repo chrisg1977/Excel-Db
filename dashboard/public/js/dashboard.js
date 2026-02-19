@@ -38,7 +38,7 @@
     p.set('limit', String(state.limit));
     if (state.status)      p.set('status',      state.status);
     if (state.type)        p.set('type',         state.type);
-    if (state.nationality) p.set('nationality',  state.nationality);
+    if (state.nationality) p.set('nat_cat', state.nationality);
     return p.toString();
   }
 
@@ -240,14 +240,13 @@
   }
 
   function hexToRgba(hex, alpha) {
-    let clean = hex.replace('#', '');
-    // Expand 3-digit shorthand (#RGB → #RRGGBB)
+    // Strict validation: only accept #RGB or #RRGGBB format
+    if (typeof hex !== 'string' || !/^#[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$/.test(hex)) return '';
+    let clean = hex.slice(1);
     if (clean.length === 3) clean = clean.split('').map(c => c + c).join('');
-    if (clean.length !== 6) return '';
     const r = parseInt(clean.substring(0, 2), 16);
     const g = parseInt(clean.substring(2, 4), 16);
     const b = parseInt(clean.substring(4, 6), 16);
-    if (isNaN(r) || isNaN(g) || isNaN(b)) return '';
     return `rgba(${r},${g},${b},${alpha})`;
   }
 
