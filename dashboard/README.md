@@ -37,24 +37,35 @@ This creates the required views and stored function:
 
 ## Setup
 
-1. **Clone / navigate to this directory:**
+1. **Clone the repository and navigate to the dashboard directory:**
 
-```bash
-cd dashboard
-```
+   ```bash
+   git clone https://github.com/chrisg1977/Excel-Db.git
+   cd Excel-Db/dashboard
+   ```
+
+   > **Windows PowerShell users:** use the same commands above — Git Bash, PowerShell,
+   > and Windows Terminal all support `git clone` and `cd` with forward slashes.
+   > Make sure you run every subsequent command from inside `Excel-Db\dashboard`.
 
 2. **Install dependencies:**
 
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
 3. **Create your environment file:**
 
-```bash
-cp .env.example .env
-# Then edit .env with your actual values
-```
+   ```bash
+   # Linux / macOS / Git Bash
+   cp .env.example .env
+
+   # Windows PowerShell
+   Copy-Item .env.example .env
+   ```
+
+   Then open `.env` in a text editor and fill in your actual values (see
+   [Environment Variables](#environment-variables) below).
 
 ## Environment Variables
 
@@ -65,8 +76,8 @@ cp .env.example .env
 | `DB_NAME` | *(required)* | Database name |
 | `DB_USER` | `app_directus` | Database user |
 | `DB_PASSWORD` | *(required)* | Database password |
-| `DASHBOARD_USER` | `admin` | HTTP Basic Auth username |
-| `DASHBOARD_PASSWORD` | `changeme` | HTTP Basic Auth password |
+| `DASHBOARD_USER` | *(required)* | HTTP Basic Auth username |
+| `DASHBOARD_PASSWORD` | *(required)* | HTTP Basic Auth password |
 | `PORT` | `3000` | HTTP port the server listens on |
 
 ## How to Run
@@ -94,7 +105,7 @@ Returns a paginated list of employees from `vw_hr_employee_dashboard`.
 | `tab` | `current`, `dentists`, `ft` | Preset tab filter |
 | `status` | `CURRENT`, `TERMINATED` | Employment status |
 | `type` | `FT`, `PT` | Employment type |
-| `nationality` | `MALTESE`, `EU`, `OTHER` | Nationality group |
+| `nat_cat` | `MALTESE`, `EU`, `OTHER` | Nationality group |
 | `page` | `1` | Page number (default 1) |
 | `limit` | `20` | Records per page (max 200) |
 
