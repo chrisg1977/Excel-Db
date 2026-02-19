@@ -1,0 +1,22 @@
+services:
+  pg_excel:
+    image: postgres:16
+    container_name: pg_excel
+    environment:
+      POSTGRES_USER: excel
+      POSTGRES_PASSWORD: excelpass
+      POSTGRES_DB: exceldb
+    ports:
+      - "55432:5432"
+    volumes:
+      - pg_excel_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U excel -d exceldb"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  pg_excel_data:
+

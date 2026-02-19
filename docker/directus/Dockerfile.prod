@@ -1,0 +1,5 @@
+FROM directus/directus:11.14.1
+
+# Bake the built extension bundle into the image for production releases.
+COPY directus-extensions/directus-extension-tax-sync /directus/extensions/directus-extension-tax-sync
+

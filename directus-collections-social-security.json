@@ -1,0 +1,1047 @@
+{
+  "collections": [
+    {
+      "collection": "social_security_classes",
+      "meta": {
+        "collection": "social_security_classes",
+        "icon": null,
+        "note": "Social security class definitions by year, wage band, and DOB cohort",
+        "display_template": null,
+        "hidden": false,
+        "singleton": false,
+        "translations": null,
+        "accountability": "all",
+        "color": null,
+        "item_duplication_fields": null,
+        "sort": null,
+        "sort_field": null,
+        "preview_url": null,
+        "collapse": "open"
+      },
+      "schema": null,
+      "fields": [
+        {
+          "field": "id",
+          "type": "bigint",
+          "meta": {
+            "field": "id",
+            "hidden": true,
+            "readonly": true,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": null,
+            "group": null,
+            "note": null,
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "year",
+          "type": "integer",
+          "meta": {
+            "field": "year",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": { "min": 2000, "max": 2100 },
+            "display": "raw",
+            "sort": 1,
+            "group": null,
+            "note": "Tax/benefit year",
+            "conditionality": null,
+            "required": true,
+            "translations": null
+          }
+        },
+        {
+          "field": "class_code",
+          "type": "string",
+          "meta": {
+            "field": "class_code",
+            "hidden": false,
+            "readonly": false,
+            "interface": "select-dropdown",
+            "options": { "choices": [{"text":"A","value":"A"},{"text":"B","value":"B"},{"text":"C","value":"C"},{"text":"D","value":"D"},{"text":"E","value":"E"},{"text":"F","value":"F"}] },
+            "display": "raw",
+            "sort": 2,
+            "group": "Classification",
+            "note": "Social security class (A-F)",
+            "conditionality": null,
+            "required": true,
+            "translations": null
+          }
+        },
+        {
+          "field": "dob_from",
+          "type": "date",
+          "meta": {
+            "field": "dob_from",
+            "hidden": false,
+            "readonly": false,
+            "interface": "datetime",
+            "options": null,
+            "display": "date",
+            "sort": 3,
+            "group": "Cohorts",
+            "note": "Date of birth range start (inclusive)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "dob_to",
+          "type": "date",
+          "meta": {
+            "field": "dob_to",
+            "hidden": false,
+            "readonly": false,
+            "interface": "datetime",
+            "options": null,
+            "display": "date",
+            "sort": 4,
+            "group": "Cohorts",
+            "note": "Date of birth range end (inclusive)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "min_age",
+          "type": "integer",
+          "meta": {
+            "field": "min_age",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": { "min": 0, "max": 100 },
+            "display": "raw",
+            "sort": 5,
+            "group": "Cohorts",
+            "note": "Minimum age in years",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "max_age",
+          "type": "integer",
+          "meta": {
+            "field": "max_age",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": { "min": 0, "max": 100 },
+            "display": "raw",
+            "sort": 6,
+            "group": "Cohorts",
+            "note": "Maximum age in years",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "wage_from",
+          "type": "numeric",
+          "meta": {
+            "field": "wage_from",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 7,
+            "group": "Wage Bands",
+            "note": "Weekly wage threshold (from, inclusive)",
+            "conditionality": null,
+            "required": true,
+            "translations": null
+          }
+        },
+        {
+          "field": "wage_to",
+          "type": "numeric",
+          "meta": {
+            "field": "wage_to",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 8,
+            "group": "Wage Bands",
+            "note": "Weekly wage threshold (to, inclusive; NULL=unlimited)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "employee_fixed",
+          "type": "numeric",
+          "meta": {
+            "field": "employee_fixed",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 9,
+            "group": "Contributions",
+            "note": "Fixed employee contribution amount (€)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "employee_percentage",
+          "type": "numeric",
+          "meta": {
+            "field": "employee_percentage",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 10,
+            "group": "Contributions",
+            "note": "Percentage employee contribution (%)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "employer_fixed",
+          "type": "numeric",
+          "meta": {
+            "field": "employer_fixed",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 11,
+            "group": "Contributions",
+            "note": "Fixed employer contribution amount (€)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "employer_percentage",
+          "type": "numeric",
+          "meta": {
+            "field": "employer_percentage",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 12,
+            "group": "Contributions",
+            "note": "Percentage employer contribution (%)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "mlf_fixed",
+          "type": "numeric",
+          "meta": {
+            "field": "mlf_fixed",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 13,
+            "group": "MLF (Maternity Leave Fund)",
+            "note": "Fixed MLF contribution (€)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "mlf_percentage",
+          "type": "numeric",
+          "meta": {
+            "field": "mlf_percentage",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 14,
+            "group": "MLF (Maternity Leave Fund)",
+            "note": "Percentage MLF contribution (%)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "mlf_max",
+          "type": "numeric",
+          "meta": {
+            "field": "mlf_max",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 15,
+            "group": "MLF (Maternity Leave Fund)",
+            "note": "Maximum MLF contribution cap (€)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "notes",
+          "type": "text",
+          "meta": {
+            "field": "notes",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input-multiline",
+            "options": null,
+            "display": "raw",
+            "sort": 16,
+            "group": null,
+            "note": "Internal notes or description",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "created_at",
+          "type": "timestamp",
+          "meta": {
+            "field": "created_at",
+            "hidden": true,
+            "readonly": true,
+            "interface": "datetime",
+            "options": null,
+            "display": "date",
+            "sort": null,
+            "group": null,
+            "note": "Auto-generated timestamp",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        }
+      ]
+    },
+    {
+      "collection": "social_security_rates_import",
+      "meta": {
+        "collection": "social_security_rates_import",
+        "icon": null,
+        "note": "Raw social security rate imports before category mapping and cleanup",
+        "display_template": null,
+        "hidden": false,
+        "singleton": false,
+        "translations": null,
+        "accountability": "all",
+        "color": null,
+        "item_duplication_fields": null,
+        "sort": null,
+        "sort_field": null,
+        "preview_url": null,
+        "collapse": "open"
+      },
+      "schema": null,
+      "fields": [
+        {
+          "field": "id",
+          "type": "integer",
+          "meta": {
+            "field": "id",
+            "hidden": true,
+            "readonly": true,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": null,
+            "group": null,
+            "note": null,
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "status",
+          "type": "string",
+          "meta": {
+            "field": "status",
+            "hidden": false,
+            "readonly": false,
+            "interface": "select-dropdown",
+            "options": { "choices": [{"text":"Draft","value":"draft"},{"text":"Published","value":"published"}] },
+            "display": "raw",
+            "sort": 1,
+            "group": "Status",
+            "note": "Import status",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "year",
+          "type": "integer",
+          "meta": {
+            "field": "year",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": { "min": 2000, "max": 2100 },
+            "display": "raw",
+            "sort": 2,
+            "group": "Source Data",
+            "note": "Tax/benefit year",
+            "conditionality": null,
+            "required": true,
+            "translations": null
+          }
+        },
+        {
+          "field": "raw_category_label",
+          "type": "text",
+          "meta": {
+            "field": "raw_category_label",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 3,
+            "group": "Mapping",
+            "note": "Raw category label from source (e.g., 'Class A', 'Class A (Under 18)')",
+            "conditionality": null,
+            "required": true,
+            "translations": null
+          }
+        },
+        {
+          "field": "category_code",
+          "type": "string",
+          "meta": {
+            "field": "category_code",
+            "hidden": false,
+            "readonly": false,
+            "interface": "select-dropdown",
+            "options": { "choices": [{"text":"A","value":"A"},{"text":"B","value":"B"},{"text":"C","value":"C"},{"text":"D","value":"D"},{"text":"E","value":"E"},{"text":"F","value":"F"}] },
+            "display": "raw",
+            "sort": 4,
+            "group": "Mapping",
+            "note": "Canonical social security class code (A-F)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "band_from",
+          "type": "numeric",
+          "meta": {
+            "field": "band_from",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 5,
+            "group": "Rate Data",
+            "note": "Band lower bound (€)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "band_to",
+          "type": "numeric",
+          "meta": {
+            "field": "band_to",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 6,
+            "group": "Rate Data",
+            "note": "Band upper bound (€)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "employee_rate",
+          "type": "numeric",
+          "meta": {
+            "field": "employee_rate",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 7,
+            "group": "Rate Data",
+            "note": "Employee rate (%)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "employer_rate",
+          "type": "numeric",
+          "meta": {
+            "field": "employer_rate",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 8,
+            "group": "Rate Data",
+            "note": "Employer rate (%)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "total_rate",
+          "type": "numeric",
+          "meta": {
+            "field": "total_rate",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 9,
+            "group": "Rate Data",
+            "note": "Total rate (%)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "employee_amount",
+          "type": "numeric",
+          "meta": {
+            "field": "employee_amount",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 10,
+            "group": "Computed Amounts",
+            "note": "Employee contribution amount (€)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "employer_amount",
+          "type": "numeric",
+          "meta": {
+            "field": "employer_amount",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 11,
+            "group": "Computed Amounts",
+            "note": "Employer contribution amount (€)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "total_amount",
+          "type": "numeric",
+          "meta": {
+            "field": "total_amount",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 12,
+            "group": "Computed Amounts",
+            "note": "Total contribution amount (€)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "source_url",
+          "type": "string",
+          "meta": {
+            "field": "source_url",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 13,
+            "group": "Audit",
+            "note": "Source document URL or filename",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "date_created",
+          "type": "timestamp",
+          "meta": {
+            "field": "date_created",
+            "hidden": true,
+            "readonly": true,
+            "interface": "datetime",
+            "options": null,
+            "display": "date",
+            "sort": null,
+            "group": null,
+            "note": "Auto-generated timestamp",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "batch_id",
+          "type": "uuid",
+          "meta": {
+            "field": "batch_id",
+            "hidden": true,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": null,
+            "group": "Audit",
+            "note": "Batch identifier for grouping related imports",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        }
+      ]
+    },
+    {
+      "collection": "social_security_rates_live",
+      "meta": {
+        "collection": "social_security_rates_live",
+        "icon": null,
+        "note": "Cleaned and published social security rates (ready for payroll processing)",
+        "display_template": null,
+        "hidden": false,
+        "singleton": false,
+        "translations": null,
+        "accountability": "all",
+        "color": null,
+        "item_duplication_fields": null,
+        "sort": null,
+        "sort_field": null,
+        "preview_url": null,
+        "collapse": "open"
+      },
+      "schema": null,
+      "fields": [
+        {
+          "field": "id",
+          "type": "integer",
+          "meta": {
+            "field": "id",
+            "hidden": true,
+            "readonly": true,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": null,
+            "group": null,
+            "note": null,
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "year",
+          "type": "integer",
+          "meta": {
+            "field": "year",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": { "min": 2000, "max": 2100 },
+            "display": "raw",
+            "sort": 1,
+            "group": null,
+            "note": "Tax/benefit year",
+            "conditionality": null,
+            "required": true,
+            "translations": null
+          }
+        },
+        {
+          "field": "raw_category_label",
+          "type": "text",
+          "meta": {
+            "field": "raw_category_label",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 2,
+            "group": "Mapping",
+            "note": "Original category label",
+            "conditionality": null,
+            "required": true,
+            "translations": null
+          }
+        },
+        {
+          "field": "category_code",
+          "type": "string",
+          "meta": {
+            "field": "category_code",
+            "hidden": false,
+            "readonly": false,
+            "interface": "select-dropdown",
+            "options": { "choices": [{"text":"A","value":"A"},{"text":"B","value":"B"},{"text":"C","value":"C"},{"text":"D","value":"D"},{"text":"E","value":"E"},{"text":"F","value":"F"}] },
+            "display": "raw",
+            "sort": 3,
+            "group": "Mapping",
+            "note": "Canonical social security class",
+            "conditionality": null,
+            "required": true,
+            "translations": null
+          }
+        },
+        {
+          "field": "band_from",
+          "type": "numeric",
+          "meta": {
+            "field": "band_from",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 4,
+            "group": "Band",
+            "note": "Lower bound (€)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "band_to",
+          "type": "numeric",
+          "meta": {
+            "field": "band_to",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 5,
+            "group": "Band",
+            "note": "Upper bound (€)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "employee_rate",
+          "type": "numeric",
+          "meta": {
+            "field": "employee_rate",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 6,
+            "group": "Rates",
+            "note": "Employee rate (%)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "employer_rate",
+          "type": "numeric",
+          "meta": {
+            "field": "employer_rate",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 7,
+            "group": "Rates",
+            "note": "Employer rate (%)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "total_rate",
+          "type": "numeric",
+          "meta": {
+            "field": "total_rate",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 8,
+            "group": "Rates",
+            "note": "Total rate (%)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "employee_amount",
+          "type": "numeric",
+          "meta": {
+            "field": "employee_amount",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 9,
+            "group": "Amounts",
+            "note": "Employee contribution (€)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "employer_amount",
+          "type": "numeric",
+          "meta": {
+            "field": "employer_amount",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 10,
+            "group": "Amounts",
+            "note": "Employer contribution (€)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "total_amount",
+          "type": "numeric",
+          "meta": {
+            "field": "total_amount",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 11,
+            "group": "Amounts",
+            "note": "Total contribution (€)",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "source_url",
+          "type": "string",
+          "meta": {
+            "field": "source_url",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 12,
+            "group": "Audit",
+            "note": "Source URL/filename",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "date_created",
+          "type": "timestamp",
+          "meta": {
+            "field": "date_created",
+            "hidden": true,
+            "readonly": true,
+            "interface": "datetime",
+            "options": null,
+            "display": "date",
+            "sort": null,
+            "group": null,
+            "note": null,
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        }
+      ]
+    },
+    {
+      "collection": "directus_social_security_category_map",
+      "meta": {
+        "collection": "directus_social_security_category_map",
+        "icon": null,
+        "note": "Maps raw category labels to canonical social security class codes (A-F)",
+        "display_template": "{{raw_category_label}} → {{category_code}}",
+        "hidden": false,
+        "singleton": false,
+        "translations": null,
+        "accountability": "all",
+        "color": null,
+        "item_duplication_fields": null,
+        "sort": null,
+        "sort_field": null,
+        "preview_url": null,
+        "collapse": "open"
+      },
+      "schema": null,
+      "fields": [
+        {
+          "field": "id",
+          "type": "integer",
+          "meta": {
+            "field": "id",
+            "hidden": true,
+            "readonly": true,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": null,
+            "group": null,
+            "note": null,
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "raw_category_label",
+          "type": "string",
+          "meta": {
+            "field": "raw_category_label",
+            "hidden": false,
+            "readonly": false,
+            "interface": "input",
+            "options": null,
+            "display": "raw",
+            "sort": 1,
+            "group": null,
+            "note": "Raw label as imported (e.g., 'Class A', 'Class A (Under 18)')",
+            "conditionality": null,
+            "required": true,
+            "translations": null
+          }
+        },
+        {
+          "field": "category_code",
+          "type": "string",
+          "meta": {
+            "field": "category_code",
+            "hidden": false,
+            "readonly": false,
+            "interface": "select-dropdown",
+            "options": { "choices": [{"text":"A","value":"A"},{"text":"B","value":"B"},{"text":"C","value":"C"},{"text":"D","value":"D"},{"text":"E","value":"E"},{"text":"F","value":"F"}] },
+            "display": "raw",
+            "sort": 2,
+            "group": null,
+            "note": "Canonical class code",
+            "conditionality": null,
+            "required": true,
+            "translations": null
+          }
+        },
+        {
+          "field": "enabled",
+          "type": "boolean",
+          "meta": {
+            "field": "enabled",
+            "hidden": false,
+            "readonly": false,
+            "interface": "boolean",
+            "options": null,
+            "display": "boolean",
+            "sort": 3,
+            "group": null,
+            "note": "Whether this mapping is active",
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        },
+        {
+          "field": "created_at",
+          "type": "timestamp",
+          "meta": {
+            "field": "created_at",
+            "hidden": true,
+            "readonly": true,
+            "interface": "datetime",
+            "options": null,
+            "display": "date",
+            "sort": null,
+            "group": null,
+            "note": null,
+            "conditionality": null,
+            "required": false,
+            "translations": null
+          }
+        }
+      ]
+    }
+  ],
+  "relations": []
+}

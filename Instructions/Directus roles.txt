@@ -1,0 +1,69 @@
+Directus roles (Option B model) + permission checklist
+
+Goal:
+- Directus connects with DB user `app_directus` (data CRUD, no schema changes).
+- Human roles in Directus control who can see HR vs private pay.
+
+How to assign rights (Directus UI)
+1) Log in as Directus admin → Settings (gear) → Roles & Permissions
+2) Click a role (basic/manager/hr/owner)
+3) For each Collection, set permissions:
+   - Create / Read / Update / Delete toggles
+   - Optional: add Filters (row-level security inside Directus)
+   - Optional: Field Permissions (hide specific columns per role)
+4) Recommended: keep Views read-only (Read ✅, Create/Update/Delete ❌)
+5) Assign a role to a user: User Directory → open user → Role
+
+Collections currently in the database (Excel-Db)
+HR-facing:
+- vw_employee_current (view; safe “current employee” read model)
+- employees
+- employee_name_history
+- employee_employment_terms
+- employee_tax_status_history (if you use it)
+Private pay:
+- employee_pay_private (table)
+- vw_employee_pay_private (view; joined for convenience)
+Audit/import (usually owner-only):
+- import_files
+- import_rows_raw
+Admin/technical:
+- emp_id_sequences
+
+Role definitions + exact permissions to set
+
+1) basic
+- For now: no access to HR/pay/audit collections.
+- Later (when created): daily input collections (income/expenses/etc.)
+  - Create ✅ / Read ✅ (optionally “only own rows” filter) / Update ✅ / Delete optional
+
+2) manager
+- Read-only on reporting views you create later (recommended: views only)
+  - Example future views: vw_income_last_7_days, vw_sales_summary_today, vw_vat_mtd
+- No access to HR/pay/audit tables.
+
+3) hr
+- Read-only:
+  - vw_employee_current: Read ✅ (Create/Update/Delete ❌)
+- HR tables (edit allowed):
+  - employees: Create ✅ Read ✅ Update ✅ Delete ❌ (recommended)
+  - employee_name_history: Create ✅ Read ✅ Update ✅ Delete ❌ (recommended)
+  - employee_employment_terms: Create ✅ Read ✅ Update ✅ Delete ❌ (recommended)
+  - employee_tax_status_history: (optional) Create ✅ Read ✅ Update ✅ Delete ❌
+- Explicitly NO access:
+  - employee_pay_private: all ❌
+  - vw_employee_pay_private: all ❌
+  - import_files/import_rows_raw: all ❌ (unless HR needs audit)
+
+4) owner (you)
+- Full access (recommended practical defaults):
+  - vw_employee_current: Read ✅ only
+  - vw_employee_pay_private: Read ✅ only
+  - employees / employee_name_history / employee_employment_terms / employee_tax_status_history: Create ✅ Read ✅ Update ✅ Delete ✅
+  - employee_pay_private: Create ✅ Read ✅ Update ✅ Delete ✅
+  - import_files / import_rows_raw: Read ✅ (Delete optional; usually ❌)
+  - emp_id_sequences: Read ✅ (Write optional; usually ❌)
+
+5) admin (Directus Administrator user)
+- Use only for: creating users, roles, configuring collections, settings.
+- Day-to-day: log in with your non-admin `owner` user.

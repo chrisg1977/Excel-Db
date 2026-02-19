@@ -1,0 +1,48 @@
+services:
+  pg_excel:
+    image: postgres:16
+    container_name: pg_excel
+    environment:
+      POSTGRES_USER: excel
+      POSTGRES_PASSWORD: excelpass
+      POSTGRES_DB: exceldb
+    ports:
+      - "55432:5432"
+    volumes:
+      - pg_excel_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U excel -d exceldb"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  directus_excel:
+    build:
+      context: .
+      dockerfile: docker/directus/Dockerfile.prod
+    image: directus-excel:prod
+    container_name: directus_excel
+    depends_on:
+      pg_excel:
+        condition: service_healthy
+    ports:
+      - "8055:8055"
+    environment:
+      DB_CLIENT: pg
+      DB_HOST: pg_excel
+      DB_PORT: 5432
+      DB_DATABASE: exceldb
+      DB_USER: app_directus
+      DB_PASSWORD: TempPass123!
+      DB_SCHEMA: public
+      DB_SEARCH_PATH: public,directus
+      ADMIN_EMAIL: drchrisgauci@gmail.com
+      ADMIN_PASSWORD: Crz6@6@6@!
+      KEY: change-me-32-chars-minimum-xxxxxxxxxxxx
+      SECRET: change-me-32-chars-minimum-xxxxxxxxx
+    volumes:
+      - ./directus-uploads:/directus/uploads
+
+volumes:
+  pg_excel_data:
+

@@ -1,0 +1,56 @@
+{
+  "template": "2026-maltese-fs4.pdf",
+  "page_size": "A4",
+  "origin": "top-left",
+  "fields": [
+    { "name": "payee_identity_card_tax_number", "page": 1, "x": 725, "y": 150, "font_size": 10 },
+    { "name": "payee_spouse_identity_card_tax_number", "page": 1, "x": 710, "y": 150, "font_size": 10 },
+    { "name": "payee_marriage_date", "page": 1, "x": 680, "y": 160, "font_size": 10 },
+    { "name": "payee_surname", "page": 1, "x": 660, "y": 150, "font_size": 10 },
+    { "name": "payee_name", "page": 1, "x": 650, "y": 150, "font_size": 10 },
+    { "name": "payee_dob", "page": 1, "x": 630, "y": 160, "font_size": 10 },
+    { "name": "payee_social_security_number", "page": 1, "x": 615, "y": 150, "font_size": 10 },
+    { "name": "payee_nationality", "page": 1, "x": 600, "y": 150, "font_size": 10 },
+    { "name": "payee_long_term_resident_status", "page": 1, "x": 580, "y": 295, "font_size": 10, "type": "checkbox" },
+
+    { "name": "payer_pe_number", "page": 1, "x": 730, "y": 480, "font_size": 10 },
+    { "name": "payer_name", "page": 1, "x": 700, "y": 420, "font_size": 10 },
+    { "name": "payer_phone", "page": 1, "x": 660, "y": 420, "font_size": 10 },
+    { "name": "payer_email", "page": 1, "x": 645, "y": 420, "font_size": 10 },
+    { "name": "payer_address_line1", "page": 1, "x": 625, "y": 420, "font_size": 10 },
+    { "name": "payer_address_line2", "page": 1, "x": 610, "y": 420, "font_size": 10 },
+    { "name": "payer_address_line3", "page": 1, "x": 595, "y": 420, "font_size": 10 },
+    { "name": "payer_postcode", "page": 1, "x": 595, "y": 520, "font_size": 10 },
+
+    { "name": "tax_status_single", "page": 1, "x": 535, "y": 295, "font_size": 10, "type": "checkbox" },
+    { "name": "tax_status_married", "page": 1, "x": 520, "y": 295, "font_size": 10, "type": "checkbox" },
+    { "name": "tax_status_married_one_child", "page": 1, "x": 505, "y": 295, "font_size": 10, "type": "checkbox" },
+    { "name": "tax_status_married_two_children", "page": 1, "x": 490, "y": 295, "font_size": 10, "type": "checkbox" },
+    { "name": "tax_status_parent", "page": 1, "x": 475, "y": 295, "font_size": 10, "type": "checkbox" },
+    { "name": "tax_status_parent_one_child", "page": 1, "x": 560, "y": 295, "font_size": 10, "type": "checkbox" },
+    { "name": "tax_status_parent_two_children", "page": 1, "x": 445, "y": 295, "font_size": 10, "type": "checkbox" },
+
+    { "name": "scheme_returning_employment_0pct", "page": 1, "x": null, "y": null, "font_size": 10, "type": "checkbox" },
+    { "name": "scheme_overseas_employment_15pct", "page": 1, "x": null, "y": null, "font_size": 10, "type": "checkbox" },
+    { "name": "scheme_sport_activity_7_5pct", "page": 1, "x": null, "y": null, "font_size": 10, "type": "checkbox" },
+    { "name": "scheme_other", "page": 1, "x": null, "y": null, "font_size": 10, "type": "checkbox" },
+    { "name": "scheme_opt_out_overtime_15pct", "page": 1, "x": null, "y": null, "font_size": 10, "type": "checkbox" },
+
+    { "name": "part_time_main_income_employer_name", "page": 1, "x": 370, "y": 220, "font_size": 10 },
+    { "name": "part_time_main_income_pe_number", "page": 1, "x": 370, "y": 480, "font_size": 10 },
+    { "name": "part_time_main_income_pension", "page": 1, "x": null, "y": null, "font_size": 10, "type": "checkbox" },
+    { "name": "part_time_do_not_deduct", "page": 1, "x": null, "y": null, "font_size": 10, "type": "checkbox" },
+    { "name": "part_time_deduct_10pct", "page": 1, "x": null, "y": null, "font_size": 10, "type": "checkbox" },
+
+    { "name": "other_emoluments_deduct_20pct", "page": 1, "x": null, "y": null, "font_size": 10, "type": "checkbox" },
+    { "name": "other_emoluments_higher_rate_pct", "page": 1, "x": null, "y": null, "font_size": 10 },
+    { "name": "other_emoluments_lower_rate_pensioner_pct", "page": 1, "x": null, "y": null, "font_size": 10 },
+    { "name": "other_emoluments_lower_rate_non_pensioner_pct", "page": 1, "x": null, "y": null, "font_size": 10 },
+
+    { "name": "employee_declaration_date", "page": 1, "x": 90, "y": 60, "font_size": 10 },
+    { "name": "employee_declaration_signature", "page": 1, "x": null, "y": null, "font_size": 10 },
+    { "name": "payer_declaration_full_name_position", "page": 1, "x": 100, "y": 400, "font_size": 10 },
+    { "name": "payer_declaration_signature", "page": 1, "x": 70, "y": 480, "font_size": 10 },
+    { "name": "payer_declaration_signature_date", "page": 1, "x": 70, "y": 490, "font_size": 10 }
+  ]
+}

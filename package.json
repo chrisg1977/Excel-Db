@@ -1,0 +1,109 @@
+{
+  "name": "directus-extension-tax-sync",
+  "version": "1.0.0",
+  "description": "Tax sync and publish extension for Directus",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "directus-extension develop",
+    "build": "directus-extension build"
+  },
+  "directus:extension": {
+    "host": "^11.0.0",
+    "type": "bundle",
+    "path": {
+      "app": "dist/app.js",
+      "api": "dist/api.js"
+    },
+    "entries": [
+      {
+        "type": "endpoint",
+        "name": "tax-sync-preview",
+        "source": "src/endpoints/sync-preview.ts"
+      },
+      {
+        "type": "endpoint",
+        "name": "tax-publish",
+        "source": "src/endpoints/publish.ts"
+      },
+      {
+        "type": "panel",
+        "name": "tax-admin",
+        "source": "src/panels/tax-admin.ts"
+      },
+      {
+        "type": "panel",
+        "name": "od-import",
+        "source": "src/panels/od-import.ts"
+      },
+      {
+        "type": "endpoint",
+        "name": "payroll-subscriptions",
+        "source": "src/endpoints/payroll-subscriptions.ts"
+      },
+      {
+        "type": "panel",
+        "name": "payroll-subscriptions-panel",
+        "source": "src/panels/payroll-subscriptions.ts"
+      },
+      {
+        "type": "endpoint",
+        "name": "social-security-sync-preview",
+        "source": "src/endpoints/social-security-sync-preview.ts"
+      },
+      {
+        "type": "endpoint",
+        "name": "social-security-publish",
+        "source": "src/endpoints/social-security-publish.ts"
+      },
+      {
+        "type": "endpoint",
+        "name": "admin-dashboard",
+        "source": "src/endpoints/admin-dashboard.ts"
+      },
+      {
+        "type": "endpoint",
+        "name": "timesheets",
+        "source": "src/endpoints/timesheets.ts"
+      },
+      {
+        "type": "endpoint",
+        "name": "wage-calculator",
+        "source": "src/endpoints/wage-calculator.ts"
+      },
+      {
+        "type": "endpoint",
+        "name": "payslip",
+        "source": "src/endpoints/payslip.ts"
+      }
+    ]
+  },
+  "keywords": [
+    "directus",
+    "extension",
+    "tax",
+    "sync"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@directus/extensions-sdk": "^17.0.8",
+    "@directus/types": "^14.2.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "cheerio": "^1.1.2",
+    "csv-parse": "^5.6.0",
+    "express": "^4.21.2",
+    "pdfkit": "^0.13.0",
+    "vue": "^3.5.24"
+  },
+  "overrides": {
+    "axios": "1.13.5",
+    "qs": "6.15.0",
+    "fast-xml-parser": "5.3.6",
+    "lodash-es": "4.17.23"
+  }
+}
