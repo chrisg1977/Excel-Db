@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EMPINFO – HR Dashboard</title>
+  <link rel="stylesheet" href="/css/dashboard.css" />
+</head>
+<body>
+
+<!-- ─── Header ──────────────────────────────────────────────────────────────── -->
+<header class="app-header">
+  <div class="header-left">
+    <span class="app-title">EMPINFO</span>
+  </div>
+  <div class="header-center">
+    <span class="header-date" id="headerDate"></span>
+  </div>
+  <div class="header-right">
+    <div class="logo-placeholder" title="Dental Practice">🦷</div>
+  </div>
+</header>
+
+<!-- ─── Tab bar ─────────────────────────────────────────────────────────────── -->
+<nav class="tab-bar" role="tablist">
+  <button class="tab active" role="tab" data-tab="current">Current</button>
+  <button class="tab"        role="tab" data-tab="dentists">Dentists</button>
+  <button class="tab"        role="tab" data-tab="ft">FT</button>
+</nav>
+
+<!-- ─── Toolbar ─────────────────────────────────────────────────────────────── -->
+<div class="toolbar">
+  <div class="filter-groups">
+
+    <!-- Employment Type -->
+    <div class="filter-group" role="group" aria-label="Employment Type">
+      <button class="filter-btn active" data-filter="type" data-val="">All</button>
+      <button class="filter-btn"        data-filter="type" data-val="FT">FT</button>
+      <button class="filter-btn"        data-filter="type" data-val="PT">PT</button>
+    </div>
+
+    <!-- Nationality -->
+    <div class="filter-group" role="group" aria-label="Nationality">
+      <button class="filter-btn active" data-filter="nationality" data-val="">All</button>
+      <button class="filter-btn"        data-filter="nationality" data-val="MALTESE">Maltese</button>
+      <button class="filter-btn"        data-filter="nationality" data-val="EU">EU</button>
+      <button class="filter-btn"        data-filter="nationality" data-val="OTHER">Other</button>
+    </div>
+
+    <!-- Status -->
+    <div class="filter-group" role="group" aria-label="Status">
+      <button class="filter-btn active" data-filter="status" data-val="CURRENT">Current</button>
+      <button class="filter-btn"        data-filter="status" data-val="">All</button>
+      <button class="filter-btn"        data-filter="status" data-val="TERMINATED">Terminated</button>
+    </div>
+
+  </div>
+
+  <div class="toolbar-actions">
+    <button class="btn btn-outline" id="btnPrint">🖨 Print</button>
+    <button class="btn btn-success" id="btnNew">+ NEW</button>
+  </div>
+</div>
+
+<!-- ─── Main ─────────────────────────────────────────────────────────────────── -->
+<main class="main">
+  <div class="table-card">
+    <table id="empTable">
+      <thead>
+        <tr>
+          <th>Emp ID</th>
+          <th>Surname</th>
+          <th>First Name</th>
+          <th>Position</th>
+          <th>Phone / Tax No</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="empBody">
+        <tr class="state-row">
+          <td colspan="7"><span class="spinner"></span> Loading employees…</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination-bar" id="paginationBar">
+      <span id="pgInfo"></span>
+      <div class="pagination-controls" id="pgControls"></div>
+    </div>
+  </div>
+</main>
+
+<script src="/js/dashboard.js"></script>
+</body>
+</html>
