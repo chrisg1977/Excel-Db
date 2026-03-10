@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<!--
+  ╔══════════════════════════════════════════════════════════════════════╗
+  ║  EMPINFO – HR Dashboard  (STANDALONE PREVIEW)                        ║
+  ║                                                                      ║
+  ║  This is a fully self-contained preview file.                        ║
+  ║  No server, no database, no npm install required.                    ║
+  ║                                                                      ║
+  ║  HOW TO VIEW:                                                        ║
+  ║    Option A – Download this file → double-click to open in browser  ║
+  ║    Option B – GitHub Pages URL (if Pages is enabled for this repo)  ║
+  ║                                                                      ║
+  ║  The real app (dashboard/server.js) connects to PostgreSQL and       ║
+  ║  populates the table from the vw_hr_employee_dashboard view.         ║
+  ╚══════════════════════════════════════════════════════════════════════╝
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EMPINFO – HR Dashboard (Preview)</title>
+<style>
+/* ─── Reset & Base ──────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue:      #2E5090;
+  --green:     #2D8659;
+  --purple:    #5B4D82;
+  --orange:    #D97C3A;
+  --red:       #C0392B;
+  --gray-100:  #f4f5f7;
+  --gray-200:  #e8eaed;
+  --gray-400:  #9aa0aa;
+  --gray-700:  #3d4350;
+  --gray-900:  #1a1d23;
+  --white:     #ffffff;
+  --shadow:    0 2px 8px rgba(0,0,0,0.10);
+  --radius:    6px;
+  --font:      'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+}
+
+html, body {
+  min-height: 100%;
+  background: var(--gray-100);
+  color: var(--gray-900);
+  font-family: var(--font);
+  font-size: 14px;
+}
+
+/* ─── Preview Banner ─────────────────────────────────────────────────────────── */
+.preview-banner {
+  background: #fff3cd;
+  border-bottom: 1px solid #ffc107;
+  color: #664d03;
+  font-size: 12px;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────────── */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  background: var(--blue);
+  color: var(--white);
+  padding: 0 20px;
+  position: sticky;
+  top: 32px; /* below banner */
+  z-index: 100;
+  box-shadow: var(--shadow);
+}
+
+.header-left { display: flex; align-items: center; gap: 12px; }
+
+.app-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--white);
+}
+
+.header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.header-date { font-size: 13px; opacity: 0.85; }
+
+.header-right { display: flex; align-items: center; gap: 10px; }
+
+.logo-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+  border: 2px solid rgba(255,255,255,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+/* ─── Tabs ───────────────────────────────────────────────────────────────────── */
+.tab-bar {
+  display: flex;
+  align-items: stretch;
+  background: var(--white);
+  border-bottom: 2px solid var(--gray-200);
+  padding: 0 20px;
+  height: 44px;
+  gap: 4px;
+}
+
+.tab {
+  padding: 0 22px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-400);
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+
+.tab:hover  { color: var(--blue); }
+.tab.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+
+/* ─── Toolbar ────────────────────────────────────────────────────────────────── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-groups { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+.filter-group {
+  display: flex;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.filter-btn {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--white);
+  color: var(--gray-700);
+  border: none;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  white-space: nowrap;
+}
+
+.filter-btn + .filter-btn { border-left: 1px solid var(--gray-200); }
+.filter-btn:hover  { background: var(--gray-100); }
+.filter-btn.active { background: var(--blue); color: var(--white); }
+
+.toolbar-actions { display: flex; gap: 8px; align-items: center; }
+
+.btn {
+  padding: 7px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: filter .12s;
+  letter-spacing: .4px;
+}
+
+.btn:hover    { filter: brightness(0.9); }
+.btn-success  { background: var(--green); color: var(--white); }
+.btn-outline  { background: var(--white); color: var(--blue); border: 1px solid var(--blue); }
+
+/* ─── Main / Table ───────────────────────────────────────────────────────────── */
+.main { padding: 16px 20px; }
+
+.table-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.table-card table { width: 100%; border-collapse: collapse; }
+
+.table-card thead th {
+  background: var(--gray-100);
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--gray-400);
+  border-bottom: 2px solid var(--gray-200);
+  white-space: nowrap;
+}
+
+.table-card tbody tr { border-bottom: 1px solid var(--gray-200); transition: filter .1s; }
+.table-card tbody tr:last-child { border-bottom: none; }
+.table-card tbody tr:hover { filter: brightness(0.95); cursor: pointer; }
+
+.table-card td { padding: 9px 14px; font-size: 13px; vertical-align: middle; color: var(--gray-900); }
+
+.btn-edit {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--blue);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: .4px;
+  transition: background .12s;
+}
+.btn-edit:hover { background: #1e3a6e; }
+
+/* ─── Pills ──────────────────────────────────────────────────────────────────── */
+.pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .3px;
+}
+.pill-current { background: #d4edda; color: #155724; }
+.pill-term    { background: #f8d7da; color: #721c24; }
+.pill-prosp   { background: #d1ecf1; color: #0c5460; }
+
+/* ─── Pagination ─────────────────────────────────────────────────────────────── */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-top: 1px solid var(--gray-200);
+  font-size: 12px;
+  color: var(--gray-400);
+}
+
+.pagination-controls { display: flex; gap: 4px; }
+
+.pg-btn {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-700);
+  transition: background .1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pg-btn:hover  { background: var(--gray-100); border-color: var(--blue); }
+.pg-btn.active { background: var(--blue); color: var(--white); border-color: var(--blue); }
+
+/* ─── Color-code legend ──────────────────────────────────────────────────────── */
+.legend {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 8px 20px;
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  font-size: 11px;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--gray-700); }
+.legend-dot  { width: 12px; height: 12px; border-radius: 3px; }
+
+/* ─── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .app-header { padding: 0 12px; }
+  .main { padding: 10px 8px; }
+  .toolbar { padding: 8px 12px; }
+  .tab-bar { padding: 0 8px; }
+  .table-card td, .table-card th { padding: 8px 8px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ─── Preview banner ──────────────────────────────────────────────────────── -->
+<div class="preview-banner">
+  ⚠️ <strong>STANDALONE PREVIEW</strong> — sample data only. The live app
+  (dashboard/server.js) loads all employees from your PostgreSQL database.
+  Click <strong>EDIT</strong> on any row to open the employee form preview.
+</div>
+
+<!-- ─── Header ──────────────────────────────────────────────────────────────── -->
+<header class="app-header">
+  <div class="header-left">
+    <span class="app-title">EMPINFO</span>
+  </div>
+  <div class="header-center">
+    <span class="header-date" id="headerDate"></span>
+  </div>
+  <div class="header-right">
+    <div class="logo-placeholder" title="Dental Practice">🦷</div>
+  </div>
+</header>
+
+<!-- ─── Tab bar ─────────────────────────────────────────────────────────────── -->
+<nav class="tab-bar" role="tablist">
+  <button class="tab active" role="tab" data-tab="current">Current</button>
+  <button class="tab"        role="tab" data-tab="dentists">Dentists</button>
+  <button class="tab"        role="tab" data-tab="ft">FT</button>
+</nav>
+
+<!-- ─── Color legend ────────────────────────────────────────────────────────── -->
+<div class="legend">
+  <span class="legend-item"><span class="legend-dot" style="background:#2E5090"></span>Dental Surgeon</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#2D8659"></span>Manager</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#5B4D82"></span>Assistant</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#D97C3A"></span>Receptionist / Trainee</span>
+</div>
+
+<!-- ─── Toolbar ─────────────────────────────────────────────────────────────── -->
+<div class="toolbar">
+  <div class="filter-groups">
+
+    <div class="filter-group" role="group" aria-label="Employment Type">
+      <button class="filter-btn active" data-filter="type" data-val="">All</button>
+      <button class="filter-btn"        data-filter="type" data-val="FT">FT</button>
+      <button class="filter-btn"        data-filter="type" data-val="PT">PT</button>
+    </div>
+
+    <div class="filter-group" role="group" aria-label="Nationality">
+      <button class="filter-btn active" data-filter="nat" data-val="">All</button>
+      <button class="filter-btn"        data-filter="nat" data-val="MALTESE">Maltese</button>
+      <button class="filter-btn"        data-filter="nat" data-val="EU">EU</button>
+      <button class="filter-btn"        data-filter="nat" data-val="OTHER">Other</button>
+    </div>
+
+    <div class="filter-group" role="group" aria-label="Status">
+      <button class="filter-btn active" data-filter="status" data-val="CURRENT">Current</button>
+      <button class="filter-btn"        data-filter="status" data-val="">All</button>
+      <button class="filter-btn"        data-filter="status" data-val="TERMINATED">Terminated</button>
+    </div>
+
+  </div>
+
+  <div class="toolbar-actions">
+    <button class="btn btn-outline" id="btnPrint">🖨 Print</button>
+    <button class="btn btn-success" id="btnNew">+ NEW</button>
+  </div>
+</div>
+
+<!-- ─── Main ─────────────────────────────────────────────────────────────────── -->
+<main class="main">
+  <div class="table-card">
+    <table id="empTable">
+      <thead>
+        <tr>
+          <th>Emp ID</th>
+          <th>Surname</th>
+          <th>First Name</th>
+          <th>Position</th>
+          <th>Phone / Tax No</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="empBody"></tbody>
+    </table>
+    <div class="pagination-bar" id="paginationBar">
+      <span id="pgInfo"></span>
+      <div class="pagination-controls" id="pgControls"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ─── Mock data (8 employees, dental practice) ───────────────────────────────── */
+const ALL_EMPLOYEES = [
+  { id:'2018001', surname:'Borg',       first_name:'Maria',    designation:'Dental Surgeon',          phone:'7900 1234', status:'CURRENT',    type:'FT', nat:'MALTESE', color:'#2E5090', cat:'DENTIST' },
+  { id:'2018002', surname:'Azzopardi',  first_name:'Charles',  designation:'Dental Surgeon',          phone:'7901 2345', status:'CURRENT',    type:'PT', nat:'MALTESE', color:'#2E5090', cat:'DENTIST' },
+  { id:'2019003', surname:'Camilleri',  first_name:'Joseph',   designation:'Practice Manager',        phone:'7911 5678', status:'CURRENT',    type:'FT', nat:'MALTESE', color:'#2D8659', cat:'MANAGER' },
+  { id:'2019005', surname:'Farrugia',   first_name:'Christine',designation:'Dental Hygenist',         phone:'7912 6789', status:'CURRENT',    type:'FT', nat:'MALTESE', color:'#2E5090', cat:'DENTIST' },
+  { id:'2020007', surname:'Mifsud',     first_name:'Anna',     designation:'Dental Assistant',        phone:'7922 9012', status:'CURRENT',    type:'PT', nat:'EU',      color:'#5B4D82', cat:'ASSISTANT' },
+  { id:'2020009', surname:'Vella',      first_name:'Kurt',     designation:'Dental Assistant',        phone:'7923 0123', status:'CURRENT',    type:'FT', nat:'MALTESE', color:'#5B4D82', cat:'ASSISTANT' },
+  { id:'2021011', surname:'Grech',      first_name:'Elena',    designation:'Receptionist',            phone:'7933 3456', status:'TERMINATED', type:'FT', nat:'OTHER',   color:'#D97C3A', cat:'RECEPTIONIST_TRAINEE' },
+  { id:'2022014', surname:'Scicluna',   first_name:'Rebecca',  designation:'Trainee Dental Assistant',phone:'7944 4567', status:'CURRENT',    type:'FT', nat:'MALTESE', color:'#D97C3A', cat:'RECEPTIONIST_TRAINEE' },
+];
+
+const PAGE_SIZE = 5;
+
+/* ─── State ──────────────────────────────────────────────────────────────────── */
+const state = { tab: 'current', type: '', nat: '', status: 'CURRENT', page: 1 };
+
+/* ─── Init ───────────────────────────────────────────────────────────────────── */
+document.getElementById('headerDate').textContent =
+  new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
+
+renderTable();
+
+/* ─── Tab clicks ─────────────────────────────────────────────────────────────── */
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    state.tab = btn.dataset.tab;
+    state.page = 1;
+    // Sync status filter to tab where appropriate
+    if (state.tab === 'current') { state.status = 'CURRENT'; syncFilter('status', 'CURRENT'); }
+    else                          { /* leave filter as is */ }
+    renderTable();
+  });
+});
+
+/* ─── Filter button clicks ───────────────────────────────────────────────────── */
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const group  = btn.dataset.filter;
+    const val    = btn.dataset.val;
+    document.querySelectorAll(`.filter-btn[data-filter="${group}"]`)
+      .forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state[group] = val;
+    state.page = 1;
+    renderTable();
+  });
+});
+
+function syncFilter(group, val) {
+  document.querySelectorAll(`.filter-btn[data-filter="${group}"]`).forEach(b => {
+    b.classList.toggle('active', b.dataset.val === val);
+  });
+}
+
+/* ─── Filter & render ────────────────────────────────────────────────────────── */
+function filteredRows() {
+  return ALL_EMPLOYEES.filter(emp => {
+    if (state.tab === 'dentists' && emp.cat !== 'DENTIST') return false;
+    if (state.tab === 'ft'       && emp.type !== 'FT')     return false;
+    if (state.type   && emp.type   !== state.type)   return false;
+    if (state.nat    && emp.nat    !== state.nat)     return false;
+    if (state.status && emp.status !== state.status)  return false;
+    return true;
+  });
+}
+
+function hexToRgba(hex, alpha) {
+  if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return '';
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function pillClass(status) {
+  if (status === 'CURRENT')    return 'pill-current';
+  if (status === 'TERMINATED') return 'pill-term';
+  return 'pill-prosp';
+}
+
+function renderTable() {
+  const rows   = filteredRows();
+  const total  = rows.length;
+  const pages  = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (state.page > pages) state.page = pages;
+  const start  = (state.page - 1) * PAGE_SIZE;
+  const slice  = rows.slice(start, start + PAGE_SIZE);
+
+  const tbody = document.getElementById('empBody');
+  tbody.innerHTML = '';
+
+  if (slice.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-400)">
+      No employees match the current filters.</td></tr>`;
+  } else {
+    slice.forEach(emp => {
+      const tr  = document.createElement('tr');
+      const bg  = hexToRgba(emp.color, 0.12);
+      if (bg) tr.style.backgroundColor = bg;
+
+      const statusLabel = emp.status.charAt(0) + emp.status.slice(1).toLowerCase();
+      tr.innerHTML = `
+        <td><strong>${esc(emp.id)}</strong></td>
+        <td><strong>${esc(emp.surname)}</strong></td>
+        <td>${esc(emp.first_name)}</td>
+        <td>${esc(emp.designation)}</td>
+        <td>${esc(emp.phone)}</td>
+        <td><span class="pill ${pillClass(emp.status)}">${esc(statusLabel)}</span></td>
+        <td><button class="btn-edit" data-id="${esc(emp.id)}">EDIT</button></td>
+      `;
+
+      tr.addEventListener('click', e => {
+        if (e.target.classList.contains('btn-edit')) return;
+        window.location.href = `employee-form-preview.html?id=${encodeURIComponent(emp.id)}`;
+      });
+      tr.querySelector('.btn-edit').addEventListener('click', () => {
+        window.location.href = `employee-form-preview.html?id=${encodeURIComponent(emp.id)}`;
+      });
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Pagination info
+  document.getElementById('pgInfo').textContent =
+    `Showing ${start + 1}–${Math.min(start + PAGE_SIZE, total)} of ${total} employees`;
+
+  // Pagination controls
+  const pgControls = document.getElementById('pgControls');
+  pgControls.innerHTML = '';
+
+  const prevBtn = document.createElement('button');
+  prevBtn.className = 'pg-btn';
+  prevBtn.textContent = '◀';
+  prevBtn.disabled = state.page <= 1;
+  prevBtn.addEventListener('click', () => { state.page--; renderTable(); });
+  pgControls.appendChild(prevBtn);
+
+  for (let p = 1; p <= pages; p++) {
+    const pb = document.createElement('button');
+    pb.className = 'pg-btn' + (p === state.page ? ' active' : '');
+    pb.textContent = String(p);
+    pb.addEventListener('click', (pp => () => { state.page = pp; renderTable(); })(p));
+    pgControls.appendChild(pb);
+  }
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'pg-btn';
+  nextBtn.textContent = '▶';
+  nextBtn.disabled = state.page >= pages;
+  nextBtn.addEventListener('click', () => { state.page++; renderTable(); });
+  pgControls.appendChild(nextBtn);
+}
+
+/* ─── Print / New buttons ────────────────────────────────────────────────────── */
+document.getElementById('btnPrint').addEventListener('click', () => window.print());
+document.getElementById('btnNew').addEventListener('click', () =>
+  window.location.href = 'employee-form-preview.html');
+
+/* ─── Helper ─────────────────────────────────────────────────────────────────── */
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

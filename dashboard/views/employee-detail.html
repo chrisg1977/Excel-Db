@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EMPINFO – Employee Detail</title>
+  <link rel="stylesheet" href="/css/employee-form.css" />
+</head>
+<body>
+
+<!-- ─── Header ──────────────────────────────────────────────────────────────── -->
+<header class="emp-header">
+  <div class="emp-header-left">
+    <a class="btn-back" href="/">← Back</a>
+    <div>
+      <div class="emp-id-label">EMP No.</div>
+      <div class="emp-id-value" id="hdrEmpId">—</div>
+    </div>
+    <div class="payee-label">Payee information</div>
+  </div>
+  <div class="emp-header-right">
+    <span class="status-badge badge-active" id="statusBadge">ACTIVE</span>
+    <span class="year-label" id="hdrYear"></span>
+  </div>
+</header>
+
+<!-- ─── Period bar ───────────────────────────────────────────────────────────── -->
+<div class="period-bar">
+  <span class="period-label">Period</span>
+  <span class="period-label">From</span>
+  <span class="period-val" id="periodFrom">—</span>
+  <span class="period-sep">|</span>
+  <span class="period-label">To</span>
+  <span class="period-val" id="periodTo">—</span>
+</div>
+
+<!-- ─── Body ─────────────────────────────────────────────────────────────────── -->
+<div class="emp-body">
+
+  <!-- Left: personal info -->
+  <div>
+    <div class="info-card">
+      <div class="card-title">Personal &amp; Employment Details</div>
+      <table class="form-table" id="infoTable">
+        <tbody>
+          <tr><td class="lbl">Surname</td>        <td class="val"><input id="fSurname"     readonly /></td></tr>
+          <tr><td class="lbl">First Name</td>     <td class="val"><input id="fFirstName"   readonly /></td></tr>
+          <tr><td class="lbl">Address</td>        <td class="val"><input id="fAddress"     readonly /></td></tr>
+          <tr><td class="lbl">Telephone</td>      <td class="val"><input id="fTelephone"   readonly /></td></tr>
+          <tr><td class="lbl">ID Card No.</td>    <td class="val"><input id="fIdCard"      readonly /></td></tr>
+          <tr><td class="lbl">Social Sec. No.</td><td class="val"><input id="fSocSec"      readonly /></td></tr>
+          <tr><td class="lbl">Spouse ID</td>      <td class="val"><input id="fSpouseId"    readonly /></td></tr>
+          <tr><td class="lbl">IBAN</td>           <td class="val"><input id="fIban"        readonly /></td></tr>
+          <tr><td class="lbl">Email</td>          <td class="val"><input id="fEmail"       readonly type="email" /></td></tr>
+          <tr><td class="lbl">Date of Birth</td>  <td class="val"><input id="fDob"         readonly /></td></tr>
+          <tr><td class="lbl">First Employment</td><td class="val"><input id="fFirstEmp"   readonly /></td></tr>
+          <tr><td class="lbl">Designation</td>   <td class="val"><input id="fDesignation" readonly /></td></tr>
+          <tr><td class="lbl">FT / PT</td>        <td class="val"><input id="fFtPt"        readonly /></td></tr>
+          <tr><td class="lbl">FS4 Status</td>     <td class="val"><input id="fFs4"         readonly /></td></tr>
+          <tr><td class="lbl">Hours at Contract</td><td class="val"><input id="fHours"     readonly /></td></tr>
+          <tr><td class="lbl">Termination Date</td><td class="val"><input id="fTermDate"   readonly /></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Right: actions + balance -->
+  <div class="sidebar">
+
+    <div class="action-card">
+      <div class="card-title">Actions</div>
+      <button class="btn-action btn-blue"         id="btnWeeklyHours">Weekly Hours</button>
+      <button class="btn-action btn-outline-blue" id="btnEditDetails">Edit Details</button>
+      <button class="btn-action btn-green"        id="btnPayroll">PAYROLL</button>
+      <button class="btn-action btn-orange"       id="btnTerminate">Terminate / Change Status</button>
+      <button class="btn-action btn-purple"       id="btnContract">Contract</button>
+      <div class="img-placeholder" id="imgPlaceholder" title="Upload employee photo">📷 IMAGE</div>
+    </div>
+
+    <div class="balance-card">
+      <div class="card-title">Leave Balances (Today)</div>
+      <div class="balance-row">
+        <div class="balance-item">
+          <label for="vlBalance">VL Balance</label>
+          <input class="balance-input" id="vlBalance" value="—" readonly />
+        </div>
+        <div class="balance-item">
+          <label for="slBalance">SL Balance</label>
+          <input class="balance-input" id="slBalance" value="—" readonly />
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─── Footer nav ───────────────────────────────────────────────────────────── -->
+<footer class="emp-footer">
+  <div class="footer-left">
+    <button class="btn-nav"    id="btnPrev" disabled>◀ PREV</button>
+    <button class="btn-nav"    id="btnNext" disabled>NEXT ▶</button>
+  </div>
+  <div class="footer-right">
+    <button class="btn-cancel hidden" id="btnCancel">Cancel</button>
+    <button class="btn-save   hidden" id="btnSave">💾 Save</button>
+  </div>
+</footer>
+
+<!-- Toast notification -->
+<div class="toast hidden" id="toast"></div>
+
+<script src="/js/employee-form.js"></script>
+</body>
+</html>

@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<!--
+  ╔══════════════════════════════════════════════════════════════════════╗
+  ║  EMPINFO – Employee Detail Form  (STANDALONE PREVIEW)               ║
+  ║                                                                      ║
+  ║  This is a fully self-contained preview file.                        ║
+  ║  No server, no database, no npm install required.                    ║
+  ║                                                                      ║
+  ║  HOW TO VIEW:                                                        ║
+  ║    Option A – Download this file → double-click to open in browser  ║
+  ║    Option B – GitHub Pages URL (if Pages is enabled for this repo)  ║
+  ║                                                                      ║
+  ║  The real app (dashboard/server.js) connects to PostgreSQL and       ║
+  ║  populates these fields from live data.                              ║
+  ╚══════════════════════════════════════════════════════════════════════╝
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EMPINFO – Employee Detail (Preview)</title>
+<style>
+/* ─── Reset & Base ──────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue:      #2E5090;
+  --green:     #2D8659;
+  --purple:    #5B4D82;
+  --orange:    #D97C3A;
+  --red:       #C0392B;
+  --gray-100:  #f4f5f7;
+  --gray-200:  #e8eaed;
+  --gray-400:  #9aa0aa;
+  --gray-700:  #3d4350;
+  --gray-900:  #1a1d23;
+  --white:     #ffffff;
+  --shadow:    0 2px 8px rgba(0,0,0,0.10);
+  --radius:    6px;
+  --font:      'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+}
+
+html, body {
+  min-height: 100%;
+  background: var(--gray-100);
+  color: var(--gray-900);
+  font-family: var(--font);
+  font-size: 14px;
+}
+
+/* ─── Page Header ────────────────────────────────────────────────────────────── */
+.emp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--blue);
+  color: var(--white);
+  padding: 0 24px;
+  height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.emp-header-left { display: flex; align-items: center; gap: 16px; }
+.emp-header-right { display: flex; align-items: center; gap: 12px; }
+
+.emp-id-label {
+  font-size: 11px;
+  opacity: .75;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+}
+
+.emp-id-value { font-size: 22px; font-weight: 700; letter-spacing: 1px; }
+
+.payee-label { font-size: 13px; opacity: .85; }
+
+/* ─── Status Badge ───────────────────────────────────────────────────────────── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+.badge-active     { background: var(--red); color: var(--white); }
+.badge-terminated { background: var(--gray-400); color: var(--white); }
+
+.year-label { font-size: 18px; font-weight: 600; opacity: .9; }
+
+/* ─── Back / nav link ────────────────────────────────────────────────────────── */
+.btn-back {
+  padding: 6px 14px;
+  background: rgba(255,255,255,0.15);
+  color: var(--white);
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background .12s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-back:hover { background: rgba(255,255,255,0.25); }
+
+/* ─── Preview banner ─────────────────────────────────────────────────────────── */
+.preview-banner {
+  background: #fff3cd;
+  border-bottom: 1px solid #ffc107;
+  color: #664d03;
+  font-size: 12px;
+  padding: 8px 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── Period Section ─────────────────────────────────────────────────────────── */
+.period-bar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  padding: 10px 24px;
+  font-size: 13px;
+}
+
+.period-label { font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: .5px; font-size: 11px; }
+.period-val   { font-weight: 600; color: var(--gray-900); margin-left: 6px; }
+.period-sep   { color: var(--gray-200); font-size: 18px; }
+
+/* ─── Main Layout ────────────────────────────────────────────────────────────── */
+.emp-body {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 16px;
+  padding: 16px 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+@media (max-width: 800px) {
+  .emp-body { grid-template-columns: 1fr; }
+}
+
+/* ─── Info Card ──────────────────────────────────────────────────────────────── */
+.info-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.card-title {
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--white);
+  background: var(--blue);
+}
+
+/* ─── Form Table ─────────────────────────────────────────────────────────────── */
+.form-table { width: 100%; border-collapse: collapse; }
+
+.form-table tr + tr td { border-top: 1px solid var(--gray-200); }
+
+.form-table td {
+  padding: 8px 14px;
+  vertical-align: middle;
+}
+
+.form-table .lbl {
+  width: 200px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-400);
+  text-align: right;
+  padding-right: 16px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+
+.form-table .val input,
+.form-table .val select {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--gray-900);
+  outline: none;
+  transition: border-color .15s, background .15s;
+}
+
+.form-table .val input[readonly] { cursor: default; }
+
+.form-table .val input:not([readonly]),
+.form-table .val select:not([disabled]) {
+  background: #fff9e6;
+  border-color: var(--orange);
+}
+
+/* ─── Right Sidebar ──────────────────────────────────────────────────────────── */
+.sidebar { display: flex; flex-direction: column; gap: 12px; }
+
+.action-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.action-card .card-title { margin: -14px -14px 10px -14px; border-radius: var(--radius) var(--radius) 0 0; }
+
+.btn-action {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: center;
+  transition: filter .12s;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+}
+
+.btn-action:hover { filter: brightness(0.88); }
+
+.btn-blue        { background: var(--blue);     color: var(--white); }
+.btn-green       { background: var(--green);    color: var(--white); }
+.btn-purple      { background: var(--purple);   color: var(--white); }
+.btn-orange      { background: var(--orange);   color: var(--white); }
+.btn-red         { background: var(--red);       color: var(--white); }
+.btn-gray        { background: var(--gray-400); color: var(--white); }
+
+.btn-outline-blue {
+  background: var(--white);
+  color: var(--blue);
+  border: 2px solid var(--blue);
+}
+
+/* Image placeholder */
+.img-placeholder {
+  height: 90px;
+  border: 2px dashed var(--gray-200);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-400);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color .12s;
+}
+
+.img-placeholder:hover { border-color: var(--blue); color: var(--blue); }
+
+/* ─── Balance Section ────────────────────────────────────────────────────────── */
+.balance-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+}
+
+.balance-card .card-title {
+  margin: -14px -14px 12px -14px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--green);
+}
+
+.balance-row { display: flex; gap: 10px; }
+
+.balance-item { flex: 1; }
+.balance-item label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--gray-400);
+  margin-bottom: 4px;
+}
+
+.balance-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 2px solid var(--gray-200);
+  border-radius: 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--green);
+  text-align: center;
+  background: #f0faf5;
+  outline: none;
+}
+
+.balance-input:focus { border-color: var(--green); }
+
+/* ─── Navigator ──────────────────────────────────────────────────────────────── */
+.emp-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: var(--white);
+  border-top: 1px solid var(--gray-200);
+  position: sticky;
+  bottom: 0;
+  z-index: 50;
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.06);
+}
+
+.footer-left  { display: flex; gap: 8px; }
+.footer-right { display: flex; gap: 8px; }
+
+.btn-nav {
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--blue);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background .12s;
+  letter-spacing: .5px;
+}
+
+.btn-nav:hover    { background: #1e3a6e; }
+.btn-nav:disabled { background: var(--gray-200); color: var(--gray-400); cursor: not-allowed; }
+
+.btn-save {
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--green);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background .12s;
+}
+
+.btn-cancel {
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--white);
+  color: var(--gray-700);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.hidden { display: none !important; }
+
+/* ─── Toast ──────────────────────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 70px;
+  right: 24px;
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  background: var(--gray-900);
+  color: var(--white);
+  font-size: 13px;
+  box-shadow: var(--shadow);
+  z-index: 999;
+  transition: opacity .3s;
+  pointer-events: none;
+}
+
+.toast.hidden { opacity: 0; }
+</style>
+</head>
+<body>
+
+<!-- ─── Preview banner ──────────────────────────────────────────────────────── -->
+<div class="preview-banner">
+  ⚠️ <strong>STANDALONE PREVIEW</strong> — sample data only. The live app
+  (dashboard/server.js) connects to your PostgreSQL database.
+  Use ◀ PREV / NEXT ▶ to browse the 4 sample employees.
+</div>
+
+<!-- ─── Header ──────────────────────────────────────────────────────────────── -->
+<header class="emp-header">
+  <div class="emp-header-left">
+    <a class="btn-back" href="dashboard-preview.html">← Back</a>
+    <div>
+      <div class="emp-id-label">EMP No.</div>
+      <div class="emp-id-value" id="hdrEmpId">2018001</div>
+    </div>
+    <div class="payee-label">Payee information</div>
+  </div>
+  <div class="emp-header-right">
+    <span class="status-badge badge-active" id="statusBadge">ACTIVE</span>
+    <span class="year-label" id="hdrYear">2026</span>
+  </div>
+</header>
+
+<!-- ─── Period bar ───────────────────────────────────────────────────────────── -->
+<div class="period-bar">
+  <span class="period-label">Period</span>
+  <span class="period-label">From</span>
+  <span class="period-val" id="periodFrom">01/01/2026</span>
+  <span class="period-sep">|</span>
+  <span class="period-label">To</span>
+  <span class="period-val" id="periodTo">31/12/2026</span>
+</div>
+
+<!-- ─── Body ─────────────────────────────────────────────────────────────────── -->
+<div class="emp-body">
+
+  <!-- Left: personal info -->
+  <div>
+    <div class="info-card">
+      <div class="card-title">Personal &amp; Employment Details</div>
+      <table class="form-table" id="infoTable">
+        <tbody>
+          <tr><td class="lbl">Surname</td>         <td class="val"><input id="fSurname"     readonly /></td></tr>
+          <tr><td class="lbl">First Name</td>      <td class="val"><input id="fFirstName"   readonly /></td></tr>
+          <tr><td class="lbl">Address</td>         <td class="val"><input id="fAddress"     readonly /></td></tr>
+          <tr><td class="lbl">Telephone</td>       <td class="val"><input id="fTelephone"   readonly /></td></tr>
+          <tr><td class="lbl">ID Card No.</td>     <td class="val"><input id="fIdCard"      readonly /></td></tr>
+          <tr><td class="lbl">Social Sec. No.</td> <td class="val"><input id="fSocSec"      readonly /></td></tr>
+          <tr><td class="lbl">Spouse ID</td>       <td class="val"><input id="fSpouseId"    readonly /></td></tr>
+          <tr><td class="lbl">IBAN</td>            <td class="val"><input id="fIban"        readonly /></td></tr>
+          <tr><td class="lbl">Email</td>           <td class="val"><input id="fEmail"       readonly type="email" /></td></tr>
+          <tr><td class="lbl">Date of Birth</td>   <td class="val"><input id="fDob"         readonly /></td></tr>
+          <tr><td class="lbl">First Employment</td><td class="val"><input id="fFirstEmp"    readonly /></td></tr>
+          <tr><td class="lbl">Designation</td>     <td class="val"><input id="fDesignation" readonly /></td></tr>
+          <tr><td class="lbl">FT / PT</td>         <td class="val"><input id="fFtPt"        readonly /></td></tr>
+          <tr><td class="lbl">FS4 Status</td>      <td class="val"><input id="fFs4"         readonly /></td></tr>
+          <tr><td class="lbl">Hours at Contract</td><td class="val"><input id="fHours"      readonly /></td></tr>
+          <tr><td class="lbl">Termination Date</td><td class="val"><input id="fTermDate"    readonly /></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Right: actions + balance -->
+  <div class="sidebar">
+
+    <div class="action-card">
+      <div class="card-title">Actions</div>
+      <button class="btn-action btn-blue"         id="btnWeeklyHours">Weekly Hours</button>
+      <button class="btn-action btn-outline-blue" id="btnEditDetails">Edit Details</button>
+      <button class="btn-action btn-green"        id="btnPayroll">PAYROLL</button>
+      <button class="btn-action btn-orange"       id="btnTerminate">Terminate / Change Status</button>
+      <button class="btn-action btn-purple"       id="btnContract">Contract</button>
+      <div class="img-placeholder" id="imgPlaceholder" title="Upload employee photo">📷 IMAGE</div>
+    </div>
+
+    <div class="balance-card">
+      <div class="card-title">Leave Balances (Today)</div>
+      <div class="balance-row">
+        <div class="balance-item">
+          <label for="vlBalance">VL Balance</label>
+          <input class="balance-input" id="vlBalance" value="18.5" readonly />
+        </div>
+        <div class="balance-item">
+          <label for="slBalance">SL Balance</label>
+          <input class="balance-input" id="slBalance" value="7.0" readonly />
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─── Footer nav ───────────────────────────────────────────────────────────── -->
+<footer class="emp-footer">
+  <div class="footer-left">
+    <button class="btn-nav" id="btnPrev">◀ PREV</button>
+    <button class="btn-nav" id="btnNext">NEXT ▶</button>
+  </div>
+  <div class="footer-right">
+    <button class="btn-cancel hidden" id="btnCancel">Cancel</button>
+    <button class="btn-save   hidden" id="btnSave">💾 Save</button>
+  </div>
+</footer>
+
+<!-- Toast notification -->
+<div class="toast hidden" id="toast"></div>
+
+<script>
+/* ─── Mock employee data (replaces API calls in the standalone preview) ─────── */
+const EMPLOYEES = [
+  {
+    id: '2018001',
+    surname: 'Borg',
+    first_name: 'Maria',
+    address: '12, Triq il-Wied, Msida, MSI 1234',
+    telephone: '7900 1234',
+    id_card: '000000A',
+    soc_sec: 'MT000001',
+    spouse_id: '111111B',
+    iban: 'MT84 MALT 0110 0001 2345 MTLF MX01 234',
+    email: 'maria.borg@dentalclinic.mt',
+    dob: '15/03/1985',
+    first_emp: '01/06/2018',
+    designation: 'Dental Surgeon',
+    ft_pt: 'FT',
+    fs4: 'A',
+    hours: '40',
+    term_date: '',
+    employment_status: 'CURRENT',
+    vl_balance: '18.5',
+    sl_balance: '7.0',
+    row_color: '#2E5090'
+  },
+  {
+    id: '2019003',
+    surname: 'Camilleri',
+    first_name: 'Joseph',
+    address: '5, Triq San Pawl, Valletta, VLT 1000',
+    telephone: '7911 5678',
+    id_card: '222222C',
+    soc_sec: 'MT000002',
+    spouse_id: '',
+    iban: 'MT84 MALT 0110 0002 3456 MTLF MX01 234',
+    email: 'joseph.camilleri@dentalclinic.mt',
+    dob: '22/07/1979',
+    first_emp: '01/03/2019',
+    designation: 'Practice Manager',
+    ft_pt: 'FT',
+    fs4: 'A',
+    hours: '40',
+    term_date: '',
+    employment_status: 'CURRENT',
+    vl_balance: '24.0',
+    sl_balance: '5.5',
+    row_color: '#2D8659'
+  },
+  {
+    id: '2020007',
+    surname: 'Mifsud',
+    first_name: 'Anna',
+    address: '8, Triq il-Kbira, Birkirkara, BKR 2100',
+    telephone: '7922 9012',
+    id_card: '333333D',
+    soc_sec: 'MT000003',
+    spouse_id: '444444E',
+    iban: 'MT84 MALT 0110 0003 4567 MTLF MX01 234',
+    email: 'anna.mifsud@dentalclinic.mt',
+    dob: '10/11/1992',
+    first_emp: '15/09/2020',
+    designation: 'Dental Assistant',
+    ft_pt: 'PT',
+    fs4: 'B',
+    hours: '24',
+    term_date: '',
+    employment_status: 'CURRENT',
+    vl_balance: '12.0',
+    sl_balance: '3.0',
+    row_color: '#5B4D82'
+  },
+  {
+    id: '2021011',
+    surname: 'Grech',
+    first_name: 'Elena',
+    address: '3, Triq il-Paċi, Sliema, SLM 3000',
+    telephone: '7933 3456',
+    id_card: '555555F',
+    soc_sec: 'MT000004',
+    spouse_id: '',
+    iban: 'MT84 MALT 0110 0004 5678 MTLF MX01 234',
+    email: 'elena.grech@dentalclinic.mt',
+    dob: '04/02/1996',
+    first_emp: '01/02/2021',
+    designation: 'Receptionist',
+    ft_pt: 'FT',
+    fs4: 'A',
+    hours: '40',
+    term_date: '31/12/2024',
+    employment_status: 'TERMINATED',
+    vl_balance: '0',
+    sl_balance: '0',
+    row_color: '#D97C3A'
+  }
+];
+
+/* ─── State ──────────────────────────────────────────────────────────────────── */
+let currentIndex = 0;
+let editMode     = false;
+
+/* ─── DOM refs ───────────────────────────────────────────────────────────────── */
+const hdrEmpId     = document.getElementById('hdrEmpId');
+const hdrYear      = document.getElementById('hdrYear');
+const statusBadge  = document.getElementById('statusBadge');
+const periodFrom   = document.getElementById('periodFrom');
+const periodTo     = document.getElementById('periodTo');
+const vlBalance    = document.getElementById('vlBalance');
+const slBalance    = document.getElementById('slBalance');
+const btnEditDetails = document.getElementById('btnEditDetails');
+const btnSave      = document.getElementById('btnSave');
+const btnCancel    = document.getElementById('btnCancel');
+const btnPrev      = document.getElementById('btnPrev');
+const btnNext      = document.getElementById('btnNext');
+const toast        = document.getElementById('toast');
+
+const FIELD_IDS = {
+  surname: 'fSurname', first_name: 'fFirstName', address: 'fAddress',
+  telephone: 'fTelephone', id_card: 'fIdCard', soc_sec: 'fSocSec',
+  spouse_id: 'fSpouseId', iban: 'fIban', email: 'fEmail',
+  dob: 'fDob', first_emp: 'fFirstEmp', designation: 'fDesignation',
+  ft_pt: 'fFtPt', fs4: 'fFs4', hours: 'fHours', term_date: 'fTermDate'
+};
+
+/* ─── Pick employee from URL ?id= or default to first ───────────────────────── */
+(function init() {
+  hdrYear.textContent = new Date().getFullYear();
+  const urlId = new URLSearchParams(window.location.search).get('id');
+  if (urlId) {
+    const idx = EMPLOYEES.findIndex(e => e.id === urlId);
+    currentIndex = idx >= 0 ? idx : 0;
+  }
+  renderEmployee();
+}());
+
+/* ─── Render ─────────────────────────────────────────────────────────────────── */
+function renderEmployee() {
+  const emp = EMPLOYEES[currentIndex];
+
+  hdrEmpId.textContent = emp.id;
+  document.title = `EMPINFO – ${emp.surname}, ${emp.first_name} (Preview)`;
+
+  const status = (emp.employment_status || 'CURRENT').toUpperCase();
+  statusBadge.textContent = status === 'CURRENT' ? 'ACTIVE' : status;
+  statusBadge.className   = 'status-badge ' + (status === 'CURRENT' ? 'badge-active' : 'badge-terminated');
+
+  periodFrom.textContent = emp.first_emp || '—';
+  periodTo.textContent   = emp.term_date || 'Present';
+
+  vlBalance.value = emp.vl_balance !== '' ? emp.vl_balance : '—';
+  slBalance.value = emp.sl_balance !== '' ? emp.sl_balance : '—';
+
+  Object.entries(FIELD_IDS).forEach(([key, domId]) => {
+    const el = document.getElementById(domId);
+    if (el) el.value = emp[key] != null ? emp[key] : '';
+  });
+
+  btnPrev.disabled = currentIndex <= 0;
+  btnNext.disabled = currentIndex >= EMPLOYEES.length - 1;
+
+  if (editMode) disableEdit();   // reset edit mode when navigating
+}
+
+/* ─── Edit / Save / Cancel ───────────────────────────────────────────────────── */
+function enableEdit() {
+  editMode = true;
+  Object.values(FIELD_IDS).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.removeAttribute('readonly');
+  });
+  btnEditDetails.classList.add('hidden');
+  btnSave.classList.remove('hidden');
+  btnCancel.classList.remove('hidden');
+}
+
+function disableEdit() {
+  editMode = false;
+  Object.values(FIELD_IDS).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('readonly', '');
+  });
+  btnEditDetails.classList.remove('hidden');
+  btnSave.classList.add('hidden');
+  btnCancel.classList.add('hidden');
+}
+
+btnEditDetails.addEventListener('click', enableEdit);
+
+btnCancel.addEventListener('click', () => {
+  renderEmployee();   // restore original values
+});
+
+btnSave.addEventListener('click', () => {
+  // In preview mode: just read field values back into mock data
+  const emp = EMPLOYEES[currentIndex];
+  Object.entries(FIELD_IDS).forEach(([key, domId]) => {
+    const el = document.getElementById(domId);
+    if (el) emp[key] = el.value;
+  });
+  disableEdit();
+  showToast('✓ Changes saved to preview data (not persisted — no server).', 3500);
+});
+
+/* ─── PREV / NEXT ────────────────────────────────────────────────────────────── */
+btnPrev.addEventListener('click', () => {
+  if (currentIndex > 0) { currentIndex--; renderEmployee(); }
+});
+btnNext.addEventListener('click', () => {
+  if (currentIndex < EMPLOYEES.length - 1) { currentIndex++; renderEmployee(); }
+});
+
+/* ─── Action buttons ─────────────────────────────────────────────────────────── */
+document.getElementById('btnWeeklyHours').addEventListener('click', () =>
+  showToast('Weekly Hours — available in the live app.', 3000));
+document.getElementById('btnPayroll').addEventListener('click', () =>
+  showToast('PAYROLL — available in the live app.', 3000));
+document.getElementById('btnTerminate').addEventListener('click', () =>
+  showToast('Terminate / Change Status — available in the live app.', 3000));
+document.getElementById('btnContract').addEventListener('click', () =>
+  showToast('Contract — available in the live app.', 3000));
+document.getElementById('imgPlaceholder').addEventListener('click', () =>
+  showToast('Image upload — available in the live app.', 3000));
+
+/* ─── Toast ──────────────────────────────────────────────────────────────────── */
+let toastTimer = null;
+function showToast(msg, ms) {
+  toast.textContent = msg;
+  toast.classList.remove('hidden');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.add('hidden'), ms || 3000);
+}
+</script>
+</body>
+</html>
