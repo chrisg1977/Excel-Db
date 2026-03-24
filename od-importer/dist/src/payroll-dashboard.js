@@ -99,6 +99,98 @@ const countMondaysInMonth = (year, month) => {
     }
     return mondays;
 };
+const normalizeLegacyPayType = (value) => {
+    const raw = cleanText(value).toUpperCase();
+    if (raw === 'HOURLY_RATE')
+        return 'HOURLY';
+    if (raw === 'MONTHLY_RATE')
+        return 'MONTHLY';
+    if (raw === 'YEARLY_RATE')
+        return 'YEARLY';
+    return raw;
+};
+const getCurrentMonthResult = async (pg, payroll, period, empId) => {
+    const result = await pg.query(`SELECT *
+     FROM payroll_month_results
+     WHERE emp_id = $1
+       AND payroll_type = $2
+       AND period_year = $3
+       AND period_month = $4
+       AND is_current = TRUE
+     ORDER BY calc_version DESC, id DESC
+     LIMIT 1`, [empId, payroll, period.year, period.month]);
+    return result.rows[0] || null;
+};
+const upsertMainHourlyRateOverride = async (pg, empId, period, hourlyRate) => {
+    if (!Number.isFinite(hourlyRate) || hourlyRate <= 0)
+        return;
+    const existing = await pg.query(`SELECT id
+     FROM employee_payroll_terms
+     WHERE emp_id = $1
+       AND payroll_type = 'MAIN'
+       AND effective_from <= $3::date
+       AND (effective_to IS NULL OR effective_to >= $2::date)
+       AND is_active = TRUE
+     ORDER BY effective_from DESC, id DESC
+     LIMIT 1`, [empId, period.periodFrom, period.periodTo]);
+    if (existing.rows[0]?.id) {
+        await pg.query(`UPDATE employee_payroll_terms
+       SET pay_input_basis_main = 'HOURLY',
+           input_amount_main = $2,
+           hourly_rate_main = $2,
+           updated_at = NOW(),
+           updated_by = 'issue_flow',
+           notes = CONCAT(COALESCE(notes, ''), CASE WHEN COALESCE(notes, '') = '' THEN '' ELSE ' | ' END, 'Hourly rate amended in payslip popup for ', $3)
+       WHERE id = $1`, [Number(existing.rows[0].id), hourlyRate, period.raw]);
+        return;
+    }
+    const employment = await pg.query(`SELECT
+       COALESCE(NULLIF(TRIM(et.employment_type), ''), '') AS employment_type,
+       COALESCE(et.weekly_hours, efp.fixed_hours_week, 0) AS weekly_hours,
+       COALESCE(NULLIF(TRIM(efp.fs4_status), ''), 'Single') AS fs4_status,
+       efp.timesheet_required
+     FROM employees e
+     LEFT JOIN LATERAL (
+       SELECT *
+       FROM employee_employment_terms et
+       WHERE et.emp_id = e.emp_id
+       ORDER BY et.effective_from DESC
+       LIMIT 1
+     ) et ON TRUE
+     LEFT JOIN employee_form_profile efp
+       ON efp.emp_id = e.emp_id
+     WHERE e.emp_id = $1
+     LIMIT 1`, [empId]);
+    const employmentRow = employment.rows[0] || {};
+    const rawType = cleanText(employmentRow.employment_type).toUpperCase();
+    const normalizedEmploymentType = rawType.includes('REDUCED')
+        ? 'FULL_TIME_REDUCED'
+        : rawType.includes('CASUAL')
+            ? 'CASUAL_PART_TIME'
+            : rawType.includes('PART')
+                ? 'PART_TIME'
+                : rawType
+                    ? 'FULL_TIME'
+                    : null;
+    await pg.query(`INSERT INTO employee_payroll_terms (
+       emp_id, payroll_type, effective_from, effective_to, is_active,
+       employment_type_main, weekly_hours_main, pay_input_basis_main, input_amount_main, hourly_rate_main,
+       timesheet_required, student_flag, tax_status, created_by, updated_by, notes
+     ) VALUES (
+       $1, 'MAIN', $2::date, NULL, TRUE,
+       $3, $4, 'HOURLY', $5, $5,
+       $6, FALSE, $7, 'issue_flow', 'issue_flow', $8
+     )`, [
+        empId,
+        period.periodFrom,
+        normalizedEmploymentType,
+        toNumber(employmentRow.weekly_hours),
+        hourlyRate,
+        employmentRow.timesheet_required === null || employmentRow.timesheet_required === undefined ? true : !!employmentRow.timesheet_required,
+        cleanText(employmentRow.fs4_status) || 'Single',
+        `Hourly rate amended in payslip popup for ${period.raw}`
+    ]);
+};
 let excelPayslipCachePromise = null;
 const loadExcelPayslipCache = async () => {
     if (!excelPayslipCachePromise) {
@@ -764,14 +856,20 @@ const buildRows = async (pg, payroll, period) => {
          ec.first_name,
          COALESCE(NULLIF(TRIM(ec.position_held), ''), '') AS designation,
          COALESCE(NULLIF(TRIM(ec.department_code), ''), '') AS department,
-         COALESCE(NULLIF(TRIM(ec.employment_type), ''), '') AS employment_type,
-         COALESCE(form_profile.timesheet_required, true) AS timesheet_required,
-         COALESCE(ec.weekly_hours, profile.weekly_hours, 0) AS weekly_hours,
-         COALESCE(pay.hourly_rate, trunc(COALESCE(profile.current_salary_hourly_rate, 0)::numeric, 2), 0) AS hourly_rate,
-         COALESCE(NULLIF(TRIM(ec.fs_status), ''), 'Single') AS tax_status,
+         COALESCE(NULLIF(TRIM(current_terms.employment_type_main), ''), NULLIF(TRIM(ec.employment_type), ''), '') AS employment_type,
+         COALESCE(current_terms.timesheet_required, current_result.timesheet_required, form_profile.timesheet_required, true) AS timesheet_required,
+         COALESCE(current_terms.weekly_hours_main, current_result.weekly_hours_main, ec.weekly_hours, profile.weekly_hours, 0) AS weekly_hours,
+         COALESCE(current_terms.hourly_rate_main, current_result.hourly_rate_main, pay.hourly_rate, trunc(COALESCE(profile.current_salary_hourly_rate, 0)::numeric, 2), 0) AS hourly_rate,
+         COALESCE(NULLIF(TRIM(current_terms.tax_status), ''), NULLIF(TRIM(current_result.tax_status), ''), NULLIF(TRIM(ec.fs_status), ''), 'Single') AS tax_status,
          COALESCE(NULLIF(TRIM(ec.email), ''), '') AS email,
          source_transition.effective_on AS source_transition_effective_on,
-         target_transition.effective_on AS target_transition_effective_on
+         target_transition.effective_on AS target_transition_effective_on,
+         current_result.gross_total AS current_result_gross_total,
+         current_result.net_wage AS current_result_net_wage,
+         current_result.ssc_employee AS current_result_ssc_employee,
+         current_result.ssc_employer AS current_result_ssc_employer,
+         current_result.mlf AS current_result_mlf,
+         current_result.tax_on_gross AS current_result_tax_on_gross
        FROM payroll_subscriptions ps
        JOIN vw_employee_current ec
          ON ec.emp_id = ps.employee_id
@@ -779,6 +877,28 @@ const buildRows = async (pg, payroll, period) => {
          ON profile.emp_id = ps.employee_id
        LEFT JOIN employee_form_profile form_profile
          ON form_profile.emp_id = ps.employee_id
+       LEFT JOIN LATERAL (
+         SELECT *
+         FROM employee_payroll_terms ept
+         WHERE ept.emp_id = ps.employee_id
+           AND ept.payroll_type = ps.payroll_type
+           AND ept.effective_from <= $4::date
+           AND (ept.effective_to IS NULL OR ept.effective_to >= $1::date)
+           AND ept.is_active = TRUE
+         ORDER BY ept.effective_from DESC, ept.id DESC
+         LIMIT 1
+       ) current_terms ON TRUE
+       LEFT JOIN LATERAL (
+         SELECT *
+         FROM payroll_month_results pmr
+         WHERE pmr.emp_id = ps.employee_id
+           AND pmr.payroll_type = ps.payroll_type
+           AND pmr.period_year = EXTRACT(YEAR FROM $1::date)::int
+           AND pmr.period_month = EXTRACT(MONTH FROM $1::date)::int
+           AND pmr.is_current = TRUE
+         ORDER BY pmr.calc_version DESC, pmr.id DESC
+         LIMIT 1
+       ) current_result ON TRUE
        LEFT JOIN LATERAL (
          SELECT eft.effective_on
          FROM employee_file_transitions eft
@@ -975,35 +1095,43 @@ const buildRows = async (pg, payroll, period) => {
         let ssEmployerContribution = 0;
         let mlfContribution = 0;
         if (gross > 0) {
-            try {
-                const bracket = await lookupTaxBracket(pg, gross * 12, safeTaxCategory(record.tax_status));
-                taxRateApplied = toNumber(bracket.rate);
-                taxDeduction = roundMoney(calculateTax(gross, taxRateApplied / 100, toNumber(bracket.subtract) / 12));
+            if (toNumber(record.current_result_tax_on_gross) > 0 || toNumber(record.current_result_ssc_employee) > 0 || toNumber(record.current_result_ssc_employer) > 0) {
+                taxDeduction = roundMoney(toNumber(record.current_result_tax_on_gross));
+                ssEmployeeContribution = roundMoney(toNumber(record.current_result_ssc_employee));
+                ssEmployerContribution = roundMoney(toNumber(record.current_result_ssc_employer));
+                mlfContribution = roundMoney(toNumber(record.current_result_mlf));
             }
-            catch {
-                warnings.push('Missing tax bracket');
-            }
-            try {
-                const employeeDobResult = await pg.query(`SELECT to_char(dob, 'YYYY-MM-DD') AS dob FROM employees WHERE emp_id = $1 LIMIT 1`, [Number(record.emp_id)]);
-                const employeeDob = cleanText(employeeDobResult.rows[0]?.dob) || null;
-                const ssContribution = await lookupSocialSecurityContribution(pg, period.year, gross, employeeDob);
-                if (ssContribution) {
-                    ssClassCode = cleanText(ssContribution.class_code);
-                    ssEmployeeContribution = roundMoney(ssContribution.employee_contribution);
-                    ssEmployerContribution = roundMoney(ssContribution.employer_contribution);
-                    mlfContribution = roundMoney(ssContribution.mlf_contribution);
+            else {
+                try {
+                    const bracket = await lookupTaxBracket(pg, gross * 12, safeTaxCategory(record.tax_status));
+                    taxRateApplied = toNumber(bracket.rate);
+                    taxDeduction = roundMoney(calculateTax(gross, taxRateApplied / 100, toNumber(bracket.subtract) / 12));
                 }
-                else {
-                    warnings.push('Missing SSC class');
+                catch {
+                    warnings.push('Missing tax bracket');
                 }
-            }
-            catch {
-                warnings.push('SSC data unavailable');
+                try {
+                    const employeeDobResult = await pg.query(`SELECT to_char(dob, 'YYYY-MM-DD') AS dob FROM employees WHERE emp_id = $1 LIMIT 1`, [Number(record.emp_id)]);
+                    const employeeDob = cleanText(employeeDobResult.rows[0]?.dob) || null;
+                    const ssContribution = await lookupSocialSecurityContribution(pg, period.year, gross, employeeDob);
+                    if (ssContribution) {
+                        ssClassCode = cleanText(ssContribution.class_code);
+                        ssEmployeeContribution = roundMoney(ssContribution.employee_contribution);
+                        ssEmployerContribution = roundMoney(ssContribution.employer_contribution);
+                        mlfContribution = roundMoney(ssContribution.mlf_contribution);
+                    }
+                    else {
+                        warnings.push('Missing SSC class');
+                    }
+                }
+                catch {
+                    warnings.push('SSC data unavailable');
+                }
             }
         }
-        const grossTotal = roundMoney(gross);
+        const grossTotal = roundMoney(toNumber(record.current_result_gross_total) || gross);
         const totalDeductions = roundMoney(taxDeduction + ssEmployeeContribution);
-        const netPayment = roundMoney(grossTotal - totalDeductions);
+        const netPayment = roundMoney(toNumber(record.current_result_net_wage) || (grossTotal - totalDeductions));
         let vlPending = 0;
         let slPending = 0;
         let vlTakenYtd = 0;
@@ -1108,6 +1236,30 @@ const loadRowsByEmployee = async (pg, payroll, period, employeeIds) => {
     return rows.filter((row) => allowed.has(row.emp_id));
 };
 const getRateSource = async (pg, empId, period) => {
+    const newTermsResult = await pg.query(`SELECT
+       pay_input_basis_main,
+       input_amount_main,
+       hourly_rate_main,
+       effective_from,
+       notes
+     FROM employee_payroll_terms
+     WHERE emp_id = $1
+       AND payroll_type = 'MAIN'
+       AND effective_from <= $3::date
+       AND (effective_to IS NULL OR effective_to >= $2::date)
+       AND is_active = TRUE
+     ORDER BY effective_from DESC, id DESC
+     LIMIT 1`, [empId, period.periodFrom, period.periodTo]);
+    if (newTermsResult.rows[0]) {
+        return {
+            pay_type: normalizeLegacyPayType(cleanText(newTermsResult.rows[0].pay_input_basis_main)),
+            input_amount: toNumber(newTermsResult.rows[0].input_amount_main),
+            derived_hourly_rate: toNumber(newTermsResult.rows[0].hourly_rate_main),
+            effective_from: toIsoDate(newTermsResult.rows[0].effective_from),
+            notes: cleanText(newTermsResult.rows[0].notes),
+            source_emp_id: empId
+        };
+    }
     const result = await pg.query(`SELECT
        epp.pay_type,
        epp.amount,
@@ -1219,6 +1371,7 @@ const getPayrollDashboardDetail = async (pg, payroll, period, empId) => {
        AND pe.payroll_number = $2
      ORDER BY pl.id DESC
      LIMIT 1`, [empId, `${payroll}-${period.raw}`]);
+    const currentMonthResult = await getCurrentMonthResult(pg, payroll, period, empId);
     const employee = employeeResult.rows[0] || {};
     const work = workResult.rows[0] || {};
     const savedLine = savedLineResult.rows[0] || {};
@@ -1256,34 +1409,34 @@ const getPayrollDashboardDetail = async (pg, payroll, period, empId) => {
                 ? 'Passport'
                 : 'ID';
     const ssClass = cleanText(savedLine.ss_class_code) || cleanText(row.ss_class_code) || determineSocialSecurityClass(row.gross_including_bonuses, null);
-    const ssEmployee = roundMoney(toNumber(savedLine.ss_employee_contribution) || row.ss_employee_contribution);
-    const ssEmployer = roundMoney(toNumber(savedLine.ss_employer_contribution) || row.ss_employer_contribution);
+    const ssEmployee = roundMoney(toNumber(currentMonthResult?.ssc_employee) || toNumber(savedLine.ss_employee_contribution) || row.ss_employee_contribution);
+    const ssEmployer = roundMoney(toNumber(currentMonthResult?.ssc_employer) || toNumber(savedLine.ss_employer_contribution) || row.ss_employer_contribution);
     const ssTotal = roundMoney(ssEmployee + ssEmployer);
-    const mlf = roundMoney(toNumber(savedLine.mlf_contribution) || row.mlf_contribution);
+    const mlf = roundMoney(toNumber(currentMonthResult?.mlf) || toNumber(savedLine.mlf_contribution) || row.mlf_contribution);
     const extraUnderHours = roundMoney(toNumber(savedLine.extra_hours_worked));
-    const extraUnderAmount = roundMoney(extraUnderHours * row.hourly_rate);
-    const unpaidLeaveHours = roundMoney(toNumber(savedLine.unpaid_leave_hours));
-    const unpaidLeaveAmount = roundMoney(unpaidLeaveHours * row.hourly_rate);
-    const performanceBonus = roundMoney(toNumber(savedLine.performance_bonus));
-    const supervisorBonus = roundMoney(toNumber(savedLine.supervisor_bonus));
-    const discretionaryBonus = roundMoney(toNumber(savedLine.discretionary_bonus));
+    const extraUnderAmount = roundMoney(toNumber(currentMonthResult?.normal_rate_extra_pay) || (extraUnderHours * row.hourly_rate));
+    const unpaidLeaveHours = roundMoney(toNumber(currentMonthResult?.unpaid_leave_hours_total) || toNumber(savedLine.unpaid_leave_hours));
+    const unpaidLeaveAmount = roundMoney(toNumber(currentMonthResult?.unpaid_leave_deduction_amount) || (unpaidLeaveHours * row.hourly_rate));
+    const performanceBonus = roundMoney(toNumber(currentMonthResult?.performance_bonus) || toNumber(savedLine.performance_bonus));
+    const supervisorBonus = roundMoney(toNumber(currentMonthResult?.supervisor_bonus) || toNumber(savedLine.supervisor_bonus));
+    const discretionaryBonus = roundMoney(toNumber(currentMonthResult?.bonus) || toNumber(savedLine.discretionary_bonus));
     const statutoryBonus = roundMoney(toNumber(savedLine.statutory_bonus_june) +
         toNumber(savedLine.statutory_bonus_december));
     const bonusTotal = roundMoney(performanceBonus + supervisorBonus + discretionaryBonus + statutoryBonus);
     const otherPayments = roundMoney(toNumber(savedLine.weekly_allowance_march) +
         toNumber(savedLine.weekly_allowance_september));
     const overtimeHours = roundMoney(toNumber(savedLine.overtime_hours));
-    const overtimeAmount = roundMoney(toNumber(savedLine.overtime_payment));
+    const overtimeAmount = roundMoney(toNumber(currentMonthResult?.overtime_pay_amount) || toNumber(savedLine.overtime_payment));
     const overtimeTax = 0;
-    const grossBeforeBonuses = row.gross_including_bonuses;
-    const grossIncludingAdjustments = roundMoney(grossBeforeBonuses + bonusTotal + otherPayments + extraUnderAmount + overtimeAmount - unpaidLeaveAmount);
-    const leaveTakenYtd = roundMoney(toNumber(savedLine.annual_leave_taken_hours) + toNumber(savedLine.sick_leave_taken_hours));
+    const grossBeforeBonuses = roundMoney(toNumber(currentMonthResult?.main_base_monthly_wage) || row.gross_including_bonuses);
+    const grossIncludingAdjustments = roundMoney(toNumber(currentMonthResult?.gross_total) || (grossBeforeBonuses + bonusTotal + otherPayments + extraUnderAmount - unpaidLeaveAmount));
+    const leaveTakenYtd = roundMoney(toNumber(currentMonthResult?.vl_taken_hours) + toNumber(currentMonthResult?.sl_taken_hours) || (toNumber(savedLine.annual_leave_taken_hours) + toNumber(savedLine.sick_leave_taken_hours)));
     const leaveLeftYtd = roundMoney(row.vl_pending);
-    const bankedSinceLastMonth = providerEmployee ? 0 : (payroll === 'PROVIDER' ? 0 : roundMoney(toNumber(savedLine.banked_hours_new)));
+    const bankedSinceLastMonth = providerEmployee ? 0 : (payroll === 'PROVIDER' ? 0 : roundMoney(toNumber(currentMonthResult?.banked_hours_movement) || toNumber(savedLine.banked_hours_new)));
     const signatureImageUrl = cleanText(savedLine.signature_image_url);
     const transactionNumber = cleanText(savedLine.bank_transaction_number);
-    const sourceFundsLabel = cleanText(savedLine.source_funds_label);
-    const paidPreviouslyAmount = roundMoney(toNumber(savedLine.paid_previously_amount));
+    const sourceFundsLabel = cleanText(currentMonthResult?.source_funds_label) || cleanText(savedLine.source_funds_label);
+    const paidPreviouslyAmount = roundMoney(toNumber(currentMonthResult?.paid_previously_amount) || toNumber(savedLine.paid_previously_amount));
     const currentYearRow = (Array.isArray(yearView.rows) ? yearView.rows : []).find((entry) => String(entry?.month) === period.raw) || null;
     const hasSavedLine = Number(savedLine.id) > 0;
     const displayExtraUnderHours = !hasSavedLine && currentYearRow?.extra_under_hours != null
@@ -1316,15 +1469,21 @@ const getPayrollDashboardDetail = async (pg, payroll, period, empId) => {
     const displayMlf = !hasSavedLine && currentYearRow?.mlf != null
         ? roundMoney(toNumber(currentYearRow.mlf))
         : mlf;
-    const displayTaxDeduction = !hasSavedLine && currentYearRow?.tax != null
-        ? roundMoney(toNumber(currentYearRow.tax))
-        : roundMoney(row.tax_deduction);
-    const displayGrossIncludingAdjustments = !hasSavedLine && currentYearRow?.gross_total != null
-        ? roundMoney(toNumber(currentYearRow.gross_total))
-        : grossIncludingAdjustments;
-    const baseNetWage = !hasSavedLine && currentYearRow?.net_wage != null
-        ? roundMoney(toNumber(currentYearRow.net_wage))
-        : roundMoney(row.net_payment);
+    const displayTaxDeduction = toNumber(currentMonthResult?.tax_on_gross) > 0
+        ? roundMoney(toNumber(currentMonthResult?.tax_on_gross))
+        : !hasSavedLine && currentYearRow?.tax != null
+            ? roundMoney(toNumber(currentYearRow.tax))
+            : roundMoney(row.tax_deduction);
+    const displayGrossIncludingAdjustments = toNumber(currentMonthResult?.gross_total) > 0
+        ? roundMoney(toNumber(currentMonthResult?.gross_total))
+        : !hasSavedLine && currentYearRow?.gross_total != null
+            ? roundMoney(toNumber(currentYearRow.gross_total))
+            : grossIncludingAdjustments;
+    const baseNetWage = toNumber(currentMonthResult?.net_wage) > 0
+        ? roundMoney(toNumber(currentMonthResult?.net_wage))
+        : !hasSavedLine && currentYearRow?.net_wage != null
+            ? roundMoney(toNumber(currentYearRow.net_wage))
+            : roundMoney(row.net_payment);
     const displayLeaveLeftYtd = !hasSavedLine && currentYearRow?.leave_balance_end != null
         ? roundMoney(toNumber(currentYearRow.leave_balance_end))
         : leaveLeftYtd;
@@ -1380,6 +1539,7 @@ const getPayrollDashboardDetail = async (pg, payroll, period, empId) => {
             }))
         },
         calculation: {
+            hourly_rate: row.hourly_rate,
             pay_type_used: rateSource?.pay_type || 'PROFILE_HOURLY',
             pay_input_amount: rateSource?.input_amount ?? row.hourly_rate,
             derived_hourly_rate: row.hourly_rate,
@@ -1435,10 +1595,10 @@ const getPayrollDashboardDetail = async (pg, payroll, period, empId) => {
             bank_transaction_number: transactionNumber,
             source_funds_label: sourceFundsLabel,
             paid_previously_amount: paidPreviouslyAmount,
-            review_adjustments: savedLine.review_adjustments || null,
+            review_adjustments: savedLine.review_adjustments || currentMonthResult?.review_reason || null,
             payslip_total: baseNetWage,
             transaction_amount: transactionAmount,
-            payslip_status: cleanText(savedLine.payslip_status) || 'PENDING',
+            payslip_status: cleanText(savedLine.payslip_status) || cleanText(currentMonthResult?.calc_status) || 'PENDING',
             timesheet_acquired: row.timesheet_acquired,
             last_timesheet_import: row.last_timesheet_import,
             notes: (Array.isArray(row.warnings) ? row.warnings : []).filter((warning) => String(warning || '').toLowerCase().includes('loan'))
@@ -1541,6 +1701,393 @@ const upsertPayrollEntry = async (client, payroll, period, rows) => {
         roundMoney(totals.net)
     ]);
     return { payrollEntryId: Number(inserted.rows[0].id), payrollNumber, paymentDate };
+};
+const upsertPayrollMonthResult = async (client, payroll, period, row, options) => {
+    const termsResult = await client.query(`SELECT *
+     FROM employee_payroll_terms
+     WHERE emp_id = $1
+       AND payroll_type = $2
+       AND effective_from <= $4::date
+       AND (effective_to IS NULL OR effective_to >= $3::date)
+       AND is_active = TRUE
+     ORDER BY effective_from DESC, id DESC
+     LIMIT 1`, [row.emp_id, payroll, period.periodFrom, period.periodTo]);
+    const profileResult = await client.query(`SELECT COALESCE(NULLIF(TRIM(fs4_status), ''), 'Single') AS fs4_status,
+            fixed_hours_week,
+            timesheet_required
+     FROM employee_form_profile
+     WHERE emp_id = $1
+     LIMIT 1`, [row.emp_id]);
+    const terms = termsResult.rows[0] || {};
+    const profile = profileResult.rows[0] || {};
+    const current = await client.query(`SELECT id, calc_version
+     FROM payroll_month_results
+     WHERE emp_id = $1
+       AND payroll_type = $2
+       AND period_year = $3
+       AND period_month = $4
+       AND is_current = TRUE
+     ORDER BY calc_version DESC, id DESC
+     LIMIT 1`, [row.emp_id, payroll, period.year, period.month]);
+    const paidPreviouslyAmount = options.paidPreviouslyAmount ?? 0;
+    const calcStatus = options.calcStatus || 'CONFIRMED';
+    const reviewReason = options.reviewAdjustments
+        ? JSON.stringify(options.reviewAdjustments)
+        : null;
+    const payload = [
+        row.emp_id,
+        payroll,
+        period.year,
+        period.month,
+        cleanText(terms.employment_type_main) || cleanText(row.employment_type),
+        toNumber(terms.weekly_hours_main) || roundMoney(row.contracted_weekly_hours),
+        cleanText(terms.pay_input_basis_main) || null,
+        toNumber(terms.input_amount_main) || row.hourly_rate,
+        toNumber(terms.hourly_rate_main) || row.hourly_rate,
+        cleanText(terms.tax_status) || cleanText(profile.fs4_status) || 'Single',
+        !!terms.student_flag,
+        terms.timesheet_required === null || terms.timesheet_required === undefined ? !!row.timesheet_required : !!terms.timesheet_required,
+        toNumber(terms.annual_vl_entitlement_hours),
+        toNumber(terms.annual_sl_entitlement_hours),
+        roundMoney(row.vl_taken_ytd),
+        roundMoney(row.sl_taken_ytd),
+        roundMoney(row.hours_worked),
+        roundMoney(row.banked_hours_balance),
+        roundMoney(row.gross_total),
+        roundMoney(row.gross_total),
+        roundMoney(row.tax_deduction),
+        roundMoney(row.tax_deduction),
+        roundMoney(row.hourly_rate * row.contracted_weekly_hours),
+        roundMoney(row.ss_employee_contribution),
+        roundMoney(row.ss_employer_contribution),
+        roundMoney(row.ss_employee_contribution + row.ss_employer_contribution),
+        roundMoney(row.mlf_contribution),
+        roundMoney(row.net_payment),
+        roundMoney(paidPreviouslyAmount),
+        roundMoney(row.net_payment - paidPreviouslyAmount),
+        roundMoney(row.my_cost_per_cheque),
+        options.bankTransactionNumber || null,
+        options.sourceFundsLabel || null,
+        calcStatus,
+        row.warnings.join('; '),
+        reviewReason
+    ];
+    if (current.rows[0]?.id) {
+        await client.query(`UPDATE payroll_month_results
+       SET updated_at = NOW(),
+           updated_by = 'issue_flow',
+           employment_type_main = $5,
+           weekly_hours_main = $6,
+           pay_input_basis_main = $7,
+           input_amount_main = $8,
+           hourly_rate_main = $9,
+           tax_status = $10,
+           student_flag = $11,
+           timesheet_required = $12,
+           annual_vl_entitlement_hours = $13,
+           annual_sl_entitlement_hours = $14,
+           vl_taken_hours = $15,
+           sl_taken_hours = $16,
+           timesheet_work_hours = $17,
+           banked_hours_closing = $18,
+           gross_total = $19,
+           normal_main_income = $20,
+           tax_on_gross = $21,
+           total_employee_tax = $22,
+           ssc_weekly_wage_basis = $23,
+           ssc_employee = $24,
+           ssc_employer = $25,
+           ssc_total = $26,
+           mlf = $27,
+           net_wage = $28,
+           paid_previously_amount = $29,
+           transaction_amount = $30,
+           payslip_value = $31,
+           transaction_number = $32,
+           source_funds_label = $33,
+           calc_status = $34,
+           calc_notes = $35,
+           review_reason = $36
+       WHERE id = $1`, [current.rows[0].id, ...payload]);
+        return Number(current.rows[0].id);
+    }
+    const inserted = await client.query(`INSERT INTO payroll_month_results (
+       emp_id, payroll_type, period_year, period_month,
+       employment_type_main, weekly_hours_main, pay_input_basis_main, input_amount_main, hourly_rate_main,
+       tax_status, student_flag, timesheet_required, annual_vl_entitlement_hours, annual_sl_entitlement_hours,
+       vl_taken_hours, sl_taken_hours, timesheet_work_hours, banked_hours_closing,
+       gross_total, normal_main_income, tax_on_gross, total_employee_tax, ssc_weekly_wage_basis,
+       ssc_employee, ssc_employer, ssc_total, mlf, net_wage, paid_previously_amount,
+       transaction_amount, payslip_value, transaction_number, source_funds_label, calc_status, calc_notes, review_reason
+     ) VALUES (
+       $1, $2, $3, $4,
+       $5, $6, $7, $8, $9,
+       $10, $11, $12, $13, $14,
+       $15, $16, $17, $18,
+       $19, $20, $21, $22, $23,
+       $24, $25, $26, $27, $28, $29,
+       $30, $31, $32, $33, $34, $35, $36
+     )
+     RETURNING id`, payload);
+    return Number(inserted.rows[0].id);
+};
+const syncPayrollHourSourcesAndDecisions = async (client, payrollResultId, payroll, period, row, detail) => {
+    await client.query(`DELETE FROM payroll_hour_decisions
+     WHERE payroll_result_id = $1`, [payrollResultId]);
+    await client.query(`DELETE FROM payroll_hour_deficit_decisions
+     WHERE payroll_result_id = $1`, [payrollResultId]);
+    await client.query(`DELETE FROM payroll_hour_sources
+     WHERE emp_id = $1
+       AND payroll_type = $2
+       AND period_year = $3
+       AND period_month = $4`, [row.emp_id, payroll, period.year, period.month]);
+    const calc = detail?.calculation || {};
+    const banked = roundMoney(toNumber(calc.banked_hours_since_last_month));
+    const extraHours = roundMoney(toNumber(calc.extra_under_hours));
+    const overtimeHours = roundMoney(toNumber(calc.overtime_hours));
+    const normalExtraPay = roundMoney(toNumber(calc.extra_under_amount));
+    const overtimePay = roundMoney(toNumber(calc.overtime_amount));
+    const insertSource = async (sourceType, direction, hoursValue) => {
+        const inserted = await client.query(`INSERT INTO payroll_hour_sources (
+         emp_id, payroll_type, period_year, period_month, source_type, direction, hours_value, origin, is_active, created_by
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,'SYSTEM_RECALC',TRUE,'issue_flow')
+       RETURNING id`, [row.emp_id, payroll, period.year, period.month, sourceType, direction, hoursValue]);
+        return Number(inserted.rows[0].id);
+    };
+    if (banked !== 0) {
+        await insertSource('BANKED', banked > 0 ? 'CREDIT' : 'DEFICIT', Math.abs(banked));
+    }
+    if (extraHours > 0) {
+        const sourceId = await insertSource('EXTRA', 'CREDIT', extraHours);
+        if (normalExtraPay > 0) {
+            await client.query(`INSERT INTO payroll_hour_decisions (
+           emp_id, payroll_type, period_year, period_month, payroll_result_id, hour_source_id,
+           source_type, source_hours_available, hours_decided, action, rate_mode, hourly_rate_used,
+           tax_path, pay_amount, tax_amount, affects_gross_total, affects_transaction_amount, affects_payslip_value,
+           created_by, updated_by
+         ) VALUES (
+           $1,$2,$3,$4,$5,$6,
+           'EXTRA',$7,$8,'PAY_NORMAL','NORMAL',$9,
+           'NORMAL_PROGRESSIVE',$10,0,TRUE,TRUE,TRUE,
+           'issue_flow','issue_flow'
+         )`, [row.emp_id, payroll, period.year, period.month, payrollResultId, sourceId, extraHours, extraHours, row.hourly_rate, normalExtraPay]);
+        }
+    }
+    else if (extraHours < 0) {
+        const deficitHours = Math.abs(extraHours);
+        const sourceId = await insertSource('UNDER_HOURS', 'DEFICIT', deficitHours);
+        await client.query(`INSERT INTO payroll_hour_deficit_decisions (
+         emp_id, payroll_type, period_year, period_month, payroll_result_id, hour_source_id,
+         source_type, source_hours_deficit, hours_decided, action, hourly_rate_used, deduction_amount,
+         affects_gross_total, affects_transaction_amount, affects_payslip_value, created_by, updated_by
+       ) VALUES (
+         $1,$2,$3,$4,$5,$6,
+         'UNDER_HOURS',$7,$8,'DEDUCT_NOW',$9,$10,
+         TRUE,TRUE,TRUE,'issue_flow','issue_flow'
+       )`, [row.emp_id, payroll, period.year, period.month, payrollResultId, sourceId, deficitHours, deficitHours, row.hourly_rate, roundMoney(deficitHours * row.hourly_rate)]);
+    }
+    if (overtimeHours > 0) {
+        const sourceId = await insertSource('OVERTIME', 'CREDIT', overtimeHours);
+        await client.query(`INSERT INTO payroll_hour_decisions (
+         emp_id, payroll_type, period_year, period_month, payroll_result_id, hour_source_id,
+         source_type, source_hours_available, hours_decided, action, rate_mode, hourly_rate_used,
+         overtime_multiplier_used, overtime_rate_used, tax_path, pay_amount, tax_amount,
+         affects_overtime_pay, affects_transaction_amount, affects_payslip_value, created_by, updated_by
+       ) VALUES (
+         $1,$2,$3,$4,$5,$6,
+         'OVERTIME',$7,$8,'PAY_OVERTIME','OVERTIME',$9,
+         CASE WHEN $7 > 0 AND $9 > 0 THEN $10 / ($7 * $9) ELSE 0 END,$11,'OVERTIME_FINAL',$10,0,
+         TRUE,TRUE,TRUE,'issue_flow','issue_flow'
+       )`, [row.emp_id, payroll, period.year, period.month, payrollResultId, sourceId, overtimeHours, overtimeHours, row.hourly_rate, overtimePay, overtimePay > 0 && overtimeHours > 0 && row.hourly_rate > 0 ? (overtimePay / overtimeHours / row.hourly_rate) : 0, overtimePay > 0 && overtimeHours > 0 ? (overtimePay / overtimeHours) : 0]);
+    }
+};
+const syncPayrollLeaveClassifications = async (client, payrollResultId, payroll, period, row) => {
+    await client.query(`DELETE FROM payroll_leave_classifications
+     WHERE payroll_result_id = $1`, [payrollResultId]);
+    const leaveRows = await client.query(`SELECT work_date, hours, hour_type, COALESCE(leave_status, '') AS leave_status
+     FROM timesheets
+     WHERE emp_id = $1
+       AND work_date >= $2::date
+       AND work_date < ($3::date + INTERVAL '1 day')
+       AND (
+         hour_type IN ('VACATION_LEAVE', 'SICK_LEAVE', 'UNPAID_LEAVE')
+         OR COALESCE(leave_status, '') = 'UNPAID'
+       )
+     ORDER BY work_date`, [row.emp_id, period.periodFrom, period.periodTo]);
+    for (const leave of leaveRows.rows) {
+        const hourType = cleanText(leave.hour_type).toUpperCase();
+        const leaveStatus = cleanText(leave.leave_status).toUpperCase();
+        let leaveSourceType = 'OTHER_LEAVE';
+        let payrollLeaveClass = 'OTHER_PAID';
+        let countsAsUnpaid = false;
+        let countsForSsc = false;
+        let reducesBonusDays = false;
+        let affectsGrossDeduction = false;
+        if (hourType === 'VACATION_LEAVE') {
+            leaveSourceType = 'VL';
+            payrollLeaveClass = leaveStatus === 'UNPAID' ? 'EXCESS_VL_UNPAID' : 'PAID_VL';
+        }
+        else if (hourType === 'SICK_LEAVE') {
+            leaveSourceType = 'SL';
+            payrollLeaveClass = leaveStatus === 'UNPAID' ? 'EXCESS_SL_UNPAID' : 'PAID_SL';
+        }
+        else if (hourType === 'UNPAID_LEAVE' || leaveStatus === 'UNPAID') {
+            leaveSourceType = 'UNPAID';
+            payrollLeaveClass = 'EXPLICIT_UNPAID';
+        }
+        if (payrollLeaveClass === 'EXPLICIT_UNPAID' || payrollLeaveClass === 'EXCESS_VL_UNPAID' || payrollLeaveClass === 'EXCESS_SL_UNPAID') {
+            countsAsUnpaid = true;
+            countsForSsc = true;
+            reducesBonusDays = true;
+            affectsGrossDeduction = true;
+        }
+        await client.query(`INSERT INTO payroll_leave_classifications (
+         emp_id, payroll_type, period_year, period_month, payroll_result_id,
+         leave_source_type, date_from, date_to, hours_value, payroll_leave_class,
+         reduces_vl_entitlement, reduces_sl_entitlement, counts_as_unpaid_leave, counts_for_ssc_zero_week,
+         reduces_bonus_eligible_days, affects_gross_deduction, hourly_rate_used, deduction_amount,
+         created_by, updated_by, classification_reason
+       ) VALUES (
+         $1,$2,$3,$4,$5,
+         $6,$7::date,$7::date,$8,$9,
+         $10,$11,$12,$13,
+         $14,$15,$16,$17,
+         'issue_flow','issue_flow',$18
+       )`, [
+            row.emp_id, payroll, period.year, period.month, payrollResultId,
+            leaveSourceType, leave.work_date, toNumber(leave.hours), payrollLeaveClass,
+            leaveSourceType === 'VL',
+            leaveSourceType === 'SL',
+            countsAsUnpaid,
+            countsForSsc,
+            reducesBonusDays,
+            affectsGrossDeduction,
+            row.hourly_rate,
+            countsAsUnpaid ? roundMoney(toNumber(leave.hours) * row.hourly_rate) : 0,
+            'Derived from timesheet leave rows during confirm'
+        ]);
+    }
+};
+const syncPayrollBonusAccruals = async (client, payrollResultId, payroll, period, row) => {
+    await client.query(`DELETE FROM payroll_bonus_accruals
+     WHERE payroll_result_id = $1`, [payrollResultId]);
+    const monthKey = {
+        3: 'MARCH',
+        6: 'JUNE',
+        9: 'SEPTEMBER',
+        12: 'DECEMBER'
+    }[period.month];
+    if (!monthKey)
+        return;
+    const bonusRules = await client.query(`SELECT *
+     FROM statutory_bonuses
+     WHERE bonus_year = $1
+       AND payment_month = $2
+     ORDER BY id`, [period.year, monthKey]);
+    if (!bonusRules.rows.length)
+        return;
+    const unpaidDaysResult = await client.query(`SELECT COUNT(DISTINCT work_date)::int AS unpaid_days
+     FROM timesheets
+     WHERE emp_id = $1
+       AND work_date >= (SELECT MIN(accrual_period_from) FROM statutory_bonuses WHERE bonus_year = $2 AND payment_month = $3)
+       AND work_date <= (SELECT MAX(accrual_period_to) FROM statutory_bonuses WHERE bonus_year = $2 AND payment_month = $3)
+       AND (hour_type = 'UNPAID_LEAVE' OR COALESCE(leave_status, '') = 'UNPAID')`, [row.emp_id, period.year, monthKey]);
+    const unpaidDays = Number(unpaidDaysResult.rows[0]?.unpaid_days || 0);
+    const employeeDates = await client.query(`SELECT
+       COALESCE(efp.start_date, et.date_first_employed) AS start_date,
+       efp.termination_date AS termination_date
+     FROM employees e
+     LEFT JOIN employee_form_profile efp ON efp.emp_id = e.emp_id
+     LEFT JOIN LATERAL (
+       SELECT *
+       FROM employee_employment_terms et
+       WHERE et.emp_id = e.emp_id
+       ORDER BY effective_from DESC
+       LIMIT 1
+     ) et ON TRUE
+     WHERE e.emp_id = $1`, [row.emp_id]);
+    const startDate = employeeDates.rows[0]?.start_date ? new Date(employeeDates.rows[0].start_date) : null;
+    const terminationDate = employeeDates.rows[0]?.termination_date ? new Date(employeeDates.rows[0].termination_date) : null;
+    for (const rule of bonusRules.rows) {
+        const accrualFrom = new Date(rule.accrual_period_from);
+        const accrualTo = new Date(rule.accrual_period_to);
+        const effectiveStart = startDate && startDate > accrualFrom ? startDate : accrualFrom;
+        const effectiveEnd = terminationDate && terminationDate < accrualTo ? terminationDate : accrualTo;
+        const totalBonusDays = Math.max(0, Math.floor((accrualTo.getTime() - accrualFrom.getTime()) / 86400000) + 1);
+        const daysOnPayroll = effectiveEnd >= effectiveStart ? Math.floor((effectiveEnd.getTime() - effectiveStart.getTime()) / 86400000) + 1 : 0;
+        const eligibleBonusDays = Math.max(0, daysOnPayroll - unpaidDays);
+        const statutoryBonusAmount = totalBonusDays > 0
+            ? roundMoney(toNumber(rule.full_amount) * eligibleBonusDays / totalBonusDays)
+            : 0;
+        await client.query(`INSERT INTO payroll_bonus_accruals (
+         emp_id, payroll_type, period_year, period_month, payroll_result_id,
+         bonus_type, bonus_label, full_bonus_amount, accrual_from, accrual_to,
+         total_bonus_days, days_on_payroll_in_accrual, unpaid_leave_days_in_accrual, eligible_bonus_days,
+         statutory_bonus_amount, rule_version, created_by, updated_by, notes
+       ) VALUES (
+         $1,$2,$3,$4,$5,
+         $6,$7,$8,$9::date,$10::date,
+         $11,$12,$13,$14,
+         $15,'v1','issue_flow','issue_flow',$16
+       )`, [
+            row.emp_id, payroll, period.year, period.month, payrollResultId,
+            `${rule.payment_month}_${rule.bonus_type}`,
+            `${rule.payment_month} ${rule.bonus_type}`,
+            toNumber(rule.full_amount),
+            rule.accrual_period_from,
+            rule.accrual_period_to,
+            totalBonusDays,
+            daysOnPayroll,
+            unpaidDays,
+            eligibleBonusDays,
+            statutoryBonusAmount,
+            'Derived from statutory_bonuses and unpaid leave within accrual window'
+        ]);
+    }
+};
+const syncPayrollSscZeroWeeks = async (client, payrollResultId, payroll, period, row) => {
+    await client.query(`DELETE FROM payroll_ssc_zero_weeks
+     WHERE payroll_result_id = $1`, [payrollResultId]);
+    const weeklyHours = roundMoney(row.contracted_weekly_hours);
+    if (weeklyHours <= 0)
+        return;
+    const weekRows = await client.query(`WITH day_rows AS (
+       SELECT
+         date_trunc('week', work_date::timestamp)::date AS week_from,
+         work_date,
+         SUM(CASE WHEN hour_type = 'UNPAID_LEAVE' OR COALESCE(leave_status, '') = 'UNPAID' THEN hours ELSE 0 END) AS unpaid_hours,
+         SUM(CASE WHEN NOT (hour_type = 'UNPAID_LEAVE' OR COALESCE(leave_status, '') = 'UNPAID') THEN hours ELSE 0 END) AS paid_or_worked_hours
+       FROM timesheets
+       WHERE emp_id = $1
+         AND work_date >= $2::date
+         AND work_date < ($3::date + INTERVAL '1 day')
+       GROUP BY date_trunc('week', work_date::timestamp)::date, work_date
+     )
+     SELECT
+       week_from,
+       (week_from + INTERVAL '6 days')::date AS week_to,
+       COALESCE(SUM(unpaid_hours), 0) AS unpaid_hours,
+       COALESCE(SUM(paid_or_worked_hours), 0) AS paid_or_worked_hours,
+       COUNT(DISTINCT work_date) AS covered_days
+     FROM day_rows
+     GROUP BY week_from
+     ORDER BY week_from`, [row.emp_id, period.periodFrom, period.periodTo]);
+    for (const wk of weekRows.rows) {
+        const unpaidHours = roundMoney(toNumber(wk.unpaid_hours));
+        const paidOrWorkedHours = roundMoney(toNumber(wk.paid_or_worked_hours));
+        const qualifies = paidOrWorkedHours === 0 && unpaidHours >= weeklyHours;
+        if (!qualifies)
+            continue;
+        await client.query(`INSERT INTO payroll_ssc_zero_weeks (
+         emp_id, payroll_type, period_year, period_month, payroll_result_id,
+         week_from, week_to, ssc_zero_week, reason_type, days_covered, hours_covered,
+         created_by, updated_by, is_active, system_note
+       ) VALUES (
+         $1,$2,$3,$4,$5,
+         $6::date,$7::date,TRUE,'UNPAID_LEAVE',$8,$9,
+         'issue_flow','issue_flow',TRUE,$10
+       )`, [row.emp_id, payroll, period.year, period.month, payrollResultId, wk.week_from, wk.week_to, Number(wk.covered_days || 0), unpaidHours, 'Derived from full-week unpaid timesheet coverage']);
+    }
 };
 const upsertPayrollLine = async (client, payrollEntryId, row) => {
     const existing = await client.query(`SELECT id FROM payroll_lines WHERE payroll_entry_id = $1 AND emp_id = $2 LIMIT 1`, [payrollEntryId, row.emp_id]);
@@ -1939,6 +2486,9 @@ export const handlePayrollDashboardIssueRequest = async (pg, req, res) => {
     }
     const payroll = parsePayroll(req.body?.payroll);
     const action = String(req.body?.action || '').trim();
+    const hourlyRateOverride = req.body?.hourly_rate_override === undefined || req.body?.hourly_rate_override === null || req.body?.hourly_rate_override === ''
+        ? null
+        : Number(req.body?.hourly_rate_override);
     const bankTransactionNumber = cleanText(req.body?.bank_transaction_number);
     const sourceFundsLabel = cleanText(req.body?.source_funds_label);
     const paidPreviouslyAmount = req.body?.paid_previously_amount === undefined || req.body?.paid_previously_amount === null || req.body?.paid_previously_amount === ''
@@ -1954,6 +2504,9 @@ export const handlePayrollDashboardIssueRequest = async (pg, req, res) => {
         return res.status(400).json({ ok: false, error: 'employee_ids are required' });
     }
     try {
+        if (payroll === 'MAIN' && employeeIds.length === 1 && Number.isFinite(hourlyRateOverride) && Number(hourlyRateOverride) > 0) {
+            await upsertMainHourlyRateOverride(pg, employeeIds[0], period, Number(hourlyRateOverride));
+        }
         const rows = await loadRowsByEmployee(pg, payroll, period, employeeIds);
         if (!rows.length) {
             return res.status(404).json({ ok: false, error: 'No payroll rows found for selection' });
@@ -1967,6 +2520,22 @@ export const handlePayrollDashboardIssueRequest = async (pg, req, res) => {
             for (const row of rows) {
                 if (!row.email) {
                     missingEmailCount += 1;
+                }
+                const detail = payroll === 'MAIN'
+                    ? await getPayrollDashboardDetail(pg, payroll, period, row.emp_id)
+                    : null;
+                const payrollMonthResultId = await upsertPayrollMonthResult(client, payroll, period, row, {
+                    bankTransactionNumber: bankTransactionNumber || null,
+                    sourceFundsLabel: sourceFundsLabel || null,
+                    paidPreviouslyAmount,
+                    reviewAdjustments,
+                    calcStatus: 'CONFIRMED'
+                });
+                if (payroll === 'MAIN' && detail) {
+                    await syncPayrollHourSourcesAndDecisions(client, payrollMonthResultId, payroll, period, row, detail);
+                    await syncPayrollLeaveClassifications(client, payrollMonthResultId, payroll, period, row);
+                    await syncPayrollBonusAccruals(client, payrollMonthResultId, payroll, period, row);
+                    await syncPayrollSscZeroWeeks(client, payrollMonthResultId, payroll, period, row);
                 }
                 const payrollLineId = await upsertPayrollLine(client, payrollEntryId, row);
                 const payslip = await upsertPayslip(client, payrollEntryId, payrollLineId, payroll, period, row, 'ISSUED', bankTransactionNumber || null, sourceFundsLabel || null, paidPreviouslyAmount, reviewAdjustments);
@@ -2022,6 +2591,37 @@ export const handlePayrollDashboardIssueRequest = async (pg, req, res) => {
         finally {
             client.release();
         }
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return res.status(500).json({ ok: false, error: message });
+    }
+};
+export const handlePayrollDashboardRateUpdateRequest = async (pg, req, res) => {
+    const period = parsePeriod(req.body?.period);
+    if (!period) {
+        return res.status(400).json({ ok: false, error: 'period must be YYYY-MM' });
+    }
+    const payroll = parsePayroll(req.body?.payroll);
+    if (payroll !== 'MAIN') {
+        return res.status(400).json({ ok: false, error: 'Hourly rate updates are only supported for MAIN payroll.' });
+    }
+    const empId = Number(req.body?.emp_id);
+    const hourlyRate = Number(req.body?.hourly_rate);
+    if (!Number.isInteger(empId) || empId <= 0) {
+        return res.status(400).json({ ok: false, error: 'emp_id is required' });
+    }
+    if (!Number.isFinite(hourlyRate) || hourlyRate <= 0) {
+        return res.status(400).json({ ok: false, error: 'hourly_rate must be greater than zero' });
+    }
+    try {
+        await upsertMainHourlyRateOverride(pg, empId, period, hourlyRate);
+        const detail = await getPayrollDashboardDetail(pg, payroll, period, empId);
+        return res.json({
+            ok: true,
+            message: `Hourly rate updated to ${roundMoney(hourlyRate).toFixed(2)}.`,
+            detail
+        });
     }
     catch (error) {
         const message = error instanceof Error ? error.message : String(error);

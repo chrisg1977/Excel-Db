@@ -16,6 +16,7 @@ import {
   handlePayrollDashboardDetailRequest,
   handlePayrollDashboardExportRequest,
   handlePayrollDashboardIssueRequest,
+  handlePayrollDashboardRateUpdateRequest,
   handlePayrollFs3EmailRequest,
   handlePayrollDashboardOverviewRequest,
   handlePayrollDashboardStatusesRequest,
@@ -230,6 +231,11 @@ app.get('/payroll-dashboard/payroll/dashboard/statuses', async (req, res) => {
 app.post('/payroll-dashboard/payroll/dashboard/actions/issue', async (req, res) => {
   const pg = getPgPool();
   return handlePayrollDashboardIssueRequest(pg, req, res);
+});
+
+app.post('/payroll-dashboard/payroll/dashboard/actions/update-rate', async (req, res) => {
+  const pg = getPgPool();
+  return handlePayrollDashboardRateUpdateRequest(pg, req, res);
 });
 
 app.get('/payroll-dashboard/payroll/dashboard/export.csv', async (req, res) => {

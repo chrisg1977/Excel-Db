@@ -14,6 +14,7 @@ import FormGeneratorEndpoint from './endpoints/forms-generator';
 import EcotaxSettingsEndpoint from './endpoints/ecotax-settings';
 import EmployeeFormEndpoint from './endpoints/employee-form';
 import HandoverEndpoint from './endpoints/handover';
+import AuthOtpEndpoint from './endpoints/auth-otp';
 
 export default [
   SyncPreviewEndpoint,
@@ -31,5 +32,6 @@ export default [
   FormGeneratorEndpoint,
   EcotaxSettingsEndpoint,
   EmployeeFormEndpoint,
-  HandoverEndpoint
+  HandoverEndpoint,
+  AuthOtpEndpoint,
 ];

@@ -4,7 +4,7 @@ import { getMysqlPool, getPgPool } from './db.js';
 import { handleCreateDiscrepancyEventRequest, handleCreateDiscrepancyEventReviewRequest, handleGetDiscrepancyEventRequest, handleListDiscrepancyEventsRequest } from './eos-discrepancy-events.js';
 import { handleProductionVisitsRequest } from './eos-production-visits.js';
 import { handleGetAccountingPeriodSummaryRequest, handleListAccountingPeriodsRequest } from './eos-periods.js';
-import { handlePayrollDashboardDetailRequest, handlePayrollDashboardExportRequest, handlePayrollDashboardIssueRequest, handlePayrollFs3EmailRequest, handlePayrollDashboardOverviewRequest, handlePayrollDashboardStatusesRequest, handlePayrollDashboardTimesheetReviewRequest, handlePayrollDashboardTimesheetSaveRequest } from './payroll-dashboard.js';
+import { handlePayrollDashboardDetailRequest, handlePayrollDashboardExportRequest, handlePayrollDashboardIssueRequest, handlePayrollDashboardRateUpdateRequest, handlePayrollFs3EmailRequest, handlePayrollDashboardOverviewRequest, handlePayrollDashboardStatusesRequest, handlePayrollDashboardTimesheetReviewRequest, handlePayrollDashboardTimesheetSaveRequest } from './payroll-dashboard.js';
 import { handleCreateReportHeaderRequest, handleGetReportSnapshotRequest, handleListReportsRequest } from './eos-reports.js';
 import { handleAbandonShiftSessionRequest, handleCreateShiftSessionRequest, handleSupersedeShiftSessionRequest, handleTakeoverShiftSessionRequest } from './eos-shift-sessions.js';
 import { runImport } from './importer.js';
@@ -177,6 +177,10 @@ app.get('/payroll-dashboard/payroll/dashboard/statuses', async (req, res) => {
 app.post('/payroll-dashboard/payroll/dashboard/actions/issue', async (req, res) => {
     const pg = getPgPool();
     return handlePayrollDashboardIssueRequest(pg, req, res);
+});
+app.post('/payroll-dashboard/payroll/dashboard/actions/update-rate', async (req, res) => {
+    const pg = getPgPool();
+    return handlePayrollDashboardRateUpdateRequest(pg, req, res);
 });
 app.get('/payroll-dashboard/payroll/dashboard/export.csv', async (req, res) => {
     const pg = getPgPool();

@@ -87,6 +87,11 @@
         "type": "endpoint",
         "name": "handover",
         "source": "src/endpoints/handover.ts"
+      },
+      {
+        "type": "endpoint",
+        "name": "auth-otp",
+        "source": "src/endpoints/auth-otp.ts"
       }
     ]
   },

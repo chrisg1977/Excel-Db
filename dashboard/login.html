@@ -684,7 +684,7 @@
         return input.toLowerCase();
       }
 
-      const response = await fetchWithApiFallback('/auth/login-identity/resolve', {
+      const response = await fetchWithApiFallback('/auth-otp/login-identity/resolve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ login: input })
@@ -705,7 +705,7 @@
 
     async function requestOtpCode(email) {
       const token = getAuthToken();
-      const response = await fetchWithApiFallback('/auth/otp/request', {
+      const response = await fetchWithApiFallback('/auth-otp/otp/request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -729,7 +729,7 @@
 
     async function verifyOtpCode(email, code, otpId) {
       const token = getAuthToken();
-      const response = await fetchWithApiFallback('/auth/otp/verify', {
+      const response = await fetchWithApiFallback('/auth-otp/otp/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

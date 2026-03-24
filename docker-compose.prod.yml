@@ -43,8 +43,11 @@ services:
       PUBLIC_URL: ${DIRECTUS_PUBLIC_URL}
       CORS_ENABLED: "true"
       CORS_ORIGIN: ${DIRECTUS_CORS_ORIGIN}
+      # OTP SMS: relay directory written by Directus, picked up by the watcher relay task
+      WATCHER_SMS_QUEUE_DIR: /mnt/watcher-queue
     volumes:
       - ./directus-uploads:/directus/uploads
+      - C:\watcher-sms-queue:/mnt/watcher-queue
 
   dashboard_static:
     image: nginx:1.27-alpine
