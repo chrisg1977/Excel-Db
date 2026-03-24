@@ -17,3 +17,21 @@ __pycache__/
 .idea/
 *.swp
 *.swo
+
+# Temp/debug files
+.tmp-*.js
+.tmp-*.txt
+_tmp_*.txt
+_check_*.html
+_debug_*.html
+_live_*.html
+cutover_snapshot_*.txt
+od-importer/server.err
+od-importer/data/
+dashboard/inventory-ui/tsconfig.tsbuildinfo
+dashboard/inventory-ui/tsconfig.node.tsbuildinfo
+dashboard/inventory-ui/vite.config.d.ts
+dashboard/inventory-ui/vite.config.js
+*.xlsm
+*.csv
+payroll_vba_dump.txt
