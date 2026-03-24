@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EOS Open Shift</title>
+  <link rel="icon" type="image/png" href="/dashboard/assets/logos/database-logo.png" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #2e5090;
+      --blue-deep: #20375f;
+      --ink: #162033;
+      --muted: #5a6a80;
+      --surface: rgba(255, 255, 255, 0.97);
+      --surface-soft: #f4f7fb;
+      --line: rgba(46, 80, 144, 0.12);
+      --warning-bg: #fff7e7;
+      --warning-line: #efd9a6;
+      --warning-text: #7b5a12;
+      --error-bg: #fff1f3;
+      --error-line: #ffcad1;
+      --error-text: #8d2032;
+      --info-bg: #ecf8f1;
+      --info-line: #b9e4c9;
+      --info-text: #1e6a41;
+      --shadow: 0 18px 40px rgba(20, 33, 61, 0.10);
+      --radius: 18px;
+      --font: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    }
+    html, body {
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top left, rgba(46, 80, 144, 0.14), transparent 34%),
+        linear-gradient(180deg, #edf3fb 0%, #f8fafd 56%, #eff4fa 100%);
+      color: var(--ink);
+      font-family: var(--font);
+      font-size: 16px;
+    }
+    body { padding-bottom: 16px; }
+    body.modal-open,
+    body.redirect-pending { overflow: hidden; }
+    .hidden { display: none !important; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(14px);
+      background: rgba(234, 243, 255, 0.94);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 10px 26px rgba(24, 40, 72, 0.08);
+    }
+    .topbar-shell {
+      max-width: 1120px;
+      margin: 0 auto;
+      min-height: 78px;
+      padding: 10px 20px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 16px;
+    }
+    .btn {
+      border: 1px solid transparent;
+      border-radius: 12px;
+      background: var(--blue);
+      color: #ffffff;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 800;
+      padding: 11px 16px;
+      font-size: 14px;
+      transition: transform 0.15s ease, filter 0.15s ease, background 0.15s ease;
+    }
+    .btn:hover { filter: brightness(0.98); transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn.alt {
+      background: #ffffff;
+      color: var(--blue);
+      border-color: rgba(46, 80, 144, 0.18);
+    }
+    .btn.full { width: 100%; }
+    .topbar-center {
+      display: grid;
+      justify-items: center;
+      gap: 6px;
+      text-align: center;
+    }
+    .topbar-date {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--blue-deep);
+    }
+    .topbar-time {
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1;
+      color: var(--ink);
+    }
+    .handover-notice {
+      display: inline-grid;
+      gap: 2px;
+      justify-items: center;
+      border: 1px solid rgba(208, 161, 53, 0.34);
+      border-radius: 999px;
+      background: linear-gradient(135deg, #fff4d2, #fffaf0);
+      color: #7a5810;
+      padding: 10px 18px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 900;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 8px 18px rgba(191, 148, 42, 0.16);
+    }
+    .handover-notice:hover { transform: translateY(-1px); }
+    .handover-title {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .handover-copy {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: none;
+    }
+    .identity-box {
+      min-width: 220px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(46, 80, 144, 0.14);
+      box-shadow: 0 10px 26px rgba(24, 40, 72, 0.08);
+      display: grid;
+      gap: 4px;
+      justify-items: start;
+    }
+    .identity-name {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--blue-deep);
+    }
+    .identity-meta {
+      font-size: 12px;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 14px 20px 0;
+      display: grid;
+      gap: 10px;
+    }
+    .message {
+      padding: 10px 12px;
+      line-height: 1.42;
+      font-size: 13px;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      box-shadow: var(--shadow);
+      background: var(--surface);
+    }
+    .message.error { background: var(--error-bg); border-color: var(--error-line); color: var(--error-text); }
+    .message.warning { background: var(--warning-bg); border-color: var(--warning-line); color: var(--warning-text); }
+    .message.info { background: var(--info-bg); border-color: var(--info-line); color: var(--info-text); }
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: minmax(250px, 300px) minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .panel-title {
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .panel h1,
+    .panel h2 {
+      font-size: 24px;
+      line-height: 1.05;
+      color: var(--ink);
+    }
+    .panel-copy {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.42;
+      max-width: 54ch;
+    }
+    .field-label {
+      display: grid;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 900;
+      color: #34425c;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid rgba(46, 80, 144, 0.18);
+      border-radius: 12px;
+      padding: 11px 12px;
+      font: inherit;
+      color: var(--ink);
+      background: #ffffff;
+    }
+    textarea {
+      min-height: 88px;
+      resize: vertical;
+    }
+    .location-select {
+      background: linear-gradient(180deg, #ffffff, #f7faff);
+      font-weight: 800;
+    }
+    .location-spotlight {
+      display: grid;
+      gap: 6px;
+      padding: 14px;
+      border-radius: 18px;
+      background:
+        linear-gradient(135deg, rgba(46, 80, 144, 0.12), rgba(255, 255, 255, 0.88)),
+        #ffffff;
+      border: 1px solid rgba(46, 80, 144, 0.14);
+      min-height: 136px;
+      align-content: start;
+    }
+    .spotlight-label {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .spotlight-value {
+      font-size: clamp(28px, 3.6vw, 38px);
+      font-weight: 900;
+      line-height: 1;
+      color: var(--blue-deep);
+      text-transform: uppercase;
+    }
+    .spotlight-meta {
+      font-size: 12px;
+      line-height: 1.38;
+      color: var(--muted);
+    }
+    .cashbox-card {
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+      gap: 12px;
+      padding: 14px;
+      border-radius: 18px;
+      background: var(--surface-soft);
+      border: 1px solid rgba(46, 80, 144, 0.10);
+      align-items: stretch;
+    }
+    .cashbox-amount {
+      display: grid;
+      gap: 4px;
+      align-content: center;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: #ffffff;
+      border: 1px solid rgba(46, 80, 144, 0.10);
+    }
+    .cashbox-amount-label {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .cashbox-amount-value {
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 900;
+      line-height: 1;
+      color: var(--blue-deep);
+    }
+    .cashbox-amount-copy {
+      font-size: 12px;
+      line-height: 1.34;
+      color: var(--muted);
+    }
+    .cashbox-edit {
+      display: grid;
+      gap: 4px;
+      margin-top: 2px;
+    }
+    .cashbox-edit span {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .cashbox-edit input {
+      padding: 9px 11px;
+      font-weight: 800;
+    }
+    .toggle-card {
+      display: grid;
+      gap: 8px;
+      align-content: center;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: #ffffff;
+      border: 1px solid rgba(46, 80, 144, 0.10);
+    }
+    .toggle-heading {
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--ink);
+    }
+    .toggle-copy {
+      font-size: 12px;
+      line-height: 1.34;
+      color: var(--muted);
+    }
+    .toggle-switch {
+      width: fit-content;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(46, 80, 144, 0.14);
+      background: #f1f5fb;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 900;
+      color: var(--blue-deep);
+    }
+    .toggle-switch.is-on {
+      background: rgba(236, 248, 241, 0.96);
+      border-color: rgba(33, 130, 79, 0.22);
+      color: #1e6a41;
+    }
+    .toggle-switch.is-off {
+      background: rgba(255, 241, 243, 0.96);
+      border-color: rgba(141, 32, 50, 0.20);
+      color: #8d2032;
+    }
+    .toggle-track {
+      position: relative;
+      width: 52px;
+      height: 28px;
+      border-radius: 999px;
+      background: rgba(46, 80, 144, 0.16);
+      transition: background 0.18s ease;
+    }
+    .toggle-switch.is-on .toggle-track {
+      background: rgba(33, 130, 79, 0.28);
+    }
+    .toggle-switch.is-off .toggle-track {
+      background: rgba(141, 32, 50, 0.24);
+    }
+    .toggle-knob {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 4px 10px rgba(20, 33, 61, 0.18);
+      transition: transform 0.18s ease;
+    }
+    .toggle-switch.is-on .toggle-knob {
+      transform: translateX(24px);
+    }
+    .toggle-state {
+      min-width: 34px;
+      text-align: center;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .override-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(255, 241, 243, 0.72);
+      border: 1px solid rgba(255, 202, 209, 0.9);
+    }
+    .manager-preview {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(46, 80, 144, 0.12);
+      background: linear-gradient(180deg, #f7faff 0%, #eef4fc 100%);
+    }
+    .manager-preview-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .manager-preview-title {
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--blue-deep);
+    }
+    .manager-preview-copy {
+      font-size: 12px;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+    .manager-preview-badge {
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border: 1px solid rgba(46, 80, 144, 0.14);
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--blue-deep);
+      white-space: nowrap;
+    }
+    .manager-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .manager-preview-item {
+      display: grid;
+      gap: 4px;
+      padding: 10px 11px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(46, 80, 144, 0.10);
+      min-height: 64px;
+    }
+    .manager-preview-label {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .manager-preview-value {
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 800;
+      color: var(--ink);
+      word-break: break-word;
+    }
+    .manager-preview-value.is-muted {
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .field-note {
+      font-size: 12px;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+    .opening-response {
+      display: grid;
+      gap: 8px;
+    }
+    .opening-response-title {
+      font-size: 17px;
+      font-weight: 900;
+    }
+    .opening-response-copy,
+    .opening-response-note,
+    .opening-response-owner {
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .opening-response-fields {
+      display: grid;
+      gap: 8px;
+      padding-top: 4px;
+    }
+    .opening-response-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .registration-backdrop,
+    .completion-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(18, 27, 43, 0.56);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      z-index: 50;
+    }
+    .registration-modal,
+    .completion-card {
+      width: min(620px, 100%);
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 28px 52px rgba(9, 17, 31, 0.26);
+      display: grid;
+      gap: 16px;
+    }
+    .registration-note {
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--muted);
+      background: var(--surface-soft);
+      border: 1px solid rgba(46, 80, 144, 0.10);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+    .registration-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .completion-card {
+      width: min(540px, 100%);
+      text-align: center;
+      justify-items: center;
+      gap: 12px;
+    }
+    .completion-card h2 {
+      font-size: 28px;
+      line-height: 1.08;
+      color: var(--blue-deep);
+    }
+    .completion-card p {
+      font-size: 16px;
+      line-height: 1.55;
+      color: var(--ink);
+      max-width: 40ch;
+    }
+    .completion-note {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    @media (max-width: 980px) {
+      .topbar-shell {
+        grid-template-columns: 1fr;
+        justify-items: stretch;
+      }
+      .topbar-center {
+        order: 1;
+      }
+      .identity-box {
+        min-width: 0;
+      }
+      .workspace-grid {
+        grid-template-columns: 1fr;
+      }
+      .cashbox-card {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 760px) {
+      .override-grid {
+        grid-template-columns: 1fr;
+      }
+      .manager-preview-grid {
+        grid-template-columns: 1fr;
+      }
+      .panel-head {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .btn.full-mobile {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-shell">
+      <div>
+        <button class="btn alt" id="btnAppHub" type="button">APPHUB</button>
+      </div>
+
+      <div class="topbar-center">
+        <div class="topbar-date" id="topDateLabel">FRIDAY, 13/03/2026</div>
+        <div class="topbar-time" id="topTimeLabel">08:00</div>
+        <button class="handover-notice" id="btnCashboxHandover" type="button">
+          <span class="handover-title">Cashbox Handover Notice</span>
+          <span class="handover-copy">Open handover / to do details</span>
+        </button>
+      </div>
+
+      <aside class="identity-box" aria-label="Login details">
+        <div class="identity-name" id="loginUserCompact">CHRISTIAN</div>
+        <div class="identity-meta" id="loginLocationCompact">Location: Zabbar</div>
+        <div class="identity-meta" id="loginWorkstationCompact">PC logging in: Unknown workstation</div>
+      </aside>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="message error hidden" id="errorBanner"></section>
+    <section class="message info hidden" id="infoBanner"></section>
+
+    <div class="workspace-grid">
+      <section class="panel">
+        <div class="panel-title">Reception Location</div>
+
+        <label class="field-label">Location
+          <select class="location-select" id="openingLocationSelect">
+            <option value="">Select location</option>
+          </select>
+        </label>
+
+        <article class="location-spotlight">
+          <div class="spotlight-label">Selected Location</div>
+          <div class="spotlight-value" id="selectedLocationDisplay">-</div>
+          <div class="spotlight-meta" id="selectedLocationHint">EOS shifts are opened per reception location, not per department location.</div>
+        </article>
+
+        <div class="field-note" id="openingMetaNote">
+          Shift date and opening time are system-generated when you save the opening values.
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Open Shift</div>
+            <h1>Save Opening Values</h1>
+            <p class="panel-copy">
+              Confirm the cashbox handover for the reception location. Ownership and unresolved-shift rules stay enforced by the existing EOS shift-session API.
+            </p>
+          </div>
+          <div>
+            <button class="btn full-mobile" id="btnSaveOpening" type="button">Save and Continue</button>
+          </div>
+        </div>
+
+        <section class="cashbox-card">
+          <article class="cashbox-amount">
+            <div class="cashbox-amount-label">Last EOS Close</div>
+            <div class="cashbox-amount-value" id="lastCloseAmountDisplay">EUR 245.00</div>
+            <div class="cashbox-amount-copy">This amount is used as the expected opening cash unless a discrepancy is reported.</div>
+            <label class="cashbox-edit">
+              <span>Close amount entry</span>
+              <input id="lastShiftClosingCash" type="number" step="0.01" min="0" inputmode="decimal" />
+            </label>
+          </article>
+
+          <article class="toggle-card">
+            <div class="toggle-heading">Opening cash matches previous closing cash</div>
+            <div class="toggle-copy">Default is YES. If the cash does not agree, corrected opening cash and an override reason are required.</div>
+            <button class="toggle-switch is-on" id="openingCashMatchesToggle" type="button" aria-pressed="true">
+              <span class="toggle-track"><span class="toggle-knob"></span></span>
+              <span class="toggle-state" id="openingCashMatchesLabel">YES</span>
+            </button>
+          </article>
+        </section>
+
+        <section class="override-grid hidden" id="openingOverrideFields">
+          <label class="field-label">Actual Opening Cash
+            <input id="actualOpeningCash" type="number" step="0.01" min="0" inputmode="decimal" />
+          </label>
+
+          <label class="field-label">Override Reason
+            <select id="overrideReasonSelect">
+              <option value="">Select override reason</option>
+              <option value="Counted cash does not match prior closing">Counted cash does not match prior closing</option>
+              <option value="Float corrected before opening">Float corrected before opening</option>
+              <option value="Prior shift handover issue">Prior shift handover issue</option>
+              <option value="Cash movement pending review">Cash movement pending review</option>
+            </select>
+          </label>
+
+          <label class="field-label">Optional Note
+            <textarea id="openingNote" placeholder="Add any note that should stay with the opening discrepancy."></textarea>
+          </label>
+        </section>
+
+        <section class="manager-preview hidden" id="managerPreviewPanel" aria-live="polite"></section>
+        <section class="message error hidden" id="openingErrorBanner"></section>
+        <section class="message warning hidden" id="openingResponsePanel"></section>
+      </section>
+    </div>
+  </main>
+
+  <div class="registration-backdrop hidden" id="registrationBackdrop" aria-hidden="true">
+    <div class="registration-modal" role="dialog" aria-modal="true" aria-labelledby="registrationTitle">
+      <div>
+        <h2 id="registrationTitle">First-Time Workstation Registration</h2>
+        <p>This is the first time this PC has logged in. Which reception location does it belong to?</p>
+      </div>
+
+      <div class="field-note">
+        Workstation: <strong id="registrationWorkstationName">Resolving...</strong><br />
+        Detection: <span id="registrationWorkstationSource">-</span><br />
+        Temporary location hint: <span id="registrationLocationRule">No location hint yet.</span>
+      </div>
+
+      <label class="field-label">Reception Location
+        <select id="registrationLocationSelect">
+          <option value="">Select location</option>
+        </select>
+      </label>
+
+      <div class="registration-note" id="registrationSuggestion">
+        No temporary location suggestion is available.
+      </div>
+
+      <div class="registration-actions">
+        <button class="btn" id="btnConfirmRegistration" type="button" disabled>Confirm Location</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="completion-backdrop hidden" id="completionBackdrop" aria-hidden="true">
+    <div class="completion-card">
+      <h2 id="completionTitle">Opening values saved</h2>
+      <p id="completionMessage">Your opening shift values have been saved.</p>
+      <div class="completion-note">Redirecting to APPHUB...</div>
+    </div>
+  </div>
+
+  <script src="../assets/js/usage-tracker.js"></script>
+  <script src="./open-shift.js"></script>
+</body>
+</html>

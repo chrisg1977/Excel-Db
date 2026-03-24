@@ -5,13 +5,19 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js",
-    "smoke": "node dist/scripts/smoke.js"
+    "start": "node dist/src/server.js",
+    "smoke": "node dist/scripts/smoke.js",
+    "payroll:import-rates": "python scripts/import_payroll_rates_from_excel.py",
+    "payroll:extract-payslips": "python scripts/extract_payroll_excel_cache.py"
   },
   "dependencies": {
+    "@types/nodemailer": "^7.0.11",
+    "@types/pdfkit": "^0.17.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "mysql2": "^3.12.0",
+    "nodemailer": "^8.0.3",
+    "pdfkit": "^0.18.0",
     "pg": "^8.12.0"
   },
   "devDependencies": {

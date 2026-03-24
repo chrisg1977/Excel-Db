@@ -1,0 +1,1287 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M-CodeZ - Payroll Dashboard</title>
+  <style>
+    :root {
+      --blue: #2e5090;
+      --ink: #1a1d23;
+      --muted: #6b7280;
+      --line: #d7dce5;
+      --paper: #ffffff;
+      --bg: #f4f7fb;
+      --ok: #1f9d5a;
+      --bad: #b42318;
+      --radius: 8px;
+      --font: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+      --top-green-1: #e8f3ea;
+      --top-green-2: #dbeee0;
+      --top-green-3: #cfe8d6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: linear-gradient(140deg, #edf4ff 0%, var(--bg) 50%, #f6f7fb 100%);
+      color: var(--ink);
+    }
+    .wrap {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(120deg, var(--top-green-1), var(--top-green-2));
+      border: 1px solid #c4dccb;
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .top-left {
+      display: grid;
+      gap: 6px;
+    }
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .app-title {
+      margin: 0;
+      font-size: 24px;
+      color: var(--blue);
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+    .title-home-btn {
+      border: none;
+      background: transparent;
+      padding: 0;
+      display: inline-flex;
+      cursor: pointer;
+      line-height: 0;
+    }
+    .title-home-btn img {
+      width: 90px;
+      height: auto;
+      display: block;
+    }
+    .today {
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .payday {
+      text-align: right;
+    }
+    .payday .big {
+      font-weight: 800;
+      font-size: 30px;
+      color: var(--blue);
+      line-height: 1.05;
+    }
+    .payday .small {
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      background: linear-gradient(120deg, var(--top-green-2), var(--top-green-3));
+      border: 1px solid #bdd8c5;
+      border-radius: var(--radius);
+      padding: 10px;
+      margin-bottom: 12px;
+      align-items: end;
+    }
+    .controls .field { display: grid; gap: 4px; min-width: 180px; }
+    label { font-size: 12px; color: #355245; font-weight: 600; }
+    select, input[type="month"] {
+      border: 1px solid #c6d5cc;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 14px;
+      background: #fff;
+    }
+    .btn {
+      border: 1px solid #b9cabf;
+      background: #fff;
+      color: #1f2937;
+      border-radius: 6px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .btn.primary {
+      background: var(--blue);
+      color: #fff;
+      border-color: var(--blue);
+    }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .table-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1560px;
+      font-size: 13px;
+    }
+    th, td {
+      border-bottom: 1px solid #edf0f5;
+      padding: 9px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f3f7f4;
+      color: #2f3e36;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      white-space: normal;
+      line-height: 1.2;
+      word-break: normal;
+    }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable.active { color: #1f3f7a; }
+    .sort-indicator { margin-left: 4px; color: #7c8ca0; font-weight: 700; }
+    .month-band-spacer {
+      background: #f3f7f4;
+      border-bottom: 1px solid #edf0f5;
+    }
+    .month-band-cell {
+      background: #f3f7f4;
+      text-align: center;
+      border-bottom: 1px solid #edf0f5;
+    }
+    #monthBandRow th {
+      position: static;
+      z-index: 1;
+    }
+    .month-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border: 1px solid #c7d6ec;
+      border-radius: 999px;
+      background: #eef4ff;
+      color: #1f3f7a;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+    }
+
+    tr:hover td { background: #fbfdff; }
+    tr.row-clickable { cursor: pointer; }
+    .muted { color: var(--muted); }
+    .ok { color: var(--ok); font-weight: 700; }
+
+    .surname-col,
+    .name-col {
+      min-width: 130px;
+    }
+    .surname-cell,
+    .name-cell {
+      padding-top: 7px;
+      padding-bottom: 7px;
+    }
+    .surname-cell {
+      padding-right: 4px;
+    }
+    .name-cell {
+      padding-left: 4px;
+    }
+    .surname-cell strong,
+    .name-cell strong { display: inline-block; }
+    .emp-open-link {
+      color: inherit;
+      text-decoration: none;
+      font-weight: inherit;
+      cursor: inherit;
+    }
+    .emp-open-link:hover,
+    .emp-open-link:focus {
+      color: inherit;
+      text-decoration: none;
+      outline: none;
+    }
+    .pending-badges {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .pending-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid #d1d7e0;
+      background: #f6f8fc;
+      color: #445067;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+      padding: 3px 8px;
+    }
+    .pending-badge.warn {
+      border-color: #ff9aa2;
+      background: #fff1f3;
+      color: #b3392f;
+    }
+
+    .period-input {
+      width: 102px;
+      border: 1px solid #cfd7e3;
+      border-radius: 6px;
+      padding: 5px 6px;
+      font-size: 12px;
+      background: #fff;
+      color: #1f2937;
+    }
+    
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.3s;
+      border-radius: 24px;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+    input:checked + .toggle-slider {
+      background-color: var(--blue);
+    }
+    input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+    .toggle-label {
+      font-size: 12px;
+      color: #355245;
+      font-weight: 600;
+    }
+    
+    th.leave-col.provider-hidden,
+    td.leave-col.provider-hidden {
+      display: none;
+    }
+    th.provider-hidden,
+    td.provider-hidden {
+      display: none;
+    }
+
+    .money-col { text-align: right; font-variant-numeric: tabular-nums; }
+    .leave-col { text-align: right; font-variant-numeric: tabular-nums; }
+    .detail-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(17, 24, 39, 0.45);
+      display: none;
+      align-items: stretch;
+      justify-content: flex-end;
+      z-index: 50;
+    }
+    .detail-overlay.open { display: flex; }
+    .detail-panel {
+      width: min(760px, 100%);
+      height: 100%;
+      background: #fff;
+      box-shadow: -8px 0 24px rgba(0,0,0,0.18);
+      overflow: auto;
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+    .detail-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+    }
+    .detail-title {
+      margin: 0;
+      font-size: 22px;
+      color: var(--blue);
+      font-weight: 800;
+    }
+    .detail-sub {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .detail-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcff;
+      padding: 10px 12px;
+    }
+    .detail-card strong {
+      display: block;
+      font-size: 12px;
+      color: #516073;
+      margin-bottom: 4px;
+    }
+    .detail-value {
+      font-weight: 700;
+      color: #1f2937;
+    }
+    .excel-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .excel-card table {
+      min-width: 0;
+      width: 100%;
+      font-size: 12px;
+    }
+    .excel-card th,
+    .excel-card td {
+      border-bottom: 1px solid #edf0f5;
+      padding: 8px 6px;
+      vertical-align: top;
+    }
+    .excel-card th {
+      position: static;
+      background: #eef4ff;
+      color: #23406f;
+    }
+    .excel-label {
+      color: #586579;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .excel-money {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    tfoot td {
+      background: #eef4ff;
+      font-weight: 800;
+      border-top: 2px solid #d4dfef;
+    }
+    .total-label {
+      color: #1f3f7a;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      font-size: 12px;
+    }
+
+    .status {
+      margin-top: 10px;
+      padding: 9px 10px;
+      border-radius: 6px;
+      display: none;
+      font-size: 13px;
+    }
+    .status.show { display: block; }
+    .status.ok { background: #e8f7ee; color: #17693a; border: 1px solid #b8e1c7; }
+    .status.err { background: #ffebee; color: var(--bad); border: 1px solid #ffcdd2; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="top-left">
+        <div class="title-row">
+          <h1 class="app-title">PAYROLL DASHBOARD</h1>
+          <button class="title-home-btn" id="btnHomeLogo" type="button" title="M-CodeZ App Hub">
+            <img src="../assets/logos/mcorezButton.png" alt="M-CodeZ App Hub" />
+          </button>
+        </div>
+        <div class="today" id="todayLabel"></div>
+      </div>
+      <div class="payday">
+        <div class="big" id="daysToPayday">- Days to payday</div>
+        <div class="small" id="paydayDate">Last Friday: -</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="field">
+        <label>Payroll</label>
+        <select id="payrollSelect">
+          <option value="MAIN">MAIN</option>
+          <option value="O3P">O3P</option>
+          <option value="PROV">PROV</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Period</label>
+        <input id="periodInput" type="month" />
+      </div>
+      <div class="field">
+        <label>Designation</label>
+        <select id="designationFilter">
+          <option value="">All</option>
+        </select>
+      </div>
+      <button class="btn" id="btnReload" type="button">Reload</button>
+      <button class="btn" id="btnAcquireTimesheet" type="button">Acquire Timesheets</button>
+      <div class="toggle-group" id="timesheetToggleGroup" style="display: none;">
+        <span class="toggle-label">Timesheet Required:</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="timesheetRequired" checked />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <button class="btn primary" id="btnIssue" type="button">Issue Selected</button>
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr id="monthBandRow">
+            <th class="month-band-spacer" id="monthBandLeftSpacer" colspan="12"></th>
+            <th class="month-band-cell" colspan="6"><span class="month-pill" id="monthBandLabel">Month</span></th>
+          </tr>
+          <tr>
+            <th>SELECT</th>
+            <th class="sortable" data-sort="emp_id">Emp ID <span class="sort-indicator">&lt;&gt;</span></th>
+            <th class="sortable surname-col" data-sort="surname">Surname <span class="sort-indicator">&lt;&gt;</span></th>
+            <th class="name-col">Name</th>
+            <th class="sortable" data-sort="department">Dept <span class="sort-indicator">&lt;&gt;</span></th>
+            <th class="sortable" data-sort="designation">Designation <span class="sort-indicator">&lt;&gt;</span></th>
+            <th id="hFrom">From</th>
+            <th id="hTo">To</th>
+            <th id="hTimesheetAcquired">Timesheet Acquired</th>
+            <th class="leave-col" id="hVLTakenYR">VL Taken (YR)</th>
+            <th class="leave-col" id="hVLTakenPeriod">VL Taken (Period)</th>
+            <th class="leave-col" id="hVLPending">VL Pending</th>
+            <th id="hVLWarning">VL Warning</th>
+            <th class="leave-col" id="hSLTakenYR">SL Taken (YR)</th>
+            <th class="leave-col" id="hSLTakenPeriod">SL Taken (Period)</th>
+            <th class="leave-col" id="hSLPending">SL Pending</th>
+            <th id="hSLWarning">SL Warning</th>
+            <th class="leave-col" id="hBankedTotal">Banked Hours Total</th>
+          </tr>
+        </thead>
+        <tbody id="rowsBody"></tbody>
+        <tfoot id="totalsFoot">
+          <tr id="totalsRow">
+            <td colspan="17" class="total-label" id="totalsLabel">Totals (Filtered)</td>
+            <td id="sumBanked">0.0</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div id="detailOverlay" class="detail-overlay" aria-hidden="true">
+      <div class="detail-panel">
+        <div class="detail-head">
+          <div>
+            <h2 class="detail-title" id="detailTitle">Payroll Breakdown</h2>
+            <div class="detail-sub" id="detailSub">Employee month detail</div>
+          </div>
+          <button class="btn" id="btnDetailClose" type="button">Close</button>
+        </div>
+        <div class="detail-grid" id="detailSummary"></div>
+        <div class="excel-card">
+          <table>
+            <thead>
+              <tr>
+                <th>Excel Row</th>
+                <th>Left Label</th>
+                <th>Left Value</th>
+                <th>Right Label</th>
+                <th>Right Value</th>
+                <th>Far Label</th>
+                <th>Far Value</th>
+              </tr>
+            </thead>
+            <tbody id="detailExcelRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="statusOk" class="status ok"></div>
+    <div id="statusErr" class="status err"></div>
+  </div>
+
+  <script>
+    const AUTH_STORAGE_KEY = 'empinfo.auth.v1';
+    const API_ORIGIN_STORAGE_KEY = 'empinfo.api_origin.v1';
+    const DEFAULT_AUTH_ORIGIN = `http://${window.location.hostname}:8055`;
+    const normalizePayrollApiOrigin = (value) => {
+      const raw = String(value || '').trim();
+      if (!raw) return `http://${window.location.hostname}:4020`;
+      try {
+        const parsed = new URL(raw);
+        if (parsed.port === '8055') {
+          return `${parsed.protocol}//${parsed.hostname}:4020`;
+        }
+      } catch (_) {}
+      return raw;
+    };
+
+    const qs = new URLSearchParams(window.location.search);
+    const API_ORIGIN = (function () {
+      const fromQuery = (qs.get('api_origin') || '').trim();
+      if (fromQuery) {
+        const normalized = normalizePayrollApiOrigin(fromQuery);
+        localStorage.setItem(API_ORIGIN_STORAGE_KEY, normalized);
+        return normalized;
+      }
+      const stored = (localStorage.getItem(API_ORIGIN_STORAGE_KEY) || '').trim();
+      if (stored) return normalizePayrollApiOrigin(stored);
+      return normalizePayrollApiOrigin('');
+    })();
+    const AUTH_API_ORIGIN = DEFAULT_AUTH_ORIGIN.replace(/\/$/, '');
+
+    const getToken = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || '{}');
+        const expiresAt = stored?.expires_at ? new Date(stored.expires_at).getTime() : null;
+        if (expiresAt && Date.now() > expiresAt) return null;
+        return stored?.access_token || null;
+      } catch {
+        return null;
+      }
+    };
+
+    const state = {
+      roleName: '',
+      isHr: false,
+      rows: [],
+      sortBy: 'designation',
+      sortDir: 'asc',
+      dateOverrides: {},
+      timesheetRequired: true,
+      currentPayroll: 'MAIN'
+    };
+
+    const el = {
+      today: document.getElementById('todayLabel'),
+      days: document.getElementById('daysToPayday'),
+      payday: document.getElementById('paydayDate'),
+      payroll: document.getElementById('payrollSelect'),
+      period: document.getElementById('periodInput'),
+      designation: document.getElementById('designationFilter'),
+      rowsBody: document.getElementById('rowsBody'),
+      totalsLabel: document.getElementById('totalsLabel'),
+      sumBanked: document.getElementById('sumBanked'),
+      totalsFoot: document.getElementById('totalsFoot'),
+      ok: document.getElementById('statusOk'),
+      err: document.getElementById('statusErr'),
+      hFrom: document.getElementById('hFrom'),
+      hTo: document.getElementById('hTo'),
+      homeLogo: document.getElementById('btnHomeLogo'),
+      monthBandLabel: document.getElementById('monthBandLabel'),
+      monthBandLeftSpacer: document.getElementById('monthBandLeftSpacer'),
+      detailOverlay: document.getElementById('detailOverlay'),
+      detailTitle: document.getElementById('detailTitle'),
+      detailSub: document.getElementById('detailSub'),
+      detailSummary: document.getElementById('detailSummary'),
+      detailExcelRows: document.getElementById('detailExcelRows'),
+      btnDetailClose: document.getElementById('btnDetailClose'),
+      timesheetToggleGroup: document.getElementById('timesheetToggleGroup'),
+      timesheetRequired: document.getElementById('timesheetRequired')
+    };
+
+    const esc = (v) => String(v ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+
+    const fmtMoney = (v) => {
+      const n = Number(v || 0);
+      if (!Number.isFinite(n)) return '\u20AC 0.00';
+      return `\u20AC ${n.toFixed(2)}`;
+    };
+
+    const fmtHours = (v) => {
+      const n = Number(v || 0);
+      if (!Number.isFinite(n)) return '0.0';
+      return n.toFixed(1);
+    };
+
+    const getPeriodLabel = () => {
+      const raw = String(el.period?.value || '').trim();
+      const m = /^(\d{4})-(\d{2})$/.exec(raw);
+      if (!m) return 'Month';
+      const year = Number(m[1]);
+      const month = Number(m[2]);
+      if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) return 'Month';
+      return new Intl.DateTimeFormat('en-GB', { month: 'short', year: '2-digit' }).format(new Date(year, month - 1, 1));
+    };
+
+    const fmtIsoToDmy = (iso) => {
+      const raw = String(iso || '').slice(0, 10);
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+      if (!m) return '';
+      const yyyy = Number(m[1]);
+      const mm = Number(m[2]);
+      const dd = Number(m[3]);
+      return `${dd}/${String(mm).padStart(2, '0')}/${yyyy}`;
+    };
+
+    const fmtIsoToDashShort = (iso) => {
+      const raw = String(iso || '').slice(0, 10);
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+      if (!m) return '-';
+      return `${m[3]}-${m[2]}-${String(m[1]).slice(-2)}`;
+    };
+
+    const parseDmyToIso = (dmy) => {
+      const raw = String(dmy || '').trim();
+      const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(raw);
+      if (!m) return null;
+      const dd = Number(m[1]);
+      const mm = Number(m[2]);
+      const yyyy = Number(m[3]);
+      if (!Number.isFinite(dd) || !Number.isFinite(mm) || !Number.isFinite(yyyy)) return null;
+      if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return null;
+      const dt = new Date(Date.UTC(yyyy, mm - 1, dd));
+      if (dt.getUTCFullYear() !== yyyy || dt.getUTCMonth() !== (mm - 1) || dt.getUTCDate() !== dd) return null;
+      return `${yyyy}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+    };
+
+    const fmtTimesheet = (raw) => {
+      const text = String(raw || '').trim();
+      if (!text) return 'Pending';
+      const m = /(\d{4}-\d{2}-\d{2})$/.exec(text);
+      if (!m) return text;
+      return `${text.slice(0, m.index).trim()} ${fmtIsoToDmy(m[1])}`.trim();
+    };
+
+    const showErr = (msg) => {
+      el.ok.classList.remove('show');
+      el.err.textContent = msg;
+      el.err.classList.add('show');
+    };
+
+    const showOk = (msg) => {
+      el.err.classList.remove('show');
+      el.ok.textContent = msg;
+      el.ok.classList.add('show');
+    };
+
+    const api = async (path, options = {}) => {
+      const token = getToken();
+      if (!token) {
+        const loginUrl = `../login.html?api_origin=${encodeURIComponent(DEFAULT_AUTH_ORIGIN)}`;
+        window.location.href = loginUrl;
+        throw new Error('No auth token');
+      }
+      const response = await fetch(`${API_ORIGIN}${path}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          ...(options.headers || {})
+        }
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || data.message || `HTTP ${response.status}`);
+      return data;
+    };
+
+    const authApi = async (path, options = {}) => {
+      const token = getToken();
+      if (!token) {
+        const loginUrl = `../login.html?api_origin=${encodeURIComponent(DEFAULT_AUTH_ORIGIN)}`;
+        window.location.href = loginUrl;
+        throw new Error('No auth token');
+      }
+      const response = await fetch(`${AUTH_API_ORIGIN}${path}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          ...(options.headers || {})
+        }
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || data.message || `HTTP ${response.status}`);
+      return data;
+    };
+
+    const normalizeDesignationKey = (value) => String(value || '').trim().toLowerCase().replace(/[.]/g, '').replace(/\s+/g, ' ');
+
+    const designationColor = (designation) => {
+      const key = normalizeDesignationKey(designation);
+      if (!key) return '#d9dee8';
+      if (key.includes('dental surgeon')) return '#CDB4DB';
+      if (key.includes('dental hygenist') || key.includes('dental hygienist') || key.includes('dental hygeinist')) return '#722F37';
+      if (key.includes('sup') && key.includes('dental assistant')) return '#00838F';
+      if (key.includes('dental assistant trainee')) return '#F6BD60';
+      if (key.includes('dental assistant')) return '#95D5B2';
+      if (key.includes('receptionist trainee')) return '#FF9AA2';
+      if (key.includes('receptionist')) return '#7CB342';
+      if (key.includes('housekeeping')) return '#2E5090';
+      if (key.includes('maintenance')) return '#283593';
+      if (key.includes('office manager')) return '#7B5A33';
+      if (key.includes('clinical manager')) return '#A38A64';
+      if (key.includes('principal')) return '#6D4C41';
+      return '#c6d2e3';
+    };
+
+    const hexToRgba = (hex, alpha) => {
+      if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return '';
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    };
+
+    const compareText = (a, b) => String(a || '').localeCompare(String(b || ''), undefined, { sensitivity: 'base' });
+    const designationRank = (designation) => {
+      const key = normalizeDesignationKey(designation);
+      if (!key) return 999999;
+      if (key.includes('dental surgeon')) return 1;
+      if (key.includes('dental hygenist') || key.includes('dental hygienist') || key.includes('dental hygeinist')) return 2;
+      if (key.includes('sup') && key.includes('dental assistant')) return 3;
+      if (key.includes('dental assistant') && key.includes('trainee')) return 5;
+      if (key.includes('dental assistant')) return 4;
+      if (key.includes('receptionist') && key.includes('trainee')) return 7;
+      if (key.includes('receptionist')) return 6;
+      if (key.includes('housekeeping')) return 8;
+      if (key.includes('maintenance')) return 9;
+      if (key.includes('clinical manager')) return 10;
+      if (key.includes('office manager')) return 11;
+      if (key.includes('principal')) return 12;
+      return 999999;
+    };
+
+    const sortRows = (rows) => {
+      const list = rows.slice();
+      const dir = state.sortDir === 'desc' ? -1 : 1;
+      list.sort((a, b) => {
+        const key = state.sortBy;
+        let cmp = 0;
+        if (key === 'emp_id') cmp = Number(a.emp_id || 0) - Number(b.emp_id || 0);
+        else if (key === 'surname') cmp = compareText(a.surname, b.surname);
+        else if (key === 'designation') {
+          cmp = designationRank(a.designation) - designationRank(b.designation);
+          if (cmp === 0) cmp = compareText(a.designation, b.designation);
+        }
+        else if (key === 'department') cmp = compareText(a.department, b.department);
+
+        if (cmp === 0 && key !== 'surname') cmp = compareText(a.surname, b.surname);
+        if (cmp === 0) cmp = Number(a.emp_id || 0) - Number(b.emp_id || 0);
+        return cmp * dir;
+      });
+      return list;
+    };
+
+    const renderSortHeaders = () => {
+      document.querySelectorAll('th.sortable').forEach((th) => {
+        const key = th.dataset.sort;
+        const indicator = th.querySelector('.sort-indicator');
+        const active = key === state.sortBy;
+        th.classList.toggle('active', active);
+        if (!indicator) return;
+        if (!active) indicator.textContent = '<>';
+        else indicator.textContent = state.sortDir === 'asc' ? '^' : 'v';
+      });
+    };
+
+    const getDateOverride = (empId, key) => {
+      const entry = state.dateOverrides[String(empId)] || {};
+      return String(entry[key] || '').trim();
+    };
+
+    const setDateOverride = (empId, key, value) => {
+      const id = String(empId);
+      state.dateOverrides[id] = state.dateOverrides[id] || {};
+      state.dateOverrides[id][key] = String(value || '').trim();
+    };
+
+    const getDisplayFrom = (row) => {
+      const override = getDateOverride(row.emp_id, 'from');
+      if (override) return override;
+      return fmtIsoToDmy(row.period_from);
+    };
+
+    const getDisplayTo = (row) => {
+      const override = getDateOverride(row.emp_id, 'to');
+      if (override) return override;
+      return fmtIsoToDmy(row.period_to);
+    };
+
+    const warningBadgeClass = (warning) => {
+      const w = String(warning || '').toLowerCase();
+      if (
+        w.includes('unpaid') ||
+        w.includes('terminated') ||
+        w.includes('pending forms') ||
+        w.includes('loan')
+      ) return 'pending-badge warn';
+      return 'pending-badge';
+    };
+    const toTitleWords = (text) => String(text || '')
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((part) => {
+        const lower = part.toLowerCase();
+        if (lower === 'fs4') return 'FS4';
+        if (lower === 'id') return 'ID';
+        if (lower === 'ss') return 'SS';
+        return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+      })
+      .join(' ');
+    const warningDisplayText = (warning) => {
+      const raw = String(warning || '').trim();
+      const lower = raw.toLowerCase();
+      if (lower.startsWith('pending forms:')) {
+        const rest = raw.slice(raw.indexOf(':') + 1).trim();
+        if (!rest) return '';
+        return rest
+          .split(',')
+          .map((item) => toTitleWords(item.trim()))
+          .filter(Boolean)
+          .join(', ');
+      }
+      return raw;
+    };
+    const closeDetail = () => {
+      el.detailOverlay.classList.remove('open');
+      el.detailOverlay.setAttribute('aria-hidden', 'true');
+      el.detailSummary.innerHTML = '';
+      el.detailExcelRows.innerHTML = '';
+    };
+
+    const detailCell = (value, money = false) => {
+      if (value === null || value === undefined || value === '') return '-';
+      if (money && Number.isFinite(Number(value))) return fmtMoney(value);
+      return esc(String(value));
+    };
+
+    const renderDetail = (data) => {
+      const employee = data.employee || {};
+      const calc = data.calculation || {};
+      const excel = data.excel_like || {};
+      el.detailTitle.textContent = `${employee.name || employee.emp_id || 'Payroll'} Breakdown`;
+      el.detailSub.textContent = `${data.payroll || ''} ${data.period || ''} | Sheet hint ${excel.sheet_hint || '-'} | Range ${excel.range_hint || 'N19:Y28'}`;
+
+      const cards = [
+        ['Employment', `${employee.employment_type || '-'} / ${employee.department || '-'}`],
+        [employee.id_label || 'ID', employee.id_value || '-'],
+        ['Date of Birth', employee.dob || '-'],
+        ['Social Security No.', employee.social_security_no || '-'],
+        ['Tax Number', employee.tax_number || '-'],
+        ['Nationality', employee.nationality || '-'],
+        ['Spouse ID', employee.spouse_national_id || '-'],
+        ['Rate Source', `${calc.pay_type_used || '-'} ${calc.rate_effective_from ? `from ${calc.rate_effective_from}` : ''}`.trim()],
+        ['Input Amount', fmtMoney(calc.pay_input_amount)],
+        ['Derived Hourly', fmtMoney(calc.derived_hourly_rate)],
+        ['Gross Basis', `${calc.gross_basis || '-'} (${Number(calc.gross_basis_hours || 0).toFixed(2)} hrs)`],
+        ['Work / Payable', `${Number(calc.work_hours || 0).toFixed(2)} / ${Number(calc.payable_hours || 0).toFixed(2)} hrs`],
+        ['Gross / Tax / Net', `${fmtMoney(calc.gross_total)} / ${fmtMoney(calc.tax_deduction)} / ${fmtMoney(calc.net_payment)}`],
+        ['SSC / MLF', `${calc.ssc_class || '-'} / ${fmtMoney(calc.ssc_total)} / ${fmtMoney(calc.mlf)}`],
+        ['P.E. / IBAN', `${employee.pe_number || '-'} / ${employee.iban || '-'}`],
+        ['Email / Phones', `${employee.email || '-'} / ${employee.phone_primary || '-'}${employee.phone_secondary ? ` / ${employee.phone_secondary}` : ''}`],
+        ['Address', [employee.address1, employee.address2, employee.city, employee.postcode].filter(Boolean).join(', ') || '-']
+      ];
+
+      el.detailSummary.innerHTML = cards.map(([label, value]) => `
+        <div class="detail-card">
+          <strong>${esc(label)}</strong>
+          <div class="detail-value">${esc(value)}</div>
+        </div>
+      `).join('');
+
+      const rows = (Array.isArray(excel.rows) ? excel.rows : []).filter((row) => {
+        if (row.row_key === 'r26' && (row.left_value === '-' || row.left_value === '' || row.left_value === null)) {
+          return false;
+        }
+        return true;
+      });
+      el.detailExcelRows.innerHTML = rows.map((row) => `
+        <tr>
+          <td class="excel-label">${esc(row.row_key || '')}</td>
+          <td class="excel-label">${esc(row.left_label || '')}</td>
+          <td>${detailCell(row.left_value, false)}</td>
+          <td class="excel-label">${esc(row.right_label || '')}</td>
+          <td class="excel-money">${detailCell(row.right_value, typeof row.right_value === 'number')}</td>
+          <td class="excel-label">${esc(row.far_label || '')}</td>
+          <td>${detailCell(row.far_value, typeof row.far_value === 'number')}</td>
+        </tr>
+      `).join('');
+
+      el.detailOverlay.classList.add('open');
+      el.detailOverlay.setAttribute('aria-hidden', 'false');
+    };
+
+    const loadDetail = async (empId) => {
+      try {
+        const data = await api(`/payroll-dashboard/payroll/dashboard/detail?payroll=${encodeURIComponent(el.payroll.value)}&period=${encodeURIComponent(el.period.value)}&emp_id=${encodeURIComponent(empId)}`);
+        renderDetail(data);
+      } catch (error) {
+        showErr(`Failed to load payroll detail: ${error.message || error}`);
+      }
+    };
+
+    const renderDesignationFilter = () => {
+      const current = String(el.designation.value || '');
+      const unique = Array.from(new Set(state.rows
+        .map((r) => String(r.designation || '').trim())
+        .filter(Boolean)))
+        .sort((a, b) => {
+          const rankDiff = designationRank(a) - designationRank(b);
+          if (rankDiff !== 0) return rankDiff;
+          return compareText(a, b);
+        });
+
+      el.designation.innerHTML = '<option value="">All</option>';
+      unique.forEach((name) => {
+        const o = document.createElement('option');
+        o.value = name;
+        o.textContent = name;
+        el.designation.appendChild(o);
+      });
+
+      if ([...el.designation.options].some((o) => o.value === current)) {
+        el.designation.value = current;
+      }
+    };
+
+    const filteredRows = () => {
+      const designation = String(el.designation.value || '').trim();
+      let rows = state.rows;
+      if (designation) {
+        rows = rows.filter((r) => String(r.designation || '').trim() === designation);
+      }
+      return sortRows(rows);
+    };
+
+    const isProviderPayroll = () => String(state.currentPayroll || '').toUpperCase() === 'PROVIDER' || String(state.currentPayroll || '').toUpperCase() === 'PROV';
+    
+    const updateColumnVisibility = () => {
+      const isProvider = isProviderPayroll();
+      const leaveColumns = ['hVLTakenYR', 'hVLTakenPeriod', 'hVLPending', 'hVLWarning', 'hSLTakenYR', 'hSLTakenPeriod', 'hSLPending', 'hSLWarning', 'hBankedTotal'];
+      
+      leaveColumns.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.style.display = isProvider ? 'none' : '';
+        }
+      });
+      
+      if (el.timesheetToggleGroup) {
+        el.timesheetToggleGroup.style.display = (!state.isHr && !isProvider) ? 'flex' : 'none';
+      }
+    };
+
+    const renderRows = () => {
+      el.totalsFoot.style.display = '';
+
+      const monthLabel = getPeriodLabel();
+      if (el.monthBandLabel) el.monthBandLabel.textContent = `Month ${monthLabel}`;
+
+      if (el.monthBandLeftSpacer) {
+        el.monthBandLeftSpacer.setAttribute('colspan', '10');
+      }
+      if (el.totalsLabel) {
+        el.totalsLabel.setAttribute('colspan', '10');
+      }
+
+      updateColumnVisibility();
+      const rows = filteredRows();
+      renderSortHeaders();
+
+      if (!rows.length) {
+        el.rowsBody.innerHTML = '<tr><td colspan="18" class="muted">No rows found.</td></tr>';
+      } else {
+        el.rowsBody.innerHTML = rows.map((r) => {
+          const warnings = (Array.isArray(r.warnings) ? r.warnings : [])
+            .map((w) => String(w || '').trim())
+            .filter((w) => {
+              const t = w.toLowerCase();
+              return t !== 'ok' && t !== 'ok warning';
+            });
+          const warningHtml = warnings.length
+            ? `<span class="pending-badges">${warnings.map((w) => {
+                const label = warningDisplayText(w);
+                if (!label) return '';
+                return `<span class="${warningBadgeClass(w)}" title="${esc(label)}">${esc(label)}</span>`;
+              }).join('')}</span>`
+            : '';
+
+          const fromVal = esc(getDisplayFrom(r));
+          const toVal = esc(getDisplayTo(r));
+          const bg = hexToRgba(designationColor(r.designation), 0.22);
+
+          const isProvider = isProviderPayroll();
+          const periodCells = `<td><input class="period-input" data-emp="${esc(r.emp_id)}" data-key="from" value="${fromVal}" /></td><td><input class="period-input" data-emp="${esc(r.emp_id)}" data-key="to" value="${toVal}" /></td><td${isProvider ? ' style="display:none;"' : ''}>${esc(fmtTimesheet(r.timesheet_acquired || 'Pending'))}</td>`;
+
+          const vlWarn = esc(r.vl_warning || '');
+          const slWarn = esc(r.sl_warning || '');
+          
+          const vlCells = `<td class="leave-col" ${isProvider ? 'style="display:none;"' : ''}>${fmtHours(r.vl_taken_ytd)}</td>
+            <td class="leave-col" ${isProvider ? 'style="display:none;"' : ''}>${fmtHours(r.vl_taken_period)}</td>
+            <td class="leave-col" ${isProvider ? 'style="display:none;"' : ''}>${fmtHours(r.vl_pending)}</td>
+            <td ${isProvider ? 'style="display:none;"' : ''}>${vlWarn || '-'}</td>`;
+          
+          const slCells = `<td class="leave-col" ${isProvider ? 'style="display:none;"' : ''}>${fmtHours(r.sl_taken_ytd)}</td>
+            <td class="leave-col" ${isProvider ? 'style="display:none;"' : ''}>${fmtHours(r.sl_taken_period)}</td>
+            <td class="leave-col" ${isProvider ? 'style="display:none;"' : ''}>${fmtHours(r.sl_pending)}</td>
+            <td ${isProvider ? 'style="display:none;"' : ''}>${slWarn || '-'}</td>`;
+          
+          const bankedCell = `<td class="leave-col" ${isProvider ? 'style="display:none;"' : ''}>${fmtHours(r.banked_hours_balance)}</td>`;
+
+          return `<tr class="row-clickable" data-emp-id="${esc(r.emp_id)}" style="${bg ? `background:${bg};` : ''}">
+            <td class="select-cell"><input type="checkbox" class="row-check" value="${esc(r.emp_id)}" /></td>
+            <td><strong>${esc(r.emp_id)}</strong></td>
+            <td class="surname-cell"><strong>${esc(r.surname || '')}</strong></td>
+            <td class="name-cell"><strong>${esc(r.first_name || '')}</strong>${warningHtml}</td>
+            <td>${esc(r.department || '')}</td>
+            <td>${esc(r.designation || '')}</td>
+            ${periodCells}
+            ${vlCells}
+            ${slCells}
+            ${bankedCell}
+          </tr>`;
+        }).join('');
+      }
+
+      const visibleRows = rows;
+      const computed = visibleRows.reduce((acc, r) => {
+        if (!isProviderPayroll()) {
+          acc.banked += Number(r.banked_hours_balance || 0);
+        }
+        return acc;
+      }, { banked: 0 });
+
+      el.sumBanked.parentElement.style.display = isProviderPayroll() ? 'none' : '';
+      el.sumBanked.textContent = fmtHours(computed.banked);
+      if (el.totalsLabel) {
+        el.totalsLabel.textContent = `Totals ${monthLabel} (Filtered)`;
+      }
+
+      document.querySelectorAll('.period-input').forEach((input) => {
+        input.addEventListener('input', (e) => {
+          const target = e.currentTarget;
+          setDateOverride(target.dataset.emp, target.dataset.key, target.value);
+        });
+        input.addEventListener('blur', (e) => {
+          const target = e.currentTarget;
+          const val = String(target.value || '').trim();
+          const iso = parseDmyToIso(val);
+          if (val && !iso) {
+            target.style.borderColor = '#d32f2f';
+            return;
+          }
+          target.style.borderColor = '#cfd7e3';
+          if (iso) {
+            const normalized = fmtIsoToDmy(iso);
+            target.value = normalized;
+            setDateOverride(target.dataset.emp, target.dataset.key, normalized);
+          }
+        });
+      });
+    };
+
+    const load = async () => {
+      el.err.classList.remove('show');
+      el.ok.classList.remove('show');
+      try {
+        const p = el.period.value;
+        const pay = el.payroll.value;
+        const data = await api(`/payroll-dashboard/payroll/dashboard/overview?payroll=${encodeURIComponent(pay)}&period=${encodeURIComponent(p)}`);
+
+        state.rows = Array.isArray(data.rows) ? data.rows : [];
+        state.isHr = !!data?.meta?.viewer?.is_hr;
+        state.roleName = data?.meta?.viewer?.role || '';
+        state.currentPayroll = pay;
+
+        if (state.isHr) {
+          el.payroll.innerHTML = '<option value="O3P">O3P</option>';
+          el.payroll.value = 'O3P';
+          el.payroll.disabled = true;
+          state.currentPayroll = 'O3P';
+        } else {
+          const selected = data?.meta?.selected_payroll || pay;
+          el.payroll.value = selected;
+          el.payroll.disabled = false;
+          state.currentPayroll = selected;
+        }
+
+        const today = new Date();
+        const dayName = new Intl.DateTimeFormat('en-GB', { weekday: 'long' }).format(today);
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const yy = String(today.getFullYear()).slice(-2);
+        el.today.textContent = `${dayName}, ${dd}/${mm}/${yy}`;
+
+        el.days.textContent = `${data?.meta?.days_to_payday ?? '-'} Days to payday`;
+        el.payday.textContent = `Last Friday: ${fmtIsoToDashShort(data?.meta?.payday_date || '')}`;
+
+        renderDesignationFilter();
+        renderRows();
+      } catch (error) {
+        showErr(error instanceof Error ? error.message : String(error));
+      }
+    };
+
+    const issueSelected = async () => {
+      const ids = [...document.querySelectorAll('.row-check:checked')].map((c) => Number(c.value)).filter(Number.isFinite);
+      if (!ids.length) {
+        showErr('Select at least one employee.');
+        return;
+      }
+      try {
+        const period = String(el.period.value || '').trim();
+        const payroll = String(el.payroll.value || 'MAIN').trim().toUpperCase();
+        const pending = await authApi(
+          `/employee-form/payroll/your-info/bank-change/pending?period=${encodeURIComponent(period)}&payroll=${encodeURIComponent(payroll)}&employee_ids=${encodeURIComponent(ids.join(','))}`
+        );
+        const pendingRows = Array.isArray(pending?.pending) ? pending.pending : [];
+        if (pendingRows.length > 0) {
+          const summary = pendingRows
+            .map((row) => `${row.employee_name || `Emp ${row.emp_id}`}: ${row.old_iban || '-'} -> ${row.new_iban || '-'}`)
+            .join('\n');
+          const confirmed = window.confirm(
+            `Bank details changed for ${pendingRows.length} employee(s).\n\n${summary}\n\nConfirm these IBAN changes were activated and saved in bank end before issuing payroll.`
+          );
+          if (!confirmed) {
+            showErr('Issue cancelled until bank detail changes are confirmed.');
+            return;
+          }
+          await authApi('/employee-form/payroll/your-info/bank-change/confirm', {
+            method: 'POST',
+            body: JSON.stringify({
+              period,
+              payroll,
+              audit_ids: pendingRows.map((row) => Number(row.audit_id)).filter(Number.isFinite),
+              notes: 'Confirmed from payroll issue popup'
+            })
+          });
+        }
+
+        const action = el.payroll.value === 'MAIN' ? 'send_payslip_email' : 'issue_remittance';
+        const result = await api('/payroll-dashboard/payroll/dashboard/actions/issue', {
+          method: 'POST',
+          body: JSON.stringify({ action, payroll: el.payroll.value, period, employee_ids: ids })
+        });
+        showOk(result?.message || 'Action queued');
+      } catch (error) {
+        showErr(error instanceof Error ? error.message : String(error));
+      }
+    };
+
+    document.querySelectorAll('th.sortable').forEach((th) => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sort;
+        if (!key) return;
+        if (state.sortBy === key) {
+          state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          state.sortBy = key;
+          state.sortDir = 'asc';
+        }
+        renderRows();
+      });
+    });
+
+    document.getElementById('btnReload').addEventListener('click', load);
+    document.getElementById('btnAcquireTimesheet').addEventListener('click', () => {
+      window.location.href = `../employee-form.html?api_origin=${encodeURIComponent(DEFAULT_AUTH_ORIGIN)}`;
+    });
+    document.getElementById('btnIssue').addEventListener('click', issueSelected);
+    el.homeLogo.addEventListener('click', () => {
+      window.location.href = `../app-hub.html?api_origin=${encodeURIComponent(DEFAULT_AUTH_ORIGIN)}`;
+    });
+    
+    el.timesheetRequired.addEventListener('change', (e) => {
+      state.timesheetRequired = e.target.checked;
+    });
+
+    el.designation.addEventListener('change', () => renderRows());
+    el.payroll.addEventListener('change', () => {
+      state.currentPayroll = el.payroll.value;
+      load();
+    });
+    el.period.addEventListener('change', load);
+    el.rowsBody.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const selectCell = target.closest('.select-cell');
+      if (selectCell) {
+        const cb = selectCell.querySelector('.row-check');
+        if (cb && !(target instanceof HTMLInputElement)) {
+          cb.checked = !cb.checked;
+        }
+        return;
+      }
+
+      const interactive = target.closest('input, button, a, select, textarea, label');
+      if (interactive) return;
+
+      const row = target.closest('tr[data-emp-id]');
+      if (!row) return;
+      const empId = String(row.getAttribute('data-emp-id') || '').trim();
+      if (!empId) return;
+      loadDetail(empId);
+    });
+
+    el.btnDetailClose.addEventListener('click', closeDetail);
+    el.detailOverlay.addEventListener('click', (event) => {
+      if (event.target === el.detailOverlay) closeDetail();
+    });
+
+    const now = new Date();
+    el.period.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    const scope = (qs.get('payroll_scope') || '').toLowerCase();
+    if (scope === 'o3p') {
+      el.payroll.value = 'O3P';
+      el.payroll.disabled = true;
+    }
+
+    load();
+  </script>
+</body>
+</html>

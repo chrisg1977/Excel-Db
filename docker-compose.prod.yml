@@ -40,8 +40,24 @@ services:
       ADMIN_PASSWORD: Crz6@6@6@!
       KEY: change-me-32-chars-minimum-xxxxxxxxxxxx
       SECRET: change-me-32-chars-minimum-xxxxxxxxx
+      PUBLIC_URL: ${DIRECTUS_PUBLIC_URL}
+      CORS_ENABLED: "true"
+      CORS_ORIGIN: ${DIRECTUS_CORS_ORIGIN}
     volumes:
       - ./directus-uploads:/directus/uploads
+
+  dashboard_static:
+    image: nginx:1.27-alpine
+    container_name: dashboard_static
+    depends_on:
+      directus_excel:
+        condition: service_started
+    volumes:
+      - ./dashboard:/usr/share/nginx/html:ro
+      - ./docker/nginx/dashboard.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8080:80"
+      - "8090:80"
 
 volumes:
   pg_excel_data:

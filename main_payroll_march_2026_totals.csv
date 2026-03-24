@@ -1,0 +1,2 @@
+payroll_year,payroll_month,period_from,period_to,employee_count,total_gross_earnings,total_deductions,total_net_payment,total_tax_deduction,total_ss_employee_contribution,total_ss_employer_contribution,total_mlf_contribution,total_employer_cost,total_net_delta
+2026,2026-03-01,2026-03-01,2026-03-31,4,7513.72,2145.49,5368.23,2033.63,111.86,111.86,3.36,7628.94,0.00

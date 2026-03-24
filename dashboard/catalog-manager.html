@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M-CodeZ - Catalog Manager</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f4f7fb;
+      color: #1a1d23;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #eaf3ff;
+      border-bottom: 1px solid #d4e0f4;
+    }
+    .title { margin: 0; font-size: 18px; color: #2e5090; }
+    .actions { display: flex; align-items: center; gap: 8px; }
+    .btn {
+      border: 1px solid #c7d2e3;
+      background: #fff;
+      color: #2f3d53;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn.primary { background: #2e5090; color: #fff; border-color: #2e5090; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .container {
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #dbe4f0;
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      color: #2f3d53;
+    }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    input[type="text"], select, input[type="color"] {
+      border: 1px solid #c7d2e3;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 13px;
+      background: #fff;
+    }
+    input[type="text"] { flex: 1; min-width: 140px; }
+    .list { margin-top: 10px; display: grid; gap: 6px; }
+    .item {
+      border: 1px solid #e0e6f2;
+      background: #fafcff;
+      border-radius: 8px;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .dot { width: 14px; height: 14px; border-radius: 4px; border: 1px solid #bcc8dc; flex: 0 0 auto; }
+    .name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .muted { color: #6d7788; font-size: 12px; }
+    .error { color: #b42318; font-size: 13px; font-weight: 600; }
+    .ok { color: #17693a; font-size: 13px; font-weight: 600; }
+    @media (max-width: 980px) {
+      .container { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 class="title">Designation / Department Manager</h1>
+    <div class="actions">
+      <button id="reloadBtn" class="btn" type="button">Reload</button>
+      <button id="saveBtn" class="btn primary" type="button">Save to Directus</button>
+      <button id="closeBtn" class="btn" type="button">Close</button>
+    </div>
+  </div>
+
+  <div style="padding:0 14px;">
+    <p id="statusLine" class="muted">Loading...</p>
+  </div>
+
+  <div class="container">
+    <section class="card">
+      <h2>Departments</h2>
+      <div class="row">
+        <input id="departmentInput" type="text" placeholder="Add department (free text)" />
+        <button id="addDepartmentBtn" class="btn" type="button">Add</button>
+      </div>
+      <div id="departmentList" class="list"></div>
+    </section>
+
+    <section class="card">
+      <h2>Designations</h2>
+      <div class="row">
+        <input id="designationInput" type="text" placeholder="New designation (free text)" />
+        <input id="designationColor" type="color" value="#2e5090" title="Color" />
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <select id="positionMode">
+          <option value="end">Place at end</option>
+          <option value="before">Place before</option>
+          <option value="after">Place after</option>
+        </select>
+        <select id="positionTarget"></select>
+        <button id="addDesignationBtn" class="btn" type="button">Add</button>
+      </div>
+      <div id="designationList" class="list"></div>
+      <p class="muted" style="margin-top:8px;">Use ↑ / ↓ to re-order before saving.</p>
+    </section>
+  </div>
+
+  <script>
+    const API_ORIGIN = (new URLSearchParams(window.location.search).get('api_origin') || 'http://localhost:8055').replace(/\/$/, '');
+    const AUTH_STORAGE_KEY = 'empinfo.auth.v1';
+    let departments = [];
+    let designations = [];
+
+    const statusLine = document.getElementById('statusLine');
+    const departmentInput = document.getElementById('departmentInput');
+    const designationInput = document.getElementById('designationInput');
+    const designationColor = document.getElementById('designationColor');
+    const positionMode = document.getElementById('positionMode');
+    const positionTarget = document.getElementById('positionTarget');
+    const departmentList = document.getElementById('departmentList');
+    const designationList = document.getElementById('designationList');
+
+    function getAuthToken() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || '{}');
+        return String(stored?.access_token || '').trim();
+      } catch {
+        return '';
+      }
+    }
+
+    function normalizeText(value) {
+      return String(value || '').trim().replace(/\s+/g, ' ');
+    }
+
+    function setStatus(text, cls = 'muted') {
+      statusLine.className = cls;
+      statusLine.textContent = text;
+    }
+
+    async function apiRequest(url, options = {}) {
+      const token = getAuthToken();
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        ...options
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.error || payload?.message || `Request failed (${response.status})`);
+      }
+      return payload;
+    }
+
+    function renderDepartments() {
+      departmentList.innerHTML = '';
+      departments.forEach((name) => {
+        const row = document.createElement('div');
+        row.className = 'item';
+        row.innerHTML = `<div class="left"><span class="dot" style="background:#cbd5e1"></span><span class="name">${name}</span></div>`;
+        departmentList.appendChild(row);
+      });
+    }
+
+    function refreshPositionTargets() {
+      const keep = positionTarget.value;
+      positionTarget.innerHTML = '';
+      designations.forEach((d) => {
+        const opt = document.createElement('option');
+        opt.value = d.name;
+        opt.textContent = d.name;
+        positionTarget.appendChild(opt);
+      });
+      if (Array.from(positionTarget.options).some(o => o.value === keep)) {
+        positionTarget.value = keep;
+      }
+      positionTarget.disabled = positionMode.value === 'end' || designations.length === 0;
+    }
+
+    function renderDesignations() {
+      designationList.innerHTML = '';
+      designations.forEach((row, idx) => {
+        const item = document.createElement('div');
+        item.className = 'item';
+        item.innerHTML = `
+          <div class="left">
+            <span class="dot" style="background:${row.color_hex || '#2E5090'}"></span>
+            <span class="name">${row.name}</span>
+          </div>
+          <div class="row">
+            <button class="btn" data-action="up" data-idx="${idx}" type="button">↑</button>
+            <button class="btn" data-action="down" data-idx="${idx}" type="button">↓</button>
+          </div>
+        `;
+        designationList.appendChild(item);
+      });
+      refreshPositionTargets();
+    }
+
+    function addDepartment() {
+      const name = normalizeText(departmentInput.value);
+      if (!name) return;
+      if (departments.some((d) => d.toLowerCase() === name.toLowerCase())) return;
+      departments.push(name);
+      departmentInput.value = '';
+      renderDepartments();
+    }
+
+    function addDesignation() {
+      const name = normalizeText(designationInput.value);
+      const color = String(designationColor.value || '#2E5090').trim();
+      if (!name) return;
+      if (designations.some((d) => d.name.toLowerCase() === name.toLowerCase())) return;
+
+      const next = { name, color_hex: color };
+      const mode = positionMode.value;
+      const target = positionTarget.value;
+      if (mode === 'end' || !target) {
+        designations.push(next);
+      } else {
+        const index = designations.findIndex((d) => d.name === target);
+        if (index < 0) {
+          designations.push(next);
+        } else if (mode === 'before') {
+          designations.splice(index, 0, next);
+        } else {
+          designations.splice(index + 1, 0, next);
+        }
+      }
+      designationInput.value = '';
+      renderDesignations();
+    }
+
+    async function loadCatalog() {
+      setStatus('Loading...', 'muted');
+      const payload = await apiRequest(`${API_ORIGIN}/employee-form/payroll/employee-form/catalog`);
+      departments = Array.isArray(payload?.departments) ? payload.departments.map((d) => normalizeText(d?.name || d)).filter(Boolean) : [];
+      designations = Array.isArray(payload?.designations)
+        ? payload.designations.map((d) => ({
+            name: normalizeText(d?.name),
+            color_hex: String(d?.color_hex || '#2E5090')
+          })).filter((d) => d.name)
+        : [];
+      renderDepartments();
+      renderDesignations();
+      setStatus('Loaded catalog from Directus.', 'ok');
+    }
+
+    async function saveCatalog() {
+      setStatus('Saving to Directus...', 'muted');
+      const payload = {
+        departments: departments.map((name) => ({ name })),
+        designations: designations.map((d, i) => ({
+          name: d.name,
+          color_hex: d.color_hex,
+          display_order: i + 1
+        }))
+      };
+      await apiRequest(`${API_ORIGIN}/employee-form/payroll/employee-form/catalog/save`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      setStatus('Saved to Directus.', 'ok');
+      await loadCatalog();
+    }
+
+    document.getElementById('reloadBtn').addEventListener('click', () => {
+      loadCatalog().catch((e) => setStatus(e.message || 'Failed to load.', 'error'));
+    });
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      saveCatalog().catch((e) => setStatus(e.message || 'Failed to save.', 'error'));
+    });
+    document.getElementById('closeBtn').addEventListener('click', () => window.close());
+    document.getElementById('addDepartmentBtn').addEventListener('click', addDepartment);
+    document.getElementById('addDesignationBtn').addEventListener('click', addDesignation);
+    positionMode.addEventListener('change', refreshPositionTargets);
+    designationList.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const idx = Number(btn.dataset.idx);
+      if (!Number.isFinite(idx)) return;
+      if (btn.dataset.action === 'up' && idx > 0) {
+        const temp = designations[idx - 1];
+        designations[idx - 1] = designations[idx];
+        designations[idx] = temp;
+        renderDesignations();
+      }
+      if (btn.dataset.action === 'down' && idx < designations.length - 1) {
+        const temp = designations[idx + 1];
+        designations[idx + 1] = designations[idx];
+        designations[idx] = temp;
+        renderDesignations();
+      }
+    });
+
+    loadCatalog().catch((e) => setStatus(e.message || 'Failed to load.', 'error'));
+  </script>
+  <script src="assets/js/idle-logout.js"></script>
+  <script>if (typeof window.initIdleLogout === 'function') window.initIdleLogout('');</script>
+</body>
+</html>

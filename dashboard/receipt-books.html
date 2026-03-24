@@ -1,0 +1,3183 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M-CodeZ - Receipt Books Workspace</title>
+  <link rel="icon" type="image/png" href="/dashboard/assets/logos/database-logo.png" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --ink: #14243a;
+      --muted: #586984;
+      --line: #d6deec;
+      --line-soft: #e8edf6;
+      --surface: #ffffff;
+      --surface-soft: #f5f8fd;
+      --surface-accent: #eaf2ff;
+      --brand: #2a4f8f;
+      --brand-strong: #1d3f77;
+      --danger-bg: #fff3f5;
+      --danger-text: #96253a;
+      --danger-line: #f7c5ce;
+      --good-bg: #edf9f1;
+      --good-text: #1e6a3f;
+      --good-line: #b8e2c8;
+      --warn-bg: #fff8ea;
+      --warn-text: #8a5c11;
+      --warn-line: #efd8a8;
+      --shadow: 0 12px 30px rgba(18, 34, 62, 0.1);
+      --radius: 14px;
+      --font: "Segoe UI", Tahoma, Arial, sans-serif;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      background: linear-gradient(180deg, #eef4ff 0%, #f8fbff 45%, #f2f6fd 100%);
+      color: var(--ink);
+      font-family: var(--font);
+      font-size: 16px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid rgba(42, 79, 143, 0.14);
+      background: rgba(234, 242, 255, 0.95);
+      box-shadow: 0 8px 20px rgba(20, 36, 58, 0.08);
+    }
+
+    .app-header-inner {
+      max-width: 1380px;
+      min-height: 74px;
+      margin: 0 auto;
+      padding: 12px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .header-left,
+    .header-center,
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .header-center {
+      flex: 1 1 auto;
+      justify-content: center;
+    }
+
+    .logo-pill {
+      border: 1px solid rgba(42, 79, 143, 0.14);
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 999px;
+      padding: 8px 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .group-logo {
+      max-width: 210px;
+      max-height: 42px;
+      object-fit: contain;
+    }
+
+    .mcorez-logo {
+      max-width: 180px;
+      max-height: 52px;
+      object-fit: contain;
+    }
+
+    .user-info {
+      text-align: right;
+    }
+
+    .user-name {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .user-role {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .btn,
+    .btn-inline,
+    .btn-icon {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: var(--brand);
+      color: #ffffff;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 700;
+      transition: transform 0.14s ease, filter 0.14s ease;
+    }
+
+    .btn:hover,
+    .btn-inline:hover,
+    .btn-icon:hover {
+      transform: translateY(-1px);
+      filter: brightness(0.98);
+    }
+
+    .btn:disabled,
+    .btn-inline:disabled,
+    .btn-icon:disabled {
+      opacity: 0.58;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn {
+      padding: 10px 14px;
+      font-size: 14px;
+    }
+
+    .btn.alt,
+    .btn-icon,
+    .btn-inline.alt {
+      background: #ffffff;
+      color: var(--brand);
+      border-color: rgba(42, 79, 143, 0.2);
+    }
+
+    .btn.warn {
+      background: #fff8ea;
+      color: #8a5c11;
+      border-color: #efd8a8;
+    }
+
+    .btn.danger {
+      background: #fff2f5;
+      color: #8e2237;
+      border-color: #f3bec8;
+    }
+
+    .btn-inline {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .btn-icon {
+      width: 40px;
+      height: 40px;
+      font-size: 12px;
+    }
+
+    .container {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 22px 20px 0;
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel,
+    .message {
+      border: 1px solid rgba(42, 79, 143, 0.1);
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .panel-head h2,
+    .panel-head h3 {
+      line-height: 1.1;
+    }
+
+    .panel-head p,
+    .muted {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .panel-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .message {
+      padding: 12px 14px;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .message.error {
+      background: var(--danger-bg);
+      color: var(--danger-text);
+      border-color: var(--danger-line);
+    }
+
+    .message.info {
+      background: var(--good-bg);
+      color: var(--good-text);
+      border-color: var(--good-line);
+    }
+
+    .message.warn {
+      background: var(--warn-bg);
+      color: var(--warn-text);
+      border-color: var(--warn-line);
+    }
+
+    .section-block {
+      border: 1px solid rgba(42, 79, 143, 0.09);
+      background: var(--surface-soft);
+      border-radius: 14px;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items: start;
+    }
+
+    .col-card {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      min-height: 100%;
+    }
+
+    .col-title {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #2f4770;
+      margin-bottom: 2px;
+    }
+
+    .receipt-editor-layout {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      align-items: start;
+    }
+
+    .receipt-left-layout {
+      grid-column: span 2;
+      display: grid;
+      gap: 12px;
+    }
+
+    .receipt-top-grid,
+    .receipt-range-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .receipt-range-grid > div {
+      display: grid;
+      gap: 10px;
+    }
+
+    .col-card-empty {
+      min-height: 100%;
+    }
+
+    .receipt-calc-card {
+      min-height: 100%;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #34445d;
+      text-transform: uppercase;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid rgba(42, 79, 143, 0.2);
+      border-radius: 10px;
+      background: #ffffff;
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 14px;
+      padding: 10px 11px;
+    }
+
+    input[readonly],
+    select[disabled] {
+      background: #f7f9fd;
+      color: #3f4f68;
+    }
+
+    .field-error {
+      color: #9a2740;
+      font-size: 12px;
+      line-height: 1.4;
+      min-height: 16px;
+      text-transform: none;
+      font-weight: 600;
+    }
+
+    .field-help {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.4;
+      text-transform: none;
+      font-weight: 600;
+    }
+
+    /* Major block: compact calculator console for temporary amount entries */
+    .calc-console {
+      border: 1px solid var(--line);
+      background: #f9fbff;
+      border-radius: 12px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      min-height: 320px;
+    }
+
+    .calc-display {
+      border: 1px solid #c8d8f4;
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 10px;
+      font-size: 24px;
+      font-weight: 800;
+      color: #173d72;
+      text-align: right;
+      letter-spacing: 0.01em;
+      min-height: 52px;
+      width: 100%;
+      appearance: textfield;
+    }
+
+    .calc-display::placeholder {
+      color: #7c90b0;
+    }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .calc-btn {
+      border: 1px solid #c7d7f2;
+      border-radius: 10px;
+      background: #ffffff;
+      color: #1a3f74;
+      font-size: 18px;
+      font-weight: 800;
+      min-height: 44px;
+      cursor: pointer;
+    }
+
+    .calc-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .calc-btn.action {
+      background: #eaf2ff;
+      border-color: #b7ccef;
+      font-size: 14px;
+    }
+
+    .calc-btn.equals {
+      background: #2a4f8f;
+      border-color: #21427a;
+      color: #ffffff;
+      font-size: 20px;
+    }
+
+    .calc-list-wrap {
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 8px;
+      max-height: 180px;
+      overflow: auto;
+      display: grid;
+      gap: 6px;
+    }
+
+    .calc-list-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid #e7edf8;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 13px;
+    }
+
+    .calc-list-row span {
+      min-width: 64px;
+      font-weight: 700;
+      color: #28456f;
+    }
+
+    .calc-list-input {
+      flex: 1 1 auto;
+      min-width: 0;
+      border: 1px solid #cad8ee;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 13px;
+      text-align: right;
+    }
+
+    .calc-list-row button {
+      border: 1px solid #efc2cc;
+      color: #8c2337;
+      background: #fff4f6;
+      border-radius: 8px;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .list-empty {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .modal-copy {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .modal.small {
+      width: min(560px, 96vw);
+    }
+
+    .modal-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+    }
+
+    .modal-input-wrap {
+      display: grid;
+      gap: 6px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border-radius: 12px;
+      border: 1px solid var(--line-soft);
+      background: #ffffff;
+      max-height: 520px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 920px;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #e7edf8;
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #f4f8ff;
+      color: #2a4670;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .row-clickable {
+      cursor: pointer;
+    }
+
+    .row-clickable:hover {
+      background: #f8fbff;
+    }
+
+    .finished-overlay {
+      border: 1px solid var(--warn-line);
+      background: var(--warn-bg);
+      color: var(--warn-text);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .resume-banner {
+      border: 1px solid #bfd3f7;
+      background: linear-gradient(135deg, #edf4ff 0%, #f7fbff 100%);
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .resume-kicker {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #315487;
+    }
+
+    .resume-title {
+      font-size: clamp(24px, 3vw, 34px);
+      font-weight: 900;
+      line-height: 1.05;
+      color: #163968;
+    }
+
+    .resume-copy {
+      color: #345276;
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 800px;
+    }
+
+    .validation-list {
+      border: 1px solid var(--danger-line);
+      background: var(--danger-bg);
+      color: var(--danger-text);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 4px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(16, 30, 52, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 40;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      width: min(980px, 96vw);
+      max-height: 90vh;
+      overflow: auto;
+      border: 1px solid rgba(42, 79, 143, 0.16);
+      background: #ffffff;
+      border-radius: 14px;
+      box-shadow: 0 28px 60px rgba(12, 22, 40, 0.22);
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .detail-card {
+      border: 1px solid var(--line-soft);
+      background: #fbfdff;
+      border-radius: 10px;
+      padding: 10px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .detail-card h4 {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #3b5378;
+      letter-spacing: 0.04em;
+    }
+
+    .detail-card pre {
+      margin: 0;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #20334e;
+    }
+
+    .footer {
+      max-width: 1380px;
+      margin: 24px auto 0;
+      padding: 0 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 1180px) {
+      .grid.three {
+        grid-template-columns: 1fr;
+      }
+
+      .receipt-editor-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .receipt-left-layout {
+        grid-column: auto;
+      }
+
+      .calc-console {
+        min-height: 280px;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .app-header-inner {
+        justify-content: center;
+      }
+
+      .header-center {
+        order: -1;
+        width: 100%;
+      }
+
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .receipt-top-grid,
+      .receipt-range-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .table-wrap {
+        max-height: 440px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <script src="../assets/js/idle-logout.js"></script>
+  <header class="app-header">
+    <div class="app-header-inner">
+      <div class="header-left">
+        <div class="logo-pill"><img class="group-logo" src="assets/logos/group-logo.png" alt="Mediatrix Group" /></div>
+        <button class="btn-icon" id="btnBack" type="button">Home</button>
+      </div>
+      <div class="header-center">
+        <div class="logo-pill"><img class="mcorez-logo" src="assets/logos/database-logo.png" alt="M-CodeZ" /></div>
+      </div>
+      <div class="header-right">
+        <div class="user-info">
+          <div class="user-name" id="userName">Resolving user...</div>
+          <div class="user-role" id="userRole">Connecting</div>
+        </div>
+        <button class="btn alt" id="btnSignOut" type="button">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="message error hidden" id="errorBanner"></section>
+    <section class="message info hidden" id="infoBanner"></section>
+    <section class="message warn hidden" id="warningBanner"></section>
+
+    <section class="panel" id="editorPanel">
+      <div class="panel-head">
+        <div>
+          <h2>Receipt Books</h2>
+        </div>
+        <div class="panel-actions">
+          <button class="btn alt" id="btnResetCurrent" type="button" data-disable-when-busy>Restart Current Book</button>
+        </div>
+      </div>
+
+      <div class="finished-overlay hidden" id="finishedOverlay">
+        This session is finished and locked. Editing is disabled to avoid accidental changes. Reload the page to start a new session intentionally.
+      </div>
+
+      <div class="resume-banner hidden" id="resumeBanner">
+        <div class="resume-kicker">Resume Draft</div>
+        <div class="resume-title" id="resumeTitle"></div>
+        <div class="resume-copy" id="resumeCopy"></div>
+      </div>
+
+      <section class="section-block">
+        <div class="receipt-editor-layout">
+          <div class="receipt-left-layout">
+            <div class="receipt-top-grid">
+              <div class="col-card">
+                <div class="col-title">New Entry</div>
+
+                <label>
+                  Department
+                  <select id="department" data-field="department">
+                    <option value="">Select department</option>
+                  </select>
+                  <span class="field-error" id="err-department"></span>
+                </label>
+
+                <label>
+                  Identifier
+                  <select id="identifier" data-field="identifier">
+                    <option value="">Select book definition</option>
+                  </select>
+                  <span class="field-error" id="err-identifier"></span>
+                </label>
+              </div>
+
+              <div class="col-card col-card-empty" aria-hidden="true"></div>
+            </div>
+
+            <div class="col-card">
+              <div class="receipt-range-grid">
+                <div>
+                  <label>
+                    First Receipt Number
+                    <input id="firstReceiptNumber" type="text" inputmode="numeric" data-field="firstReceiptNumber" />
+                    <span class="field-error" id="err-firstReceiptNumber"></span>
+                  </label>
+
+                  <label>
+                    Last Receipt Number
+                    <input id="lastReceiptNumber" type="text" inputmode="numeric" data-field="lastReceiptNumber" />
+                    <span class="field-error" id="err-lastReceiptNumber"></span>
+                  </label>
+                </div>
+
+                <div>
+                  <label>
+                    First Receipt Date
+                    <input id="firstReceiptDate" type="date" data-field="firstReceiptDate" />
+                    <span class="field-error" id="err-firstReceiptDate"></span>
+                  </label>
+
+                  <label>
+                    Last Receipt Date
+                    <input id="lastReceiptDate" type="date" data-field="lastReceiptDate" />
+                    <span class="field-error" id="err-lastReceiptDate"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-card receipt-calc-card">
+            <div class="col-title">Calculator</div>
+
+            <div class="calc-console" id="calculatorConsole">
+              <input
+                class="calc-display"
+                id="calcDisplay"
+                type="text"
+                inputmode="decimal"
+                autocomplete="off"
+                placeholder="0"
+                aria-label="Receipt value input"
+              />
+
+              <div class="calc-grid">
+                <button class="calc-btn action" type="button" data-calc-action="clearInput">C</button>
+                <button class="calc-btn action" type="button" data-calc-action="backspace">DEL</button>
+                <button class="calc-btn action" type="button" data-calc-action="deleteLastEntry">Undo Last</button>
+                <button class="calc-btn action" type="button" data-calc-action="resetBook">Reset Book</button>
+
+                <button class="calc-btn" type="button" data-calc-digit="7">7</button>
+                <button class="calc-btn" type="button" data-calc-digit="8">8</button>
+                <button class="calc-btn" type="button" data-calc-digit="9">9</button>
+                <button class="calc-btn equals" type="button" data-calc-action="equals">Next</button>
+
+                <button class="calc-btn" type="button" data-calc-digit="4">4</button>
+                <button class="calc-btn" type="button" data-calc-digit="5">5</button>
+                <button class="calc-btn" type="button" data-calc-digit="6">6</button>
+                <button class="calc-btn" type="button" data-calc-digit=".">.</button>
+
+                <button class="calc-btn" type="button" data-calc-digit="1">1</button>
+                <button class="calc-btn" type="button" data-calc-digit="2">2</button>
+                <button class="calc-btn" type="button" data-calc-digit="3">3</button>
+                <button class="calc-btn" type="button" data-calc-digit="0">0</button>
+              </div>
+
+              <div class="calc-list-wrap" id="calcEntryList"></div>
+            </div>
+
+            <label>
+              Cancelled Receipt Numbers
+              <input id="cancelledReceipts" type="text" readonly />
+              <span class="field-help">Filled automatically when a receipt value is 0.00.</span>
+              <span class="field-error" id="err-cancelledReceipts"></span>
+            </label>
+
+            <span class="field-error" id="err-calculatorEntries"></span>
+          </div>
+        </div>
+
+        <div class="validation-list hidden" id="validationList"></div>
+
+        <div class="panel-actions">
+          <button class="btn" id="btnSaveNew" type="button" data-disable-when-busy>SAVE AND NEW BOOK</button>
+          <button class="btn" id="btnSaveFinish" type="button" data-disable-when-busy>SAVE AND FINISH</button>
+        </div>
+      </section>
+    </section>
+
+    <section class="panel" id="savedBooksPanel">
+      <div class="panel-head">
+        <div>
+          <h3>Saved In This Window</h3>
+          <p>This table resets when you leave this page. Click a row to review full internal stored details from this open window only.</p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Entry Timestamp</th>
+              <th>Receipt Book Date</th>
+              <th>First Receipt No.</th>
+              <th>Last Receipt No.</th>
+              <th>Total</th>
+              <th>User</th>
+            </tr>
+          </thead>
+          <tbody id="savedBooksBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="detailModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailModalTitle">
+      <div class="modal-head">
+        <div>
+          <h3 id="detailModalTitle">Receipt Book Details</h3>
+          <p class="muted">Full internal storage payload for review and audit trail.</p>
+        </div>
+        <button class="btn alt" id="btnCloseDetails" type="button">Close</button>
+      </div>
+
+      <div class="detail-grid" id="detailGrid"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="actionModalBackdrop">
+    <div class="modal small" role="dialog" aria-modal="true" aria-labelledby="actionModalTitle">
+      <div class="modal-head">
+        <div>
+          <h3 id="actionModalTitle">Action Required</h3>
+        </div>
+        <button class="btn alt" id="btnCloseActionModal" type="button">Close</button>
+      </div>
+
+      <p class="modal-copy" id="actionModalMessage"></p>
+
+      <label class="modal-input-wrap hidden" id="actionModalInputWrap">
+        <span id="actionModalInputLabel">Amount</span>
+        <input id="actionModalInput" type="text" inputmode="decimal" autocomplete="off" />
+        <span class="field-error" id="actionModalInputError"></span>
+      </label>
+
+      <div class="modal-actions-grid" id="actionModalActions"></div>
+    </div>
+  </div>
+
+  <div class="footer">Receipt Books workspace</div>
+
+  <script>
+    const API_ORIGIN_STORAGE_KEY = "empinfo.api_origin.v1";
+    const AUTH_STORAGE_KEY = "empinfo.auth.v1";
+    const STORAGE_SAVED_BOOKS_KEY = "receipt-books.saved.v2";
+    const STORAGE_DRAFT_KEY = "receipt-books.current-draft.v2";
+    const STORAGE_FINISH_KEY = "receipt-books.finished.v2";
+    const RECEIPT_DEPARTMENT_OPTIONS = ["MDCZ", "MDCQ"];
+    const RECEIPT_IDENTIFIER_OPTIONS = [
+      { value: "GREEN", label: "Green" },
+      { value: "DEPOSIT", label: "Deposit" },
+      { value: "OTHER", label: "Other" }
+    ];
+
+    const DEFAULT_API_ORIGIN = window.location.port === "8055"
+      ? window.location.origin
+      : `${window.location.protocol}//${window.location.hostname}:8055`;
+    const PAGE_QUERY = new URLSearchParams(window.location.search);
+    const REQUESTED_DRAFT_UID = String(PAGE_QUERY.get("draft_uid") || "").trim();
+    const RECEIPT_TIMING_NOTE_PREFIX = "__receipt_books_timing__:";
+    const PAGE_OPENED_AT_MS = Date.now();
+    const PAGE_OPENED_AT_ISO = new Date(PAGE_OPENED_AT_MS).toISOString();
+
+    const state = {
+      busy: false,
+      allowPageExit: false,
+      finished: false,
+      currentUser: "local-user",
+      currentUserEmail: "",
+      currentUserRole: "",
+      apiOrigin: "",
+      storageMode: "auto",
+      savedBooks: [],
+      draftSyncBlockedMessage: "",
+      currentBook: {
+        department: "",
+        identifier: "",
+        firstReceiptNumber: "",
+        lastReceiptNumber: "",
+        cancelledReceipts: "",
+        firstReceiptDate: "",
+        lastReceiptDate: "",
+        calcInput: "",
+        calculatorEntries: [],
+        receiptTiming: {}
+      },
+      lastValidation: {
+        valid: true,
+        errors: [],
+        fieldErrors: {}
+      }
+    };
+    const PROTECTED_BOOK_FIELDS = new Set([
+      "department",
+      "identifier",
+      "firstReceiptNumber",
+      "lastReceiptNumber",
+      "firstReceiptDate",
+      "lastReceiptDate"
+    ]);
+    const PROTECTED_BOOK_FIELD_MESSAGE = "This field cannot be blank after receipt values are entered. Change it instead.";
+
+    const refs = {
+      userName: document.getElementById("userName"),
+      userRole: document.getElementById("userRole"),
+      errorBanner: document.getElementById("errorBanner"),
+      infoBanner: document.getElementById("infoBanner"),
+      warningBanner: document.getElementById("warningBanner"),
+      finishedOverlay: document.getElementById("finishedOverlay"),
+      resumeBanner: document.getElementById("resumeBanner"),
+      resumeTitle: document.getElementById("resumeTitle"),
+      resumeCopy: document.getElementById("resumeCopy"),
+      validationList: document.getElementById("validationList"),
+      calcDisplay: document.getElementById("calcDisplay"),
+      calcEntryList: document.getElementById("calcEntryList"),
+      savedBooksBody: document.getElementById("savedBooksBody"),
+      detailModalBackdrop: document.getElementById("detailModalBackdrop"),
+      detailGrid: document.getElementById("detailGrid"),
+      actionModalBackdrop: document.getElementById("actionModalBackdrop"),
+      actionModalTitle: document.getElementById("actionModalTitle"),
+      actionModalMessage: document.getElementById("actionModalMessage"),
+      actionModalInputWrap: document.getElementById("actionModalInputWrap"),
+      actionModalInputLabel: document.getElementById("actionModalInputLabel"),
+      actionModalInput: document.getElementById("actionModalInput"),
+      actionModalInputError: document.getElementById("actionModalInputError"),
+      actionModalActions: document.getElementById("actionModalActions"),
+      btnBack: document.getElementById("btnBack"),
+      btnSignOut: document.getElementById("btnSignOut"),
+      btnResetCurrent: document.getElementById("btnResetCurrent"),
+      btnSaveNew: document.getElementById("btnSaveNew"),
+      btnSaveFinish: document.getElementById("btnSaveFinish"),
+      btnCloseDetails: document.getElementById("btnCloseDetails"),
+      btnCloseActionModal: document.getElementById("btnCloseActionModal"),
+      fieldInputs: {
+        department: document.getElementById("department"),
+        identifier: document.getElementById("identifier"),
+        firstReceiptNumber: document.getElementById("firstReceiptNumber"),
+        lastReceiptNumber: document.getElementById("lastReceiptNumber"),
+        cancelledReceipts: document.getElementById("cancelledReceipts"),
+        firstReceiptDate: document.getElementById("firstReceiptDate"),
+        lastReceiptDate: document.getElementById("lastReceiptDate")
+      },
+      fieldErrors: {
+        department: document.getElementById("err-department"),
+        identifier: document.getElementById("err-identifier"),
+        firstReceiptNumber: document.getElementById("err-firstReceiptNumber"),
+        lastReceiptNumber: document.getElementById("err-lastReceiptNumber"),
+        cancelledReceipts: document.getElementById("err-cancelledReceipts"),
+        firstReceiptDate: document.getElementById("err-firstReceiptDate"),
+        lastReceiptDate: document.getElementById("err-lastReceiptDate"),
+        calculatorEntries: document.getElementById("err-calculatorEntries")
+      }
+    };
+
+    const actionModalState = {
+      buttons: []
+    };
+    let draftSyncTimer = 0;
+    let draftSyncQueued = false;
+    let draftSyncInFlight = false;
+    let draftSyncSignature = "";
+    const receiptTimingRuntime = {
+      activeSinceMs: 0,
+      active: false
+    };
+
+    function normalizeApiOrigin(origin) {
+      return String(origin || "").trim().replace(/\/$/, "");
+    }
+
+    function readStoredApiOrigin() {
+      try {
+        return normalizeApiOrigin(localStorage.getItem(API_ORIGIN_STORAGE_KEY));
+      } catch {
+        return "";
+      }
+    }
+
+    function persistApiOrigin(origin) {
+      const normalized = normalizeApiOrigin(origin);
+      if (!normalized) return "";
+      try {
+        localStorage.setItem(API_ORIGIN_STORAGE_KEY, normalized);
+      } catch {}
+      return normalized;
+    }
+
+    function getApiOrigin() {
+      const params = new URLSearchParams(window.location.search);
+      return (
+        normalizeApiOrigin(params.get("api_origin")) ||
+        readStoredApiOrigin() ||
+        normalizeApiOrigin(DEFAULT_API_ORIGIN)
+      );
+    }
+
+    function getAuthToken() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || "{}");
+        return stored?.access_token || "";
+      } catch {
+        return "";
+      }
+    }
+
+    function getStoredAuthRecord() {
+      try {
+        return JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || "{}");
+      } catch {
+        return {};
+      }
+    }
+
+    function parseJwtPayload(token) {
+      try {
+        const payloadPart = String(token || "").split(".")[1];
+        if (!payloadPart) return null;
+        const base64 = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
+        const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+        return JSON.parse(atob(padded));
+      } catch {
+        return null;
+      }
+    }
+
+    function getDraftOwnerEmail() {
+      const stored = getStoredAuthRecord();
+      const directEmail = String(stored?.email || "").trim().toLowerCase();
+      if (directEmail) return directEmail;
+
+      const payload = parseJwtPayload(stored?.access_token || "");
+      return String(payload?.email || payload?.mail || "").trim().toLowerCase();
+    }
+
+    function getDraftOwnerName() {
+      const payload = parseJwtPayload(getStoredAuthRecord()?.access_token || "");
+      const fromToken = String(payload?.first_name || payload?.firstname || "").trim();
+      if (fromToken) return fromToken;
+      if (state.currentUser && state.currentUser !== "local-user") return state.currentUser;
+      return "";
+    }
+
+    function clearAuth() {
+      try {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+      } catch {}
+    }
+
+    function redirectToLogin(reason) {
+      const suffix = reason ? `&reason=${encodeURIComponent(reason)}` : "";
+      window.location.href = `./login.html?api_origin=${encodeURIComponent(state.apiOrigin)}${suffix}`;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof window.initIdleLogout === 'function') window.initIdleLogout('');
+    });
+
+    const moneyFormatter = new Intl.NumberFormat("en-MT", {
+      style: "currency",
+      currency: "EUR",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+    function asMoney(value) {
+      const amount = Number(value);
+      return moneyFormatter.format(Number.isFinite(amount) ? amount : 0);
+    }
+
+    function getDisplayNameFromEmail(email) {
+      const localPart = String(email || "").trim().split("@")[0] || "";
+      if (!localPart) return "";
+      return localPart
+        .replace(/[._-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .replace(/\b[a-z]/g, (letter) => letter.toUpperCase());
+    }
+
+    function resolveEntryUserDisplay(entry) {
+      const createdByName = String(entry?.created_by_name || "").trim();
+      if (createdByName) return createdByName;
+
+      const createdByEmail = String(entry?.created_by_email || "").trim().toLowerCase();
+      if (createdByEmail && createdByEmail === state.currentUserEmail && state.currentUser && state.currentUser !== "local-user") {
+        return state.currentUser;
+      }
+
+      return getDisplayNameFromEmail(createdByEmail)
+        || String(entry?.created_by_user_id || "").trim()
+        || "Unknown User";
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;");
+    }
+
+    function isoNow() {
+      return new Date().toISOString();
+    }
+
+    function buildEmptyReceiptTiming(firstOpenedAt = "") {
+      return {
+        firstOpenedAt: String(firstOpenedAt || "").trim(),
+        lastResumedAt: "",
+        lastPausedAt: "",
+        completedAt: "",
+        totalMs: 0,
+        sessionCount: 0
+      };
+    }
+
+    function normalizeReceiptTiming(value, fallbackFirstOpenedAt = "") {
+      const source = value && typeof value === "object" ? value : {};
+      return {
+        firstOpenedAt: String(source.firstOpenedAt || source.first_opened_at || fallbackFirstOpenedAt || "").trim(),
+        lastResumedAt: String(source.lastResumedAt || source.last_resumed_at || "").trim(),
+        lastPausedAt: String(source.lastPausedAt || source.last_paused_at || "").trim(),
+        completedAt: String(source.completedAt || source.completed_at || "").trim(),
+        totalMs: Math.max(0, Math.round(Number(source.totalMs ?? source.total_ms ?? 0) || 0)),
+        sessionCount: Math.max(0, Math.round(Number(source.sessionCount ?? source.session_count ?? 0) || 0))
+      };
+    }
+
+    function ensureReceiptTiming(book = state.currentBook, fallbackFirstOpenedAt = PAGE_OPENED_AT_ISO) {
+      if (!book || typeof book !== "object") {
+        return normalizeReceiptTiming({}, fallbackFirstOpenedAt);
+      }
+      book.receiptTiming = normalizeReceiptTiming(book.receiptTiming, fallbackFirstOpenedAt);
+      return book.receiptTiming;
+    }
+
+    function resetReceiptTimingRuntime() {
+      receiptTimingRuntime.activeSinceMs = 0;
+      receiptTimingRuntime.active = false;
+    }
+
+    function snapshotReceiptTiming(book = state.currentBook, options = {}) {
+      const timing = ensureReceiptTiming(book, options.firstOpenedAt || PAGE_OPENED_AT_ISO);
+      const nowMs = Number.isFinite(options.nowMs) ? options.nowMs : Date.now();
+      const nowIso = String(options.nowIso || new Date(nowMs).toISOString());
+      const runtimeMs = receiptTimingRuntime.active && receiptTimingRuntime.activeSinceMs > 0
+        ? Math.max(0, nowMs - receiptTimingRuntime.activeSinceMs)
+        : 0;
+
+      return {
+        firstOpenedAt: timing.firstOpenedAt || nowIso,
+        lastResumedAt: timing.lastResumedAt || "",
+        lastPausedAt: options.pause === true ? nowIso : timing.lastPausedAt || "",
+        completedAt: options.complete === true ? nowIso : timing.completedAt || "",
+        totalMs: Math.max(0, Math.round(Number(timing.totalMs || 0) + runtimeMs)),
+        sessionCount: Math.max(0, Math.round(Number(timing.sessionCount || 0) || 0))
+      };
+    }
+
+    function captureReceiptTiming(book = state.currentBook, options = {}) {
+      if (!book || typeof book !== "object") return buildEmptyReceiptTiming(PAGE_OPENED_AT_ISO);
+      const snapshot = snapshotReceiptTiming(book, options);
+      book.receiptTiming = snapshot;
+
+      if (options.keepRunning === true) {
+        receiptTimingRuntime.activeSinceMs = Number.isFinite(options.resumeFromMs) ? options.resumeFromMs : Date.now();
+        receiptTimingRuntime.active = true;
+      } else {
+        resetReceiptTimingRuntime();
+      }
+
+      return snapshot;
+    }
+
+    function resumeReceiptTimingSession(book = state.currentBook, options = {}) {
+      if (!book || typeof book !== "object") return;
+      if (state.finished || state.draftSyncBlockedMessage || String(book.draftStatus || "").trim().toUpperCase() === "STOPPED") {
+        resetReceiptTimingRuntime();
+        return;
+      }
+
+      const activeSinceMs = Number.isFinite(options.activeSinceMs) ? options.activeSinceMs : Date.now();
+      const resumedAt = String(options.resumedAt || new Date(activeSinceMs).toISOString());
+      const timing = ensureReceiptTiming(book, options.firstOpenedAt || resumedAt);
+
+      timing.sessionCount = Math.max(0, Math.round(Number(timing.sessionCount || 0) || 0)) + 1;
+      timing.lastResumedAt = resumedAt;
+      timing.completedAt = "";
+      book.receiptTiming = timing;
+      receiptTimingRuntime.activeSinceMs = activeSinceMs;
+      receiptTimingRuntime.active = true;
+    }
+
+    function buildReceiptTimingNote(timing) {
+      const normalized = normalizeReceiptTiming(timing, PAGE_OPENED_AT_ISO);
+      return `${RECEIPT_TIMING_NOTE_PREFIX}${JSON.stringify({
+        version: 1,
+        first_opened_at: normalized.firstOpenedAt || "",
+        last_resumed_at: normalized.lastResumedAt || "",
+        last_paused_at: normalized.lastPausedAt || "",
+        completed_at: normalized.completedAt || "",
+        total_ms: normalized.totalMs,
+        total_minutes: Number((normalized.totalMs / 60000).toFixed(2)),
+        session_count: normalized.sessionCount
+      })}`;
+    }
+
+    function parseReceiptTimingNote(note) {
+      const raw = String(note || "").trim();
+      if (!raw.startsWith(RECEIPT_TIMING_NOTE_PREFIX)) return null;
+      try {
+        return normalizeReceiptTiming(JSON.parse(raw.slice(RECEIPT_TIMING_NOTE_PREFIX.length)), "");
+      } catch {
+        return null;
+      }
+    }
+
+    function classifyIdentifierBucket(identifier) {
+      const key = String(identifier || "").trim().toLowerCase();
+      return key === "green" || key === "deposit" || key === "deposits" ? "PRIMARY" : "ADMIN_OTHER";
+    }
+
+    function setBusy(value) {
+      state.busy = Boolean(value);
+      document.querySelectorAll("[data-disable-when-busy]").forEach((button) => {
+        const allowWhileDraftBlocked = button.id === "btnResetCurrent";
+        button.disabled = state.busy || state.finished || (Boolean(state.draftSyncBlockedMessage) && !allowWhileDraftBlocked);
+      });
+      document.querySelectorAll(".calc-btn").forEach((button) => {
+        const action = button.getAttribute("data-calc-action");
+        button.disabled = state.busy || state.finished || (Boolean(state.draftSyncBlockedMessage) && action !== "resetBook");
+      });
+      renderCalculator();
+    }
+
+    function showBanner(type, message) {
+      refs.errorBanner.classList.add("hidden");
+      refs.infoBanner.classList.add("hidden");
+      refs.warningBanner.classList.add("hidden");
+
+      const text = String(message || "").trim();
+      if (!text) return;
+
+      if (type === "error") {
+        refs.errorBanner.textContent = text;
+        refs.errorBanner.classList.remove("hidden");
+        return;
+      }
+
+      if (type === "warn") {
+        refs.warningBanner.textContent = text;
+        refs.warningBanner.classList.remove("hidden");
+        return;
+      }
+
+      refs.infoBanner.textContent = text;
+      refs.infoBanner.classList.remove("hidden");
+    }
+
+    function clearBanners() {
+      showBanner("info", "");
+    }
+
+    function getHeaders() {
+      const token = getAuthToken();
+      if (!token) return { "Content-Type": "application/json" };
+      return {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      };
+    }
+
+    async function fetchJson(path, options = {}) {
+      const response = await fetch(`${state.apiOrigin}${path}`, {
+        method: options.method || "GET",
+        headers: getHeaders(),
+        body: options.body ? JSON.stringify(options.body) : undefined
+      });
+      const data = await response.json().catch(() => ({}));
+      return { response, data };
+    }
+
+    async function verifyBackendHealth() {
+      try {
+        const { response } = await fetchJson("/server/ping");
+        if (!response.ok) {
+          showBanner("error", "Directus API is reachable but /server/ping failed.");
+          return;
+        }
+      } catch {
+        showBanner("error", "Directus API is unreachable.");
+      }
+    }
+
+    async function createReceiptEntry(payload) {
+      const custom = await fetchJson("/receipt-books/entries", {
+        method: "POST",
+        body: payload
+      });
+      if (custom.response.status !== 404) {
+        if (!custom.response.ok) {
+          throw new Error(custom.data?.details || custom.data?.errors?.[0]?.message || custom.data?.error || `Directus POST failed (${custom.response.status})`);
+        }
+        state.storageMode = "custom";
+        return custom.data?.entry || null;
+      }
+
+      const fallbackPayload = Object.assign({}, payload);
+      delete fallbackPayload.draft_uid;
+      const fallback = await fetchJson("/items/receipt_book_entries", {
+        method: "POST",
+        body: fallbackPayload
+      });
+      if (!fallback.response.ok) {
+        throw new Error(
+          fallback.data?.details
+          || fallback.data?.message
+          || fallback.data?.errors?.[0]?.message
+          || fallback.data?.error
+          || `Directus items POST failed (${fallback.response.status})`
+        );
+      }
+      state.storageMode = "items";
+      return fallback.data?.data || null;
+    }
+
+    async function listReceiptEntries() {
+      const custom = await fetchJson("/receipt-books/entries");
+      if (custom.response.status !== 404) {
+        if (!custom.response.ok) {
+          throw new Error(custom.data?.errors?.[0]?.message || custom.data?.error || `Failed to load receipt books (${custom.response.status})`);
+        }
+        state.storageMode = "custom";
+        return Array.isArray(custom.data?.entries) ? custom.data.entries : [];
+      }
+
+      const fallback = await fetchJson("/items/receipt_book_entries?limit=500&sort=-entry_date,-id");
+      if (!fallback.response.ok) {
+        throw new Error(
+          fallback.data?.errors?.[0]?.message
+          || fallback.data?.error
+          || `Failed to load receipt books (${fallback.response.status})`
+        );
+      }
+      state.storageMode = "items";
+      return Array.isArray(fallback.data?.data) ? fallback.data.data : [];
+    }
+
+    async function fetchCurrentReceiptDraft(draftUid = "") {
+      const query = draftUid ? `?draft_uid=${encodeURIComponent(String(draftUid || "").trim())}` : "";
+      const custom = await fetchJson(`/receipt-books/drafts/current${query}`);
+      if (custom.response.status === 404) return null;
+      if (!custom.response.ok) {
+        throw new Error(custom.data?.errors?.[0]?.message || custom.data?.error || `Failed to load draft (${custom.response.status})`);
+      }
+      return custom.data?.draft || null;
+    }
+
+    async function saveCurrentReceiptDraft(draft) {
+      const custom = await fetchJson("/receipt-books/drafts/current", {
+        method: "PUT",
+        body: {
+          draft,
+          source_app: "receipt-books-frontend"
+        }
+      });
+      if (custom.response.status === 404) return null;
+      if (!custom.response.ok) {
+        throw new Error(custom.data?.errors?.[0]?.message || custom.data?.error || `Failed to save draft (${custom.response.status})`);
+      }
+      return custom.data?.draft || null;
+    }
+
+    async function deleteCurrentReceiptDraft(draftUid = "") {
+      const query = draftUid ? `?draft_uid=${encodeURIComponent(String(draftUid || ""))}` : "";
+      const custom = await fetchJson(`/receipt-books/drafts/current${query}`, {
+        method: "DELETE"
+      });
+      if (custom.response.status === 404) return null;
+      if (!custom.response.ok) {
+        throw new Error(custom.data?.errors?.[0]?.message || custom.data?.error || `Failed to delete draft (${custom.response.status})`);
+      }
+      return custom.data || null;
+    }
+
+    async function getCurrentUser() {
+      const token = getAuthToken();
+      if (!token) return "local-user";
+
+      try {
+        const { response, data } = await fetchJson("/users/me?fields=first_name,last_name,email");
+        if (!response.ok) return "local-user";
+        const user = data?.data || {};
+        const fullName = `${String(user.first_name || "").trim()} ${String(user.last_name || "").trim()}`.trim();
+        return fullName || String(user.email || "").trim() || "local-user";
+      } catch {
+        return "local-user";
+      }
+    }
+
+    async function getCurrentUserProfile() {
+      const token = getAuthToken();
+      if (!token) {
+        return {
+          name: "local-user",
+          email: getDraftOwnerEmail(),
+          role: ""
+        };
+      }
+
+      try {
+        const { response, data } = await fetchJson("/users/me?fields=first_name,last_name,email,role.name");
+        if (!response.ok) {
+          return {
+            name: await getCurrentUser(),
+            email: getDraftOwnerEmail(),
+            role: ""
+          };
+        }
+        const user = data?.data || {};
+        const name = `${String(user.first_name || "").trim()} ${String(user.last_name || "").trim()}`.trim()
+          || String(user.email || "").trim()
+          || "local-user";
+        return {
+          name,
+          email: String(user.email || "").trim().toLowerCase(),
+          role: String(user?.role?.name || "").trim()
+        };
+      } catch {
+        return {
+          name: await getCurrentUser(),
+          email: getDraftOwnerEmail(),
+          role: ""
+        };
+      }
+    }
+
+    function readStorage(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return fallback;
+        return JSON.parse(raw);
+      } catch {
+        return fallback;
+      }
+    }
+
+    function writeStorage(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch {}
+    }
+
+    function removeStorage(key) {
+      try {
+        localStorage.removeItem(key);
+      } catch {}
+    }
+
+    function parseJsonArray(value) {
+      if (Array.isArray(value)) return value;
+      if (typeof value !== "string" || !value.trim()) return [];
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function buildEmptyBookDraft() {
+      return {
+        department: "",
+        identifier: "",
+        firstReceiptNumber: "",
+        lastReceiptNumber: "",
+        cancelledReceipts: "",
+        firstReceiptDate: "",
+        lastReceiptDate: "",
+        calcInput: "",
+        calculatorEntries: [],
+        draftServerId: "",
+        draftServerUid: "",
+        draftAssignedEmail: "",
+        draftAssignedName: "",
+        draftStatus: "",
+        draftOwnerEmail: "",
+        draftOwnerName: "",
+        draftUpdatedAt: "",
+        receiptTiming: buildEmptyReceiptTiming()
+      };
+    }
+
+    function renderDepartmentOptions(selectedValue = "") {
+      const select = refs.fieldInputs.department;
+      if (!select) return;
+
+      const normalizedSelected = String(selectedValue || "").trim().toUpperCase();
+      const optionValues = normalizedSelected && !RECEIPT_DEPARTMENT_OPTIONS.includes(normalizedSelected)
+        ? [normalizedSelected, ...RECEIPT_DEPARTMENT_OPTIONS]
+        : RECEIPT_DEPARTMENT_OPTIONS.slice();
+
+      select.innerHTML = [
+        '<option value="">Select department</option>',
+        ...optionValues.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`)
+      ].join("");
+      select.value = normalizedSelected;
+    }
+
+    function renderIdentifierOptions(selectedValue = "") {
+      const select = refs.fieldInputs.identifier;
+      if (!select) return;
+
+      const normalizedSelected = String(selectedValue || "").trim().toUpperCase();
+      const options = RECEIPT_IDENTIFIER_OPTIONS.slice();
+
+      if (normalizedSelected && !options.some((option) => option.value === normalizedSelected)) {
+        options.unshift({
+          value: normalizedSelected,
+          label: normalizedSelected
+        });
+      }
+
+      select.innerHTML = [
+        '<option value="">Select book definition</option>',
+        ...options.map((option) => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`)
+      ].join("");
+      select.value = normalizedSelected;
+    }
+
+    function hasDraftInProgress(book = state.currentBook) {
+      const target = book || {};
+      if (Array.isArray(target.calculatorEntries) && target.calculatorEntries.length) return true;
+
+      return [
+        target.department,
+        target.identifier,
+        target.firstReceiptNumber,
+        target.lastReceiptNumber,
+        target.firstReceiptDate,
+        target.lastReceiptDate,
+        target.calcInput
+      ].some((value) => String(value || "").trim());
+    }
+
+    function getDraftTimestamp(value) {
+      const time = Date.parse(String(value || ""));
+      return Number.isFinite(time) ? time : 0;
+    }
+
+    function normalizeCalculatorEntries(entries) {
+      if (!Array.isArray(entries)) return [];
+      return entries
+        .map((value) => Number(value))
+        .filter((value) => Number.isFinite(value) && value >= 0)
+        .map((value) => Number(value.toFixed(2)));
+    }
+
+    function stampDraftMetadata(target = state.currentBook) {
+      if (!target || typeof target !== "object") return target;
+      const ownerEmail = state.currentUserEmail || getDraftOwnerEmail();
+      const ownerName = state.currentUser || getDraftOwnerName();
+
+      if (ownerEmail) target.draftOwnerEmail = ownerEmail;
+      if (ownerName) target.draftOwnerName = ownerName;
+      if (!target.draftAssignedEmail) target.draftAssignedEmail = ownerEmail;
+      if (!target.draftAssignedName) target.draftAssignedName = ownerName;
+      if (!target.draftStatus) target.draftStatus = "ACTIVE";
+      target.draftUpdatedAt = isoNow();
+      return target;
+    }
+
+    function clearCurrentDraft() {
+      state.draftSyncBlockedMessage = "";
+      draftSyncSignature = "";
+      resetReceiptTimingRuntime();
+      state.currentBook = buildEmptyBookDraft();
+      removeStorage(STORAGE_DRAFT_KEY);
+    }
+
+    function buildDraftFromServerRecord(record) {
+      const draft = record?.draft || {};
+      return Object.assign(buildEmptyBookDraft(), {
+        department: String(draft.department || record?.department_code || "").trim().toUpperCase(),
+        identifier: String(draft.identifier || record?.identifier || "").trim().toUpperCase(),
+        firstReceiptNumber: String(draft.firstReceiptNumber || record?.first_receipt_number || "").trim(),
+        lastReceiptNumber: String(draft.lastReceiptNumber || record?.last_receipt_number || "").trim(),
+        cancelledReceipts: String(draft.cancelledReceipts || (Array.isArray(record?.cancelled_receipt_numbers) ? record.cancelled_receipt_numbers.join(",") : "") || "").trim(),
+        firstReceiptDate: String(draft.firstReceiptDate || record?.first_receipt_date || "").trim(),
+        lastReceiptDate: String(draft.lastReceiptDate || record?.last_receipt_date || "").trim(),
+        calcInput: String(draft.calcInput || "").trim(),
+        calculatorEntries: normalizeCalculatorEntries(draft.calculatorEntries || []),
+        draftServerId: String(record?.id || ""),
+        draftServerUid: String(record?.draft_uid || draft.draftServerUid || ""),
+        draftAssignedEmail: String(draft.draftAssignedEmail || record?.assigned_to?.email || "").trim().toLowerCase(),
+        draftAssignedName: String(draft.draftAssignedName || record?.assigned_to?.name || "").trim(),
+        draftStatus: String(record?.status || draft.draftStatus || "ACTIVE").trim().toUpperCase(),
+        draftOwnerEmail: String(draft.draftOwnerEmail || record?.owner?.email || "").trim().toLowerCase(),
+        draftOwnerName: String(draft.draftOwnerName || record?.owner?.name || "").trim(),
+        draftUpdatedAt: String(draft.draftUpdatedAt || record?.updated_at || "").trim(),
+        receiptTiming: normalizeReceiptTiming(draft.receiptTiming || draft.receipt_timing || {}, "")
+      });
+    }
+
+    function applyDraftServerMetadata(record) {
+      if (!record || typeof record !== "object") return;
+      const draft = record?.draft || {};
+      state.currentBook.draftServerId = String(record?.id || state.currentBook.draftServerId || "");
+      state.currentBook.draftServerUid = String(record?.draft_uid || draft.draftServerUid || state.currentBook.draftServerUid || "");
+      state.currentBook.draftAssignedEmail = String(draft.draftAssignedEmail || record?.assigned_to?.email || state.currentBook.draftAssignedEmail || "").trim().toLowerCase();
+      state.currentBook.draftAssignedName = String(draft.draftAssignedName || record?.assigned_to?.name || state.currentBook.draftAssignedName || "").trim();
+      state.currentBook.draftOwnerEmail = String(draft.draftOwnerEmail || record?.owner?.email || state.currentBook.draftOwnerEmail || "").trim().toLowerCase();
+      state.currentBook.draftOwnerName = String(draft.draftOwnerName || record?.owner?.name || state.currentBook.draftOwnerName || "").trim();
+      state.currentBook.draftStatus = String(record?.status || draft.draftStatus || state.currentBook.draftStatus || "ACTIVE").trim().toUpperCase();
+      state.currentBook.draftUpdatedAt = String(draft.draftUpdatedAt || record?.updated_at || isoNow()).trim();
+      state.currentBook.receiptTiming = normalizeReceiptTiming(draft.receiptTiming || draft.receipt_timing || state.currentBook.receiptTiming || {}, "");
+    }
+
+    function buildDraftSyncSignature(book = state.currentBook) {
+      const target = book || {};
+      return JSON.stringify({
+        department: target.department || "",
+        identifier: target.identifier || "",
+        firstReceiptNumber: target.firstReceiptNumber || "",
+        lastReceiptNumber: target.lastReceiptNumber || "",
+        firstReceiptDate: target.firstReceiptDate || "",
+        lastReceiptDate: target.lastReceiptDate || "",
+        calcInput: target.calcInput || "",
+        calculatorEntries: Array.isArray(target.calculatorEntries) ? target.calculatorEntries : [],
+        draftServerUid: target.draftServerUid || "",
+        draftAssignedEmail: target.draftAssignedEmail || "",
+        draftStatus: target.draftStatus || "",
+        receiptTiming: normalizeReceiptTiming(target.receiptTiming || {}, "")
+      });
+    }
+
+    function loadStateFromStorage() {
+      state.savedBooks = [];
+      state.currentBook = Object.assign(buildEmptyBookDraft(), readStorage(STORAGE_DRAFT_KEY, {}));
+      state.draftSyncBlockedMessage = "";
+      state.finished = false;
+      removeStorage(STORAGE_SAVED_BOOKS_KEY);
+      removeStorage(STORAGE_FINISH_KEY);
+    }
+
+    function queueDraftSync() {
+      if (!state.apiOrigin || !getAuthToken() || !state.currentUserEmail) return;
+      if (draftSyncTimer) window.clearTimeout(draftSyncTimer);
+      draftSyncTimer = window.setTimeout(() => {
+        draftSyncTimer = 0;
+        void flushDraftSync();
+      }, 300);
+    }
+
+    async function flushDraftSync() {
+      if (!state.apiOrigin || !getAuthToken() || !state.currentUserEmail) return;
+      if (draftSyncInFlight) {
+        draftSyncQueued = true;
+        return;
+      }
+
+      draftSyncInFlight = true;
+      try {
+        if (!hasDraftInProgress()) {
+          if (state.currentBook.draftServerUid) {
+            await deleteCurrentReceiptDraft(state.currentBook.draftServerUid);
+          }
+          draftSyncSignature = "";
+          state.draftSyncBlockedMessage = "";
+          renderFinishedState();
+          return;
+        }
+
+        const signature = buildDraftSyncSignature();
+        if (signature === draftSyncSignature) return;
+
+        const record = await saveCurrentReceiptDraft(state.currentBook);
+        if (record) {
+          applyDraftServerMetadata(record);
+          draftSyncSignature = buildDraftSyncSignature();
+          state.draftSyncBlockedMessage = "";
+          writeStorage(STORAGE_DRAFT_KEY, state.currentBook);
+          renderResumeBanner();
+          renderFinishedState();
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to save draft.";
+        if (/stopped|delegated/i.test(message)) {
+          state.draftSyncBlockedMessage = message;
+          captureReceiptTiming(state.currentBook, { pause: true, keepRunning: false });
+          showBanner("warn", message);
+          renderResumeBanner();
+          renderFinishedState();
+        }
+      } finally {
+        draftSyncInFlight = false;
+        if (draftSyncQueued) {
+          draftSyncQueued = false;
+          void flushDraftSync();
+        }
+      }
+    }
+
+    function persistCurrentDraft(options = {}) {
+      if (!hasDraftInProgress()) {
+        removeStorage(STORAGE_DRAFT_KEY);
+        if (options.skipRemote !== true) queueDraftSync();
+        return;
+      }
+      captureReceiptTiming(state.currentBook, {
+        pause: options.pauseTiming === true,
+        keepRunning: options.pauseTiming !== true
+      });
+      stampDraftMetadata(state.currentBook);
+      writeStorage(STORAGE_DRAFT_KEY, state.currentBook);
+      if (options.skipRemote !== true) queueDraftSync();
+    }
+
+    function persistSavedBooks() {
+      state.savedBooks = Array.isArray(state.savedBooks) ? state.savedBooks : [];
+    }
+
+    function persistFinishedState() {
+      removeStorage(STORAGE_FINISH_KEY);
+    }
+
+    async function hydrateDraftFromBackend() {
+      if (!state.apiOrigin || !getAuthToken() || !state.currentUserEmail) return;
+
+      try {
+        const preferredDraftUid = String(REQUESTED_DRAFT_UID || state.currentBook.draftServerUid || "").trim();
+        const remoteDraft = await fetchCurrentReceiptDraft(preferredDraftUid);
+        if (!remoteDraft) {
+          if (hasDraftInProgress()) {
+            persistCurrentDraft();
+          }
+          return;
+        }
+
+        const remoteBook = buildDraftFromServerRecord(remoteDraft);
+        const localHasDraft = hasDraftInProgress(state.currentBook);
+        const localUpdatedAt = getDraftTimestamp(state.currentBook.draftUpdatedAt);
+        const remoteUpdatedAt = getDraftTimestamp(remoteBook.draftUpdatedAt);
+
+        if (!localHasDraft || remoteUpdatedAt >= localUpdatedAt) {
+          state.currentBook = remoteBook;
+          writeStorage(STORAGE_DRAFT_KEY, state.currentBook);
+          draftSyncSignature = buildDraftSyncSignature(state.currentBook);
+        } else {
+          applyDraftServerMetadata(remoteDraft);
+          persistCurrentDraft();
+        }
+      } catch {
+      }
+    }
+
+    async function discardCurrentDraftEverywhere() {
+      const draftUid = String(state.currentBook.draftServerUid || "").trim();
+      clearCurrentDraft();
+      if (!draftUid || !state.apiOrigin || !getAuthToken()) return;
+      try {
+        await deleteCurrentReceiptDraft(draftUid);
+      } catch {
+      }
+    }
+
+    async function ensureDraftStillEditable() {
+      const draftUid = String(state.currentBook.draftServerUid || "").trim();
+      if (!draftUid || !state.apiOrigin || !getAuthToken()) return true;
+
+      try {
+        const remoteDraft = await fetchCurrentReceiptDraft(draftUid);
+        if (!remoteDraft) {
+          const message = "This receipt book draft is no longer assigned to you. Reload the page for the latest status.";
+          state.draftSyncBlockedMessage = message;
+          captureReceiptTiming(state.currentBook, { pause: true, keepRunning: false });
+          showBanner("warn", message);
+          renderFinishedState();
+          return false;
+        }
+
+        if (String(remoteDraft.draft_uid || "") !== draftUid) {
+          const message = "This receipt book draft has been reassigned. Reload the page before continuing.";
+          state.draftSyncBlockedMessage = message;
+          captureReceiptTiming(state.currentBook, { pause: true, keepRunning: false });
+          showBanner("warn", message);
+          renderFinishedState();
+          return false;
+        }
+
+        if (String(remoteDraft.status || "").trim().toUpperCase() === "STOPPED") {
+          const message = "This receipt book draft has been stopped by management.";
+          state.draftSyncBlockedMessage = message;
+          captureReceiptTiming(state.currentBook, { pause: true, keepRunning: false });
+          showBanner("warn", message);
+          renderFinishedState();
+          return false;
+        }
+
+        state.draftSyncBlockedMessage = "";
+        applyDraftServerMetadata(remoteDraft);
+        return true;
+      } catch {
+        return true;
+      }
+    }
+
+    function mapEntryToSavedBook(entry) {
+      const cancelled = parseJsonArray(entry?.cancelled_receipt_numbers_json);
+      const calculatorValues = parseJsonArray(entry?.calculator_values_json);
+      const timing = parseReceiptTimingNote(entry?.notes);
+      const total = Number(entry?.total_amount || 0);
+      const entryTimestamp = String(entry?.created_at || entry?.entry_date || "").trim();
+      const user = resolveEntryUserDisplay(entry);
+      const firstReceiptDate = String(entry?.first_receipt_date || "").trim();
+      const lastReceiptDate = String(entry?.last_receipt_date || "").trim();
+      const firstReceiptNumber = Number(entry?.first_receipt_number || 0);
+      const lastReceiptNumber = Number(entry?.last_receipt_number || 0);
+      const fullReceiptNumbers = generateReceiptRange(firstReceiptNumber, lastReceiptNumber);
+      const usesFullRangeStorage = Boolean(fullReceiptNumbers.length) && calculatorValues.length === fullReceiptNumbers.length;
+      const validReceiptNumbers = usesFullRangeStorage
+        ? fullReceiptNumbers.filter((receiptNumber, index) => !cancelled.includes(receiptNumber) && Number(calculatorValues[index] || 0) !== 0)
+        : getValidReceiptNumbers(firstReceiptNumber, lastReceiptNumber, cancelled);
+      const receiptNumbersForMapping = usesFullRangeStorage ? fullReceiptNumbers : validReceiptNumbers;
+
+      return {
+        id: String(entry?.entry_uid || entry?.id || ""),
+        summary: {
+          entry_timestamp: entryTimestamp,
+          receipt_book_date: getReceiptBookDateLabel(firstReceiptDate, lastReceiptDate),
+          first_receipt_number: firstReceiptNumber,
+          last_receipt_number: lastReceiptNumber,
+          total: Number(total.toFixed(2)),
+          user
+        },
+        internal: {
+          meta: {
+            source_app: "receipt-books-frontend",
+            schema_version: "v2",
+            commit_mode: "server",
+            created_at: entryTimestamp,
+            created_by: user
+          },
+          book_summary: {
+            entry_timestamp: entryTimestamp,
+            receipt_book_date: getReceiptBookDateLabel(firstReceiptDate, lastReceiptDate),
+            first_receipt_number: firstReceiptNumber,
+            last_receipt_number: lastReceiptNumber,
+            total: Number(total.toFixed(2)),
+            user,
+            department: String(entry?.department_code || entry?.clinic_code || "").trim(),
+            identifier: String(entry?.identifier || "").trim()
+          },
+          hidden_receipt_book_data: {
+            first_receipt_date: firstReceiptDate,
+            last_receipt_date: lastReceiptDate,
+            cancelled_receipt_numbers: cancelled,
+            generated_valid_receipt_numbers: validReceiptNumbers,
+            temporary_calculator_entries: calculatorValues,
+            receipt_number_amount_mapping: buildReceiptAmountMapping(receiptNumbersForMapping, calculatorValues),
+            receipt_entry_timing: timing
+          }
+        }
+      };
+    }
+
+    function buildSavedBookFromPayload(payload, entryId) {
+      return {
+        id: String(entryId || `book_${Date.now()}`),
+        summary: {
+          entry_timestamp: payload.meta?.created_at || "",
+          receipt_book_date: payload.book_summary?.receipt_book_date || "",
+          first_receipt_number: payload.book_summary?.first_receipt_number || "",
+          last_receipt_number: payload.book_summary?.last_receipt_number || "",
+          total: Number(payload.book_summary?.total || 0),
+          user: payload.book_summary?.user || ""
+        },
+        internal: JSON.parse(JSON.stringify(payload))
+      };
+    }
+
+    async function loadSavedBooksFromBackend() {
+      const entries = await listReceiptEntries();
+      state.savedBooks = entries.map(mapEntryToSavedBook);
+      persistSavedBooks();
+      renderSavedBooksTable();
+    }
+
+    function hasEnteredReceiptValues(book = state.currentBook) {
+      return Boolean(Array.isArray(book?.calculatorEntries) && book.calculatorEntries.length);
+    }
+
+    function protectBookFieldValue(fieldName, nextValue, options = {}) {
+      const shouldProtectBlank = options.preserveProtectedBlanks !== false
+        && PROTECTED_BOOK_FIELDS.has(fieldName)
+        && hasEnteredReceiptValues();
+      const normalizedValue = String(nextValue ?? "");
+
+      if (!shouldProtectBlank || normalizedValue.trim()) {
+        return { value: nextValue, restored: false };
+      }
+
+      const previousValue = String(state.currentBook[fieldName] || "");
+      if (!previousValue) {
+        return { value: nextValue, restored: false };
+      }
+
+      if (options.restoreInput === true && refs.fieldInputs[fieldName]) {
+        refs.fieldInputs[fieldName].value = previousValue;
+      }
+
+      return { value: previousValue, restored: true };
+    }
+
+    function syncDraftFromInputs(options = {}) {
+      const restoredFields = [];
+      const assignField = (fieldName, nextValue) => {
+        const result = protectBookFieldValue(fieldName, nextValue, options);
+        if (result.restored) restoredFields.push(fieldName);
+        state.currentBook[fieldName] = result.value;
+      };
+
+      assignField("department", refs.fieldInputs.department.value.trim().toUpperCase());
+      assignField("identifier", refs.fieldInputs.identifier.value.trim().toUpperCase());
+      assignField("firstReceiptNumber", refs.fieldInputs.firstReceiptNumber.value.trim());
+      assignField("lastReceiptNumber", refs.fieldInputs.lastReceiptNumber.value.trim());
+      assignField("firstReceiptDate", refs.fieldInputs.firstReceiptDate.value);
+      assignField("lastReceiptDate", refs.fieldInputs.lastReceiptDate.value);
+      syncCancelledReceiptsField();
+      return restoredFields;
+    }
+
+    function hydrateInputsFromDraft() {
+      renderDepartmentOptions(state.currentBook.department || "");
+      renderIdentifierOptions(state.currentBook.identifier || "");
+      refs.fieldInputs.firstReceiptNumber.value = state.currentBook.firstReceiptNumber || "";
+      refs.fieldInputs.lastReceiptNumber.value = state.currentBook.lastReceiptNumber || "";
+      refs.fieldInputs.firstReceiptDate.value = state.currentBook.firstReceiptDate || "";
+      refs.fieldInputs.lastReceiptDate.value = state.currentBook.lastReceiptDate || "";
+      renderCalculator();
+      renderResumeBanner();
+      renderValidationState();
+      renderSavedBooksTable();
+      renderFinishedState();
+    }
+
+    function setFieldError(field, message) {
+      if (!refs.fieldErrors[field]) return;
+      refs.fieldErrors[field].textContent = message || "";
+    }
+
+    function clearFieldErrors() {
+      Object.keys(refs.fieldErrors).forEach((field) => setFieldError(field, ""));
+    }
+
+    function renderValidationState() {
+      clearFieldErrors();
+      const fieldErrors = state.lastValidation.fieldErrors || {};
+      Object.keys(fieldErrors).forEach((field) => {
+        setFieldError(field, fieldErrors[field]);
+      });
+
+      const errors = Array.isArray(state.lastValidation.errors) ? state.lastValidation.errors : [];
+      if (!errors.length) {
+        refs.validationList.classList.add("hidden");
+        refs.validationList.innerHTML = "";
+      } else {
+        refs.validationList.classList.remove("hidden");
+        refs.validationList.innerHTML = errors.map((err) => `<div>${escapeHtml(err)}</div>`).join("");
+      }
+    }
+
+    function sanitizeCalcInput(rawValue) {
+      const cleaned = String(rawValue || "").replace(/[^0-9.]/g, "");
+      if (!cleaned) return "";
+
+      const hasDot = cleaned.includes(".");
+      const parts = cleaned.split(".");
+      const wholeRaw = parts.shift() || "";
+      const fractionRaw = parts.join("");
+      const whole = wholeRaw.replace(/^0+(?=\d)/, "") || (wholeRaw.startsWith("0") ? "0" : wholeRaw);
+
+      if (!hasDot) return whole;
+      return `${whole || "0"}.${fractionRaw.slice(0, 2)}`;
+    }
+
+    function getExpectedReceiptNumbers() {
+      return generateReceiptRange(state.currentBook.firstReceiptNumber, state.currentBook.lastReceiptNumber);
+    }
+
+    function hasCompleteReceiptDetails() {
+      const receiptNumbers = getExpectedReceiptNumbers();
+      if (!receiptNumbers.length) return false;
+      if (!state.currentBook.firstReceiptDate || !state.currentBook.lastReceiptDate) return false;
+      return state.currentBook.lastReceiptDate >= state.currentBook.firstReceiptDate;
+    }
+
+    function isCalculatorFull(receiptNumbers = getExpectedReceiptNumbers()) {
+      return Boolean(receiptNumbers.length) && state.currentBook.calculatorEntries.length >= receiptNumbers.length;
+    }
+
+    function calculateCancelledReceipts() {
+      const receiptNumbers = getExpectedReceiptNumbers();
+      return state.currentBook.calculatorEntries.reduce((cancelled, amount, index) => {
+        if (receiptNumbers[index] === undefined) return cancelled;
+        if (Number(amount || 0) === 0) cancelled.push(receiptNumbers[index]);
+        return cancelled;
+      }, []);
+    }
+
+    function syncCancelledReceiptsField() {
+      const cancelled = calculateCancelledReceipts();
+      const value = cancelled.join(",");
+      state.currentBook.cancelledReceipts = value;
+      refs.fieldInputs.cancelledReceipts.value = value;
+      return cancelled;
+    }
+
+    function getNextReceiptNumberToResume() {
+      const receiptNumbers = getExpectedReceiptNumbers();
+      if (!receiptNumbers.length) return "";
+      const nextIndex = state.currentBook.calculatorEntries.length;
+      return String(receiptNumbers[nextIndex] ?? receiptNumbers[receiptNumbers.length - 1]);
+    }
+
+    function renderResumeBanner() {
+      if (state.finished || !hasDraftInProgress()) {
+        refs.resumeBanner.classList.add("hidden");
+        refs.resumeTitle.textContent = "";
+        refs.resumeCopy.textContent = "";
+        return;
+      }
+
+      if (state.draftSyncBlockedMessage) {
+        refs.resumeBanner.classList.remove("hidden");
+        refs.resumeTitle.textContent = "Receipt book needs review";
+        refs.resumeCopy.textContent = state.draftSyncBlockedMessage;
+        return;
+      }
+
+      const nextReceiptNumber = getNextReceiptNumberToResume();
+      refs.resumeBanner.classList.remove("hidden");
+      const ownerEmail = String(state.currentBook.draftOwnerEmail || "").trim().toLowerCase();
+      const assignedEmail = String(state.currentBook.draftAssignedEmail || "").trim().toLowerCase();
+      const delegatedText = ownerEmail && assignedEmail && ownerEmail !== assignedEmail
+        ? ` This draft was delegated from ${state.currentBook.draftOwnerName || ownerEmail}.`
+        : "";
+
+      if (nextReceiptNumber && hasCompleteReceiptDetails() && !isCalculatorFull()) {
+        refs.resumeTitle.textContent = `Starting from receipt number ${nextReceiptNumber}`;
+        refs.resumeCopy.textContent = `This draft is saved automatically and can be resumed after login until you save the completed book.${delegatedText}`;
+        return;
+      }
+
+      if (hasCompleteReceiptDetails() && isCalculatorFull()) {
+        refs.resumeTitle.textContent = "All receipt values are entered";
+        refs.resumeCopy.textContent = `This draft is complete and auto-saved until you save it to Directus.${delegatedText}`;
+        return;
+      }
+
+      refs.resumeTitle.textContent = "Resume the current receipt book";
+      refs.resumeCopy.textContent = `Complete the book details below, then continue entering receipt values. This draft auto-saves until you commit the book.${delegatedText}`;
+    }
+
+    function focusResumeTarget() {
+      if (!hasDraftInProgress() || state.finished) return;
+
+      const target = !state.currentBook.department
+        ? refs.fieldInputs.department
+        : !state.currentBook.identifier
+          ? refs.fieldInputs.identifier
+          : !state.currentBook.firstReceiptNumber
+            ? refs.fieldInputs.firstReceiptNumber
+            : !state.currentBook.lastReceiptNumber
+              ? refs.fieldInputs.lastReceiptNumber
+              : !state.currentBook.firstReceiptDate
+                ? refs.fieldInputs.firstReceiptDate
+                : !state.currentBook.lastReceiptDate
+                  ? refs.fieldInputs.lastReceiptDate
+                  : refs.calcDisplay;
+
+      window.setTimeout(() => target?.focus(), 0);
+    }
+
+    function confirmLeavePage(onLeave) {
+      if (state.busy) return;
+
+      if (!hasDraftInProgress() || state.finished) {
+        state.allowPageExit = true;
+        onLeave();
+        return;
+      }
+
+      openActionModal({
+        title: "Pending Receipt Book",
+        message: "This receipt book draft is saved automatically, but it is not saved to Directus until you complete the book and use Save. Management can still see that it is pending. You can leave and keep the draft, leave and discard it, or cancel.",
+        buttons: [
+          {
+            label: "Leave and Keep Draft",
+            className: "btn",
+            handler: () => {
+              syncDraftFromInputs({ preserveProtectedBlanks: true, restoreInput: true });
+              persistCurrentDraft({ pauseTiming: true });
+              state.allowPageExit = true;
+              onLeave();
+            }
+          },
+          {
+            label: "Leave Without Draft",
+            className: "btn danger",
+            handler: async () => {
+              await discardCurrentDraftEverywhere();
+              state.lastValidation = { valid: true, errors: [], fieldErrors: {} };
+              state.allowPageExit = true;
+              onLeave();
+            }
+          },
+          {
+            label: "Cancel",
+            className: "btn alt"
+          }
+        ]
+      });
+    }
+
+    function getReceiptLabel(index, receiptNumbers) {
+      if (receiptNumbers[index] !== undefined) return String(receiptNumbers[index]);
+      return `Draft ${index + 1}`;
+    }
+
+    function openActionModal(options = {}) {
+      const buttons = Array.isArray(options.buttons) ? options.buttons : [];
+      actionModalState.buttons = buttons;
+      refs.actionModalTitle.textContent = String(options.title || "Action Required");
+      refs.actionModalMessage.textContent = String(options.message || "");
+      refs.actionModalActions.innerHTML = buttons
+        .map((button, index) => `
+          <button
+            class="${escapeHtml(button.className || "btn alt")}"
+            type="button"
+            data-action-modal-button="${index}"
+          >${escapeHtml(button.label || "Continue")}</button>
+        `)
+        .join("");
+
+      refs.actionModalInputError.textContent = "";
+      if (options.input) {
+        refs.actionModalInputWrap.classList.remove("hidden");
+        refs.actionModalInputLabel.textContent = String(options.input.label || "Amount");
+        refs.actionModalInput.value = String(options.input.value || "");
+        refs.actionModalInput.placeholder = String(options.input.placeholder || "");
+      } else {
+        refs.actionModalInputWrap.classList.add("hidden");
+        refs.actionModalInputLabel.textContent = "Amount";
+        refs.actionModalInput.value = "";
+        refs.actionModalInput.placeholder = "";
+      }
+
+      refs.actionModalBackdrop.classList.add("open");
+      window.setTimeout(() => {
+        if (options.input) {
+          refs.actionModalInput.focus();
+          refs.actionModalInput.select();
+          return;
+        }
+        refs.actionModalActions.querySelector("button")?.focus();
+      }, 0);
+    }
+
+    function closeActionModal() {
+      refs.actionModalBackdrop.classList.remove("open");
+      refs.actionModalActions.innerHTML = "";
+      refs.actionModalMessage.textContent = "";
+      refs.actionModalInputWrap.classList.add("hidden");
+      refs.actionModalInputLabel.textContent = "Amount";
+      refs.actionModalInput.value = "";
+      refs.actionModalInput.placeholder = "";
+      refs.actionModalInputError.textContent = "";
+      actionModalState.buttons = [];
+    }
+
+    function promptReceiptCompletion() {
+      const receiptNumbers = getExpectedReceiptNumbers();
+      if (!receiptNumbers.length) return;
+
+      openActionModal({
+        title: "Receipt Range Complete",
+        message: `Receipt ${receiptNumbers[0]} to ${receiptNumbers[receiptNumbers.length - 1]} are filled. Choose what to do next.`,
+        buttons: [
+          {
+            label: "Save and Continue",
+            className: "btn",
+            handler: () => commitBook("new")
+          },
+          {
+            label: "Save and Exit",
+            className: "btn",
+            handler: () => commitBook("finish")
+          },
+          {
+            label: "Cancel",
+            className: "btn alt"
+          }
+        ]
+      });
+    }
+
+    function applyReceiptEntryChange(index, mode, replacementValue) {
+      const idx = Number(index);
+      if (!Number.isInteger(idx) || idx < 0 || idx >= state.currentBook.calculatorEntries.length) return;
+
+      if (mode === "shift") {
+        state.currentBook.calculatorEntries.splice(idx, 1);
+      } else if (mode === "zero") {
+        state.currentBook.calculatorEntries[idx] = 0;
+      } else if (mode === "replace") {
+        state.currentBook.calculatorEntries[idx] = Number(Number(replacementValue || 0).toFixed(2));
+      }
+
+      state.lastValidation = { valid: true, errors: [], fieldErrors: {} };
+      syncCancelledReceiptsField();
+      persistCurrentDraft();
+      renderValidationState();
+      renderCalculator();
+    }
+
+    function promptReplacementValue(index) {
+      const receiptNumbers = getExpectedReceiptNumbers();
+      const label = getReceiptLabel(index, receiptNumbers);
+
+      openActionModal({
+        title: `Receipt ${label}`,
+        message: "Enter the replacement value for this receipt.",
+        input: {
+          label: "New value",
+          value: Number(state.currentBook.calculatorEntries[index] || 0).toFixed(2),
+          placeholder: "0.00"
+        },
+        buttons: [
+          {
+            label: "Save Value",
+            className: "btn",
+            keepOpen: true,
+            handler: () => {
+              const sanitized = sanitizeCalcInput(refs.actionModalInput.value);
+              const amount = Number(sanitized);
+              if (!sanitized || !Number.isFinite(amount) || amount < 0) {
+                refs.actionModalInputError.textContent = "Enter a valid non-negative amount.";
+                return false;
+              }
+
+              closeActionModal();
+              applyReceiptEntryChange(index, "replace", amount);
+              return true;
+            }
+          },
+          {
+            label: "Cancel",
+            className: "btn alt"
+          }
+        ]
+      });
+    }
+
+    function promptDeleteReceipt(index) {
+      if (state.finished || state.busy || state.draftSyncBlockedMessage) return;
+      const receiptNumbers = getExpectedReceiptNumbers();
+      const label = getReceiptLabel(index, receiptNumbers);
+
+      openActionModal({
+        title: `Receipt ${label}`,
+        message: "Choose how this receipt should be handled.",
+        buttons: [
+          {
+            label: "Move Values Up",
+            className: "btn",
+            handler: () => applyReceiptEntryChange(index, "shift")
+          },
+          {
+            label: "Make 0.00",
+            className: "btn warn",
+            handler: () => applyReceiptEntryChange(index, "zero")
+          },
+          {
+            label: "Give New Value",
+            className: "btn alt",
+            handler: () => promptReplacementValue(index)
+          },
+          {
+            label: "Cancel",
+            className: "btn alt"
+          }
+        ]
+      });
+    }
+
+    function renderCalculator() {
+      const receiptNumbers = getExpectedReceiptNumbers();
+      const detailsReady = hasCompleteReceiptDetails();
+      const calculatorFull = detailsReady && isCalculatorFull(receiptNumbers);
+      const draftBlocked = Boolean(state.draftSyncBlockedMessage);
+      const input = state.currentBook.calcInput || "";
+      refs.calcDisplay.value = input;
+      refs.calcDisplay.disabled = state.busy || state.finished || draftBlocked || !detailsReady || calculatorFull;
+
+      syncCancelledReceiptsField();
+
+      document.querySelectorAll(".calc-btn").forEach((button) => {
+        const action = button.getAttribute("data-calc-action");
+        const isDigitButton = button.hasAttribute("data-calc-digit");
+        const isInputAction = isDigitButton || action === "clearInput" || action === "backspace" || action === "equals";
+
+        if (state.busy || state.finished) {
+          button.disabled = true;
+          return;
+        }
+
+        if (action === "resetBook") {
+          button.disabled = false;
+          return;
+        }
+
+        if (draftBlocked) {
+          button.disabled = true;
+          return;
+        }
+
+        if (action === "deleteLastEntry") {
+          button.disabled = state.currentBook.calculatorEntries.length === 0;
+          return;
+        }
+
+        button.disabled = isInputAction ? (!detailsReady || calculatorFull) : false;
+      });
+
+      if (!state.currentBook.calculatorEntries.length) {
+        if (draftBlocked) {
+          refs.calcEntryList.innerHTML = `<div class="list-empty">${escapeHtml(state.draftSyncBlockedMessage)}</div>`;
+        } else if (!detailsReady) {
+          refs.calcEntryList.innerHTML = '<div class="list-empty">Fill first and last receipt numbers and dates before entering calculator values.</div>';
+        } else if (calculatorFull) {
+          refs.calcEntryList.innerHTML = '<div class="list-empty">All receipt numbers in this range are filled. Save and continue or save and exit.</div>';
+        } else {
+          refs.calcEntryList.innerHTML = `<div class="list-empty">No receipt values logged yet. Enter value and press Next to add receipt ${escapeHtml(receiptNumbers[0])}.</div>`;
+        }
+      } else {
+        refs.calcEntryList.innerHTML = state.currentBook.calculatorEntries
+          .map((amount, index) => `
+            <div class="calc-list-row">
+              <span>${escapeHtml(getReceiptLabel(index, receiptNumbers))}</span>
+              <input
+                class="calc-list-input"
+                type="number"
+                min="0"
+                step="0.01"
+                value="${escapeHtml(Number(amount || 0).toFixed(2))}"
+                data-edit-entry="${index}"
+                ${state.busy || state.finished || draftBlocked || !detailsReady ? "disabled" : ""}
+              />
+              <button type="button" data-delete-entry="${index}" ${state.busy || state.finished || draftBlocked || !detailsReady ? "disabled" : ""}>Delete</button>
+            </div>
+          `)
+          .join("");
+      }
+
+      renderResumeBanner();
+    }
+
+    function appendCalcDigit(value) {
+      if (state.finished || state.busy || state.draftSyncBlockedMessage || !hasCompleteReceiptDetails() || isCalculatorFull()) return;
+      const current = String(state.currentBook.calcInput || "");
+
+      if (value === ".") {
+        if (!current) {
+          state.currentBook.calcInput = "0.";
+        } else if (!current.includes(".")) {
+          state.currentBook.calcInput = `${current}.`;
+        }
+      } else {
+        if (current === "0") {
+          state.currentBook.calcInput = value;
+        } else {
+          state.currentBook.calcInput = `${current}${value}`;
+        }
+      }
+
+      persistCurrentDraft();
+      renderCalculator();
+    }
+
+    function clearCalculatorInput() {
+      if (state.finished || state.busy || state.draftSyncBlockedMessage) return;
+      state.currentBook.calcInput = "";
+      persistCurrentDraft();
+      renderCalculator();
+    }
+
+    function updateCalculatorEntry(index, rawValue) {
+      if (state.finished || state.busy || state.draftSyncBlockedMessage || !hasCompleteReceiptDetails()) return;
+      const idx = Number(index);
+      if (!Number.isInteger(idx) || idx < 0 || idx >= state.currentBook.calculatorEntries.length) return;
+
+      const sanitized = sanitizeCalcInput(rawValue);
+      const amount = Number(sanitized);
+      if (!sanitized || !Number.isFinite(amount) || amount < 0) {
+        state.lastValidation = {
+          valid: false,
+          errors: ["Receipt amount must be a valid non-negative number."],
+          fieldErrors: { calculatorEntries: "Invalid amount." }
+        };
+        renderValidationState();
+        renderCalculator();
+        return;
+      }
+
+      state.currentBook.calculatorEntries[idx] = Number(amount.toFixed(2));
+      state.lastValidation = { valid: true, errors: [], fieldErrors: {} };
+      syncCancelledReceiptsField();
+      persistCurrentDraft();
+      renderValidationState();
+      renderCalculator();
+    }
+
+    function backspaceCalculatorInput() {
+      if (state.finished || state.busy || state.draftSyncBlockedMessage || !hasCompleteReceiptDetails() || isCalculatorFull()) return;
+      const current = String(state.currentBook.calcInput || "");
+      state.currentBook.calcInput = current.slice(0, -1);
+      persistCurrentDraft();
+      renderCalculator();
+    }
+
+    // Required function
+    function addCalculatorEntry() {
+      if (state.finished || state.busy || state.draftSyncBlockedMessage) return;
+      if (!hasCompleteReceiptDetails()) {
+        state.lastValidation = {
+          valid: false,
+          errors: ["Fill first and last receipt numbers and dates before entering calculator values."],
+          fieldErrors: { calculatorEntries: "Complete the first/last receipt details first." }
+        };
+        renderValidationState();
+        renderCalculator();
+        return;
+      }
+
+      const receiptNumbers = getExpectedReceiptNumbers();
+      if (isCalculatorFull(receiptNumbers)) {
+        promptReceiptCompletion();
+        return;
+      }
+
+      const raw = String(state.currentBook.calcInput || "").trim();
+      const amount = raw ? Number(raw) : 0;
+      if (!Number.isFinite(amount) || amount < 0) {
+        state.lastValidation = {
+          valid: false,
+          errors: ["Receipt amount must be a valid non-negative number."],
+          fieldErrors: { calculatorEntries: "Invalid amount." }
+        };
+        renderValidationState();
+        return;
+      }
+
+      state.currentBook.calculatorEntries.push(Number(amount.toFixed(2)));
+      state.currentBook.calcInput = "";
+      state.lastValidation = { valid: true, errors: [], fieldErrors: {} };
+      syncCancelledReceiptsField();
+      persistCurrentDraft();
+      renderValidationState();
+      renderCalculator();
+
+      if (isCalculatorFull(receiptNumbers)) {
+        promptReceiptCompletion();
+      }
+    }
+
+    // Required function
+    function deleteLastEntry() {
+      if (!state.currentBook.calculatorEntries.length || state.finished || state.busy || state.draftSyncBlockedMessage) return;
+      promptDeleteReceipt(state.currentBook.calculatorEntries.length - 1);
+    }
+
+    // Required function
+    function deleteSelectedEntry(index) {
+      if (state.finished || state.busy || state.draftSyncBlockedMessage) return;
+      const idx = Number(index);
+      if (!Number.isInteger(idx) || idx < 0 || idx >= state.currentBook.calculatorEntries.length) return;
+      promptDeleteReceipt(idx);
+    }
+
+    // Required function
+    async function resetCurrentBook() {
+      if (state.finished || state.busy) return;
+      closeActionModal();
+      await discardCurrentDraftEverywhere();
+      resumeReceiptTimingSession(state.currentBook);
+      state.lastValidation = { valid: true, errors: [], fieldErrors: {} };
+      hydrateInputsFromDraft();
+      showBanner("info", "Current book session reset.");
+    }
+
+    // Required function
+    function generateReceiptRange(first, last) {
+      const start = Number(first);
+      const end = Number(last);
+      if (!Number.isInteger(start) || !Number.isInteger(end)) return [];
+      if (end < start) return [];
+
+      const output = [];
+      for (let value = start; value <= end; value += 1) {
+        output.push(value);
+      }
+      return output;
+    }
+
+    // Required function
+    function getValidReceiptNumbers(first, last, cancelledList) {
+      const range = generateReceiptRange(first, last);
+      const cancelledSet = new Set(cancelledList || []);
+      return range.filter((value) => !cancelledSet.has(value));
+    }
+
+    function buildReceiptAmountMapping(receiptNumbers, calculatorEntries) {
+      return receiptNumbers.map((receiptNumber, index) => ({
+        receipt_number: receiptNumber,
+        amount: Number(calculatorEntries[index] || 0)
+      }));
+    }
+
+    function getReceiptBookDateLabel(firstDate, lastDate) {
+      const a = String(firstDate || "").trim();
+      const b = String(lastDate || "").trim();
+      if (a && b && a !== b) return `${a} to ${b}`;
+      return a || b || "N/A";
+    }
+
+    // Required function
+    function validateBeforeSave() {
+      syncDraftFromInputs({ preserveProtectedBlanks: true, restoreInput: true });
+
+      const errors = [];
+      const fieldErrors = {};
+
+      if (!state.currentBook.department) {
+        fieldErrors.department = "Department is required.";
+        errors.push("Department is required.");
+      }
+
+      if (!state.currentBook.identifier) {
+        fieldErrors.identifier = "Identifier is required.";
+        errors.push("Identifier is required.");
+      }
+
+      if (!/^\d+$/.test(state.currentBook.firstReceiptNumber || "")) {
+        fieldErrors.firstReceiptNumber = "First receipt number must be an integer.";
+        errors.push("First receipt number must be an integer.");
+      }
+
+      if (!/^\d+$/.test(state.currentBook.lastReceiptNumber || "")) {
+        fieldErrors.lastReceiptNumber = "Last receipt number must be an integer.";
+        errors.push("Last receipt number must be an integer.");
+      }
+
+      const firstNum = Number(state.currentBook.firstReceiptNumber);
+      const lastNum = Number(state.currentBook.lastReceiptNumber);
+      if (Number.isInteger(firstNum) && Number.isInteger(lastNum) && lastNum < firstNum) {
+        fieldErrors.lastReceiptNumber = "Last receipt number cannot be smaller than first receipt number.";
+        errors.push("Last receipt number cannot be smaller than first receipt number.");
+      }
+
+      if (!state.currentBook.firstReceiptDate) {
+        fieldErrors.firstReceiptDate = "First receipt date is required.";
+        errors.push("First receipt date is required.");
+      }
+
+      if (!state.currentBook.lastReceiptDate) {
+        fieldErrors.lastReceiptDate = "Last receipt date is required.";
+        errors.push("Last receipt date is required.");
+      }
+
+      if (
+        state.currentBook.firstReceiptDate &&
+        state.currentBook.lastReceiptDate &&
+        state.currentBook.lastReceiptDate < state.currentBook.firstReceiptDate
+      ) {
+        fieldErrors.lastReceiptDate = "Last receipt date cannot be earlier than first receipt date.";
+        errors.push("Last receipt date cannot be earlier than first receipt date.");
+      }
+
+      if (!state.currentBook.calculatorEntries.length) {
+        fieldErrors.calculatorEntries = "Add at least one amount using 'Next'.";
+        errors.push("At least one calculator entry is required.");
+      }
+
+      const fullReceiptNumbers = generateReceiptRange(firstNum, lastNum);
+      const cancelledReceiptNumbers = fullReceiptNumbers.filter(
+        (receiptNumber, index) => index < state.currentBook.calculatorEntries.length && Number(state.currentBook.calculatorEntries[index] || 0) === 0
+      );
+      const validReceiptNumbers = fullReceiptNumbers.filter(
+        (receiptNumber, index) => index < state.currentBook.calculatorEntries.length && Number(state.currentBook.calculatorEntries[index] || 0) !== 0
+      );
+
+      if (fullReceiptNumbers.length !== state.currentBook.calculatorEntries.length) {
+        fieldErrors.calculatorEntries = "Every receipt number from first to last must have a value before save.";
+        errors.push(
+          `Count mismatch: ${fullReceiptNumbers.length} receipt numbers vs ${state.currentBook.calculatorEntries.length} entered values.`
+        );
+      }
+
+      const result = {
+        valid: errors.length === 0,
+        errors,
+        fieldErrors,
+        cancelledReceiptNumbers,
+        fullReceiptNumbers,
+        validReceiptNumbers,
+        receiptAmountMapping: buildReceiptAmountMapping(fullReceiptNumbers, state.currentBook.calculatorEntries)
+      };
+
+      state.lastValidation = {
+        valid: result.valid,
+        errors: result.errors,
+        fieldErrors: result.fieldErrors
+      };
+      renderValidationState();
+      return result;
+    }
+
+    // Required function
+    function buildDirectusPayload(mode) {
+      const validation = validateBeforeSave();
+      if (!validation.valid) {
+        return { valid: false, errors: validation.errors };
+      }
+
+      const timestamp = isoNow();
+      const user = state.currentUser || "local-user";
+      const total = state.currentBook.calculatorEntries.reduce((sum, amount) => sum + Number(amount || 0), 0);
+      const receiptBookDate = getReceiptBookDateLabel(state.currentBook.firstReceiptDate, state.currentBook.lastReceiptDate);
+      const timing = snapshotReceiptTiming(state.currentBook, {
+        complete: true,
+        nowIso: timestamp
+      });
+
+      const payload = {
+        meta: {
+          source_app: "receipt-books-frontend",
+          schema_version: "v2",
+          commit_mode: mode,
+          created_at: timestamp,
+          created_by: user,
+          receipt_entry_timing_ms: timing.totalMs,
+          receipt_entry_timing_sessions: timing.sessionCount
+        },
+        book_summary: {
+          entry_timestamp: timestamp,
+          receipt_book_date: receiptBookDate,
+          first_receipt_number: Number(state.currentBook.firstReceiptNumber),
+          last_receipt_number: Number(state.currentBook.lastReceiptNumber),
+          total: Number(total.toFixed(2)),
+          user,
+          department: state.currentBook.department,
+          identifier: state.currentBook.identifier
+        },
+        hidden_receipt_book_data: {
+          first_receipt_date: state.currentBook.firstReceiptDate,
+          last_receipt_date: state.currentBook.lastReceiptDate,
+          cancelled_receipt_numbers: validation.cancelledReceiptNumbers,
+          generated_valid_receipt_numbers: validation.validReceiptNumbers,
+          temporary_calculator_entries: state.currentBook.calculatorEntries.map((amount, index) => ({
+            entry_index: index + 1,
+            receipt_number: validation.fullReceiptNumbers[index],
+            amount: Number(amount)
+          })),
+          receipt_number_amount_mapping: validation.receiptAmountMapping,
+          receipt_entry_timing: timing
+        }
+      };
+
+      return {
+        valid: true,
+        payload,
+        receiptBookDate,
+        total: Number(total.toFixed(2)),
+        timing
+      };
+    }
+
+    async function postBookToDirectus(payload) {
+      const entry = await createReceiptEntry(payload);
+      return { skipped: false, data: { entry } };
+    }
+
+    // Required function
+    async function commitBook(mode) {
+      if (state.finished) {
+        showBanner("warn", "Session is locked. Reload to start a new session.");
+        return;
+      }
+      if (state.draftSyncBlockedMessage) {
+        showBanner("warn", state.draftSyncBlockedMessage);
+        return;
+      }
+
+      clearBanners();
+      setBusy(true);
+
+      try {
+        const draftIsEditable = await ensureDraftStillEditable();
+        if (!draftIsEditable) return;
+
+        const built = buildDirectusPayload(mode);
+        if (!built.valid) {
+          showBanner("error", "Please fix validation errors before save.");
+          return;
+        }
+
+        const payload = built.payload;
+        const validation = validateBeforeSave();
+        const apiPayload = {
+          entry_date: state.currentBook.firstReceiptDate,
+          clinic_code: state.currentBook.department,
+          department_code: state.currentBook.department,
+          identifier: state.currentBook.identifier,
+          identifier_bucket: classifyIdentifierBucket(state.currentBook.identifier),
+          first_receipt_number: Number(state.currentBook.firstReceiptNumber),
+          first_receipt_date: state.currentBook.firstReceiptDate,
+          last_receipt_number: Number(state.currentBook.lastReceiptNumber),
+          last_receipt_date: state.currentBook.lastReceiptDate,
+          total_amount: built.total,
+          cancelled_receipt_numbers: validation.cancelledReceiptNumbers,
+          calculator_values: state.currentBook.calculatorEntries,
+          notes: buildReceiptTimingNote(built.timing),
+          entry_uid: `book_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
+          draft_uid: state.currentBook.draftServerUid || ""
+        };
+
+        const posted = await postBookToDirectus(apiPayload);
+        const createdEntry = posted?.data?.entry || null;
+        if (createdEntry) {
+          state.savedBooks.unshift(mapEntryToSavedBook(createdEntry));
+          persistSavedBooks();
+        } else {
+          state.savedBooks.unshift(buildSavedBookFromPayload(payload, apiPayload.entry_uid));
+        }
+
+        state.currentBook.receiptTiming = built.timing;
+        resetReceiptTimingRuntime();
+
+        if (mode === "finish") {
+          state.finished = true;
+          await discardCurrentDraftEverywhere();
+          persistFinishedState();
+          showBanner("info", "Book saved and session finished. Editing is now locked.");
+        } else {
+          await discardCurrentDraftEverywhere();
+          resumeReceiptTimingSession(state.currentBook);
+          showBanner("info", "Book saved. Ready for a new book.");
+        }
+
+        renderSavedBooksTable();
+        hydrateInputsFromDraft();
+        renderFinishedState();
+      } catch (error) {
+        showBanner("error", error instanceof Error ? error.message : "Failed to commit book.");
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function renderFinishedState() {
+      refs.finishedOverlay.classList.toggle("hidden", !state.finished);
+      Object.values(refs.fieldInputs).forEach((input) => {
+        input.disabled = state.finished || Boolean(state.draftSyncBlockedMessage);
+      });
+      setBusy(state.busy);
+    }
+
+    // Required function
+    function renderSavedBooksTable() {
+      if (!state.savedBooks.length) {
+        refs.savedBooksBody.innerHTML = "<tr><td colspan=\"6\" class=\"muted\">No books saved in this open window yet.</td></tr>";
+        return;
+      }
+
+      refs.savedBooksBody.innerHTML = state.savedBooks
+        .map((book) => {
+          const row = book.summary || {};
+          return `
+            <tr class="row-clickable" data-book-id="${escapeHtml(book.id)}">
+              <td>${escapeHtml(row.entry_timestamp || "")}</td>
+              <td>${escapeHtml(row.receipt_book_date || "")}</td>
+              <td>${escapeHtml(row.first_receipt_number)}</td>
+              <td>${escapeHtml(row.last_receipt_number)}</td>
+              <td>${asMoney(row.total)}</td>
+              <td>${escapeHtml(row.user || "")}</td>
+            </tr>
+          `;
+        })
+        .join("");
+    }
+
+    function openDetailsModal() {
+      refs.detailModalBackdrop.classList.add("open");
+    }
+
+    function closeDetailsModal() {
+      refs.detailModalBackdrop.classList.remove("open");
+    }
+
+    // Required function
+    function showBookDetails(bookId) {
+      const selected = state.savedBooks.find((book) => book.id === bookId);
+      if (!selected) return;
+
+      const data = selected.internal || {};
+      const mapping = data.hidden_receipt_book_data?.receipt_number_amount_mapping || [];
+
+      refs.detailGrid.innerHTML = `
+        <div class="detail-card">
+          <h4>Summary</h4>
+          <pre>${escapeHtml(JSON.stringify(data.book_summary || {}, null, 2))}</pre>
+        </div>
+        <div class="detail-card">
+          <h4>Metadata</h4>
+          <pre>${escapeHtml(JSON.stringify(data.meta || {}, null, 2))}</pre>
+        </div>
+        <div class="detail-card">
+          <h4>Core Details</h4>
+          <pre>${escapeHtml(JSON.stringify({
+            department: data.book_summary?.department,
+            identifier: data.book_summary?.identifier,
+            first_receipt_date: data.hidden_receipt_book_data?.first_receipt_date,
+            last_receipt_date: data.hidden_receipt_book_data?.last_receipt_date,
+            cancelled_receipt_numbers: data.hidden_receipt_book_data?.cancelled_receipt_numbers,
+            generated_valid_receipt_numbers: data.hidden_receipt_book_data?.generated_valid_receipt_numbers,
+            receipt_entry_timing: data.hidden_receipt_book_data?.receipt_entry_timing,
+            total: data.book_summary?.total,
+            timestamp: data.book_summary?.entry_timestamp,
+            user: data.book_summary?.user
+          }, null, 2))}</pre>
+        </div>
+        <div class="detail-card">
+          <h4>Receipt-To-Amount Mapping</h4>
+          <pre>${escapeHtml(JSON.stringify(mapping, null, 2))}</pre>
+        </div>
+      `;
+
+      openDetailsModal();
+    }
+
+    function bindFormInputEvents() {
+      Object.keys(refs.fieldInputs).forEach((fieldName) => {
+        const handleDraftFieldInput = () => {
+          if (state.draftSyncBlockedMessage) return;
+          if (PROTECTED_BOOK_FIELDS.has(fieldName)) {
+            setFieldError(fieldName, "");
+          }
+          syncDraftFromInputs({ preserveProtectedBlanks: true });
+          persistCurrentDraft();
+          renderCalculator();
+        };
+        const handleDraftFieldCommit = () => {
+          if (state.draftSyncBlockedMessage) return;
+          if (PROTECTED_BOOK_FIELDS.has(fieldName)) {
+            setFieldError(fieldName, "");
+          }
+          const restoredFields = syncDraftFromInputs({ preserveProtectedBlanks: true, restoreInput: true });
+          if (restoredFields.includes(fieldName)) {
+            setFieldError(fieldName, PROTECTED_BOOK_FIELD_MESSAGE);
+          }
+          persistCurrentDraft();
+          renderCalculator();
+        };
+        refs.fieldInputs[fieldName].addEventListener("input", handleDraftFieldInput);
+        refs.fieldInputs[fieldName].addEventListener("change", handleDraftFieldCommit);
+      });
+    }
+
+    function bindCalculatorEvents() {
+      document.getElementById("calculatorConsole").addEventListener("click", (event) => {
+        const target = event.target instanceof HTMLElement ? event.target : null;
+        if (!target) return;
+
+        const digit = target.getAttribute("data-calc-digit");
+        if (digit !== null) {
+          appendCalcDigit(digit);
+          return;
+        }
+
+        const action = target.getAttribute("data-calc-action");
+        if (!action) return;
+
+        if (action === "clearInput") clearCalculatorInput();
+        if (action === "backspace") backspaceCalculatorInput();
+        if (action === "deleteLastEntry") deleteLastEntry();
+        if (action === "resetBook") resetCurrentBook();
+        if (action === "equals") addCalculatorEntry();
+      });
+
+      refs.calcDisplay.addEventListener("input", (event) => {
+        const target = event.target instanceof HTMLInputElement ? event.target : null;
+        if (!target) return;
+        const sanitized = sanitizeCalcInput(target.value);
+        state.currentBook.calcInput = sanitized;
+        if (target.value !== sanitized) target.value = sanitized;
+        persistCurrentDraft();
+        renderCalculator();
+      });
+
+      refs.calcDisplay.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          addCalculatorEntry();
+          return;
+        }
+        if (event.key === "Escape") {
+          event.preventDefault();
+          clearCalculatorInput();
+        }
+      });
+
+      refs.calcEntryList.addEventListener("click", (event) => {
+        const target = event.target instanceof HTMLElement ? event.target : null;
+        if (!target) return;
+        const indexRaw = target.getAttribute("data-delete-entry");
+        if (indexRaw === null) return;
+        deleteSelectedEntry(Number(indexRaw));
+      });
+
+      refs.calcEntryList.addEventListener("change", (event) => {
+        const target = event.target instanceof HTMLInputElement ? event.target : null;
+        if (!target) return;
+        const indexRaw = target.getAttribute("data-edit-entry");
+        if (indexRaw === null) return;
+        updateCalculatorEntry(Number(indexRaw), target.value);
+      });
+    }
+
+    function bindButtons() {
+      refs.btnBack.addEventListener("click", () => {
+        confirmLeavePage(() => {
+          window.location.href = `./app-hub.html?api_origin=${encodeURIComponent(state.apiOrigin)}`;
+        });
+      });
+
+      refs.btnSignOut.addEventListener("click", () => {
+        confirmLeavePage(() => {
+          clearAuth();
+          redirectToLogin("signed_out");
+        });
+      });
+
+      refs.btnResetCurrent.addEventListener("click", () => {
+        clearBanners();
+        resetCurrentBook();
+      });
+
+      refs.btnSaveNew.addEventListener("click", () => {
+        commitBook("new");
+      });
+
+      refs.btnSaveFinish.addEventListener("click", () => {
+        commitBook("finish");
+      });
+
+      refs.savedBooksBody.addEventListener("click", (event) => {
+        const target = event.target instanceof HTMLElement ? event.target : null;
+        if (!target) return;
+        const row = target.closest("tr[data-book-id]");
+        if (!row) return;
+        showBookDetails(String(row.getAttribute("data-book-id") || ""));
+      });
+
+      refs.btnCloseDetails.addEventListener("click", closeDetailsModal);
+      refs.detailModalBackdrop.addEventListener("click", (event) => {
+        if (event.target === refs.detailModalBackdrop) closeDetailsModal();
+      });
+
+      refs.btnCloseActionModal.addEventListener("click", closeActionModal);
+      refs.actionModalBackdrop.addEventListener("click", (event) => {
+        if (event.target === refs.actionModalBackdrop) closeActionModal();
+      });
+
+      refs.actionModalActions.addEventListener("click", async (event) => {
+        const target = event.target instanceof HTMLElement ? event.target : null;
+        if (!target) return;
+        const indexRaw = target.getAttribute("data-action-modal-button");
+        if (indexRaw === null) return;
+
+        const button = actionModalState.buttons[Number(indexRaw)];
+        if (!button) return;
+
+        if (!button.keepOpen) closeActionModal();
+        const result = await button.handler?.();
+        if (button.keepOpen && result !== false) closeActionModal();
+      });
+
+      refs.actionModalInput.addEventListener("keydown", async (event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeActionModal();
+          return;
+        }
+
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        const primaryButton = actionModalState.buttons[0];
+        if (!primaryButton) return;
+        if (!primaryButton.keepOpen) closeActionModal();
+        const result = await primaryButton.handler?.();
+        if (primaryButton.keepOpen && result !== false) closeActionModal();
+      });
+    }
+
+    function bindWindowLeaveWarning() {
+      window.addEventListener("beforeunload", (event) => {
+        if (state.allowPageExit || !hasDraftInProgress() || state.finished) return;
+        event.preventDefault();
+        event.returnValue = "";
+      });
+
+      window.addEventListener("pagehide", () => {
+        if (!state.allowPageExit && hasDraftInProgress() && !state.finished) {
+          syncDraftFromInputs({ preserveProtectedBlanks: true });
+          persistCurrentDraft({ skipRemote: true, pauseTiming: true });
+        }
+        state.allowPageExit = false;
+        state.savedBooks = [];
+        state.finished = false;
+      });
+    }
+
+    async function initHeaderUser() {
+      const profile = await getCurrentUserProfile();
+      state.currentUser = profile.name || "local-user";
+      state.currentUserEmail = String(profile.email || "").trim().toLowerCase();
+      state.currentUserRole = String(profile.role || "").trim();
+      refs.userName.textContent = state.currentUser;
+      refs.userRole.textContent = getAuthToken() ? (state.currentUserRole || "Authenticated") : "Local Session";
+    }
+
+    async function initializePage() {
+      state.apiOrigin = persistApiOrigin(getApiOrigin()) || normalizeApiOrigin(DEFAULT_API_ORIGIN);
+      loadStateFromStorage();
+      bindFormInputEvents();
+      bindCalculatorEvents();
+      bindButtons();
+      bindWindowLeaveWarning();
+      hydrateInputsFromDraft();
+      await initHeaderUser();
+      await hydrateDraftFromBackend();
+      resumeReceiptTimingSession(state.currentBook, { activeSinceMs: PAGE_OPENED_AT_MS });
+      hydrateInputsFromDraft();
+      if (hasDraftInProgress()) {
+        persistCurrentDraft();
+        renderResumeBanner();
+      }
+      await verifyBackendHealth();
+      renderFinishedState();
+      focusResumeTarget();
+    }
+
+    initializePage();
+  </script>
+</body>
+</html>
+

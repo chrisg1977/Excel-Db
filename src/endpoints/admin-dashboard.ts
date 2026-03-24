@@ -2,7 +2,357 @@ import { defineEndpoint } from '@directus/extensions-sdk';
 import type { Router } from 'express';
 import { roundSSNumeric } from '../utils/rounding';
 
+const ROLE_RANK: Record<string, number> = {
+  'general user': 1,
+  management: 2,
+  hr: 3,
+  full: 4,
+  admin: 5,
+  administrator: 5,
+  superadmin: 5,
+};
+
+const normalizeRoleRank = (roleName: unknown): number => {
+  const normalized = String(roleName || '').trim().toLowerCase();
+  if (!normalized) return 0;
+  if (ROLE_RANK[normalized]) return ROLE_RANK[normalized];
+  if (normalized.includes('super') || normalized.includes('admin')) return ROLE_RANK.admin;
+  if (normalized.includes('full')) return ROLE_RANK.full;
+  if (normalized.includes('hr')) return ROLE_RANK.hr;
+  if (normalized.includes('manag')) return ROLE_RANK.management;
+  if (normalized.includes('general') || normalized.includes('user')) return ROLE_RANK['general user'];
+  return 0;
+};
+
+const normalizeAclRoleName = (roleName: unknown): string => {
+  const normalized = String(roleName || '').trim().toLowerCase();
+  if (!normalized) return 'general user';
+  if (normalized.includes('super') || normalized.includes('admin')) return 'admin';
+  if (normalized.includes('full')) return 'full';
+  if (normalized.includes('hr')) return 'hr';
+  if (normalized.includes('manag')) return 'management';
+  return 'general user';
+};
+
+const slugifyItemKey = (value: unknown): string => String(value || '')
+  .trim()
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-+|-+$/g, '')
+  .slice(0, 120);
+
+const csvToList = (value: unknown): string[] => {
+  return String(value || '')
+    .split(',')
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean)
+    .filter((entry, index, arr) => arr.indexOf(entry) === index);
+};
+
+const listToCsv = (value: unknown): string => {
+  if (!Array.isArray(value)) return '';
+  return value
+    .map((entry) => String(entry || '').trim().toLowerCase())
+    .filter(Boolean)
+    .filter((entry, index, arr) => arr.indexOf(entry) === index)
+    .join(',');
+};
+
+const parseDataUrl = (value: unknown): { base64: string; mimeType: string } | null => {
+  const input = String(value || '').trim();
+  if (!input) return null;
+  const match = input.match(/^data:([^;]+);base64,(.+)$/i);
+  if (!match) return null;
+  return {
+    mimeType: String(match[1] || 'application/octet-stream').trim().toLowerCase(),
+    base64: String(match[2] || '').trim(),
+  };
+};
+
+const mapLibraryRow = (row: Record<string, any>) => ({
+  id: Number(row.id),
+  item_key: String(row.item_key || ''),
+  title: String(row.title || ''),
+  description: String(row.description || ''),
+  file_name: String(row.file_name || ''),
+  mime_type: String(row.mime_type || ''),
+  allowed_roles: csvToList(row.allowed_roles_csv),
+  allowed_apps: csvToList(row.allowed_apps_csv),
+  is_active: row.is_active !== false,
+  updated_at: row.updated_at,
+  created_at: row.created_at,
+});
+
+const ensureItemLibraryTable = async (database: any) => {
+  const exists = await database.schema.hasTable('admin_item_library');
+  if (exists) return;
+
+  await database.schema.createTable('admin_item_library', (table: any) => {
+    table.increments('id').primary();
+    table.string('item_key', 140).notNullable().unique();
+    table.string('title', 240).notNullable();
+    table.text('description');
+    table.string('file_name', 255).notNullable();
+    table.string('mime_type', 120).notNullable();
+    table.text('file_base64');
+    table.text('allowed_roles_csv');
+    table.text('allowed_apps_csv');
+    table.boolean('is_active').notNullable().defaultTo(true);
+    table.string('created_by_email', 255);
+    table.string('updated_by_email', 255);
+    table.timestamp('created_at').defaultTo(database.fn.now());
+    table.timestamp('updated_at').defaultTo(database.fn.now());
+  });
+};
+
+const getActorContext = async (database: any, userId: string) => {
+  const row = await database('directus_users as u')
+    .leftJoin('directus_roles as r', 'u.role', 'r.id')
+    .select('u.id', 'u.email', 'r.name as role_name')
+    .where('u.id', userId)
+    .first();
+
+  if (!row) return null;
+  return {
+    user_id: String(row.id || ''),
+    email: String(row.email || '').trim().toLowerCase(),
+    role_name: String(row.role_name || '').trim(),
+    role_rank: normalizeRoleRank(row.role_name),
+    acl_role: normalizeAclRoleName(row.role_name),
+  };
+};
+
+const canAccessItem = (item: Record<string, any>, actor: Record<string, any>, appName: string): boolean => {
+  if (Number(actor.role_rank) >= ROLE_RANK.admin) return true;
+  const allowedRoles = csvToList(item.allowed_roles_csv);
+  const allowedApps = csvToList(item.allowed_apps_csv);
+
+  const roleAllowed = allowedRoles.includes('all') || allowedRoles.includes(String(actor.acl_role || '').toLowerCase());
+  const appAllowed = !allowedApps.length
+    || allowedApps.includes('all')
+    || allowedApps.includes(String(appName || '').trim().toLowerCase());
+
+  return roleAllowed && appAllowed;
+};
+
 export default defineEndpoint((router: Router, { database, logger }: any) => {
+  router.get('/item-library/list', async (req: any, res: any) => {
+    try {
+      if (!req.accountability?.user) return res.status(401).json({ status: 'error', message: 'Authentication required' });
+      await ensureItemLibraryTable(database);
+
+      const actor = await getActorContext(database, String(req.accountability.user));
+      if (!actor || Number(actor.role_rank) < ROLE_RANK.admin) {
+        return res.status(403).json({ status: 'error', message: 'Admin access required' });
+      }
+
+      const rows = await database('admin_item_library')
+        .select('*')
+        .where('is_active', true)
+        .orderBy('updated_at', 'desc');
+
+      return res.json({ status: 'success', data: rows.map(mapLibraryRow) });
+    } catch (error: any) {
+      logger?.error('item-library/list failed', error);
+      return res.status(500).json({ status: 'error', message: error?.message || 'Failed to load item library' });
+    }
+  });
+
+  router.get('/item-library/available', async (req: any, res: any) => {
+    try {
+      if (!req.accountability?.user) return res.status(401).json({ status: 'error', message: 'Authentication required' });
+      await ensureItemLibraryTable(database);
+
+      const actor = await getActorContext(database, String(req.accountability.user));
+      if (!actor) return res.status(403).json({ status: 'error', message: 'Access denied' });
+
+      const appName = String(req.query?.app || 'all').trim().toLowerCase();
+      const rows = await database('admin_item_library')
+        .select('*')
+        .where('is_active', true)
+        .orderBy('updated_at', 'desc');
+
+      const filtered = (rows as Record<string, any>[])
+        .filter((row) => canAccessItem(row, actor, appName))
+        .map(mapLibraryRow);
+
+      return res.json({ status: 'success', data: filtered });
+    } catch (error: any) {
+      logger?.error('item-library/available failed', error);
+      return res.status(500).json({ status: 'error', message: error?.message || 'Failed to load available items' });
+    }
+  });
+
+  router.get('/item-library/:id/file', async (req: any, res: any) => {
+    try {
+      if (!req.accountability?.user) return res.status(401).json({ status: 'error', message: 'Authentication required' });
+      await ensureItemLibraryTable(database);
+
+      const actor = await getActorContext(database, String(req.accountability.user));
+      if (!actor) return res.status(403).json({ status: 'error', message: 'Access denied' });
+
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id) || id <= 0) {
+        return res.status(400).json({ status: 'error', message: 'Invalid item ID' });
+      }
+
+      const appName = String(req.query?.app || 'all').trim().toLowerCase();
+      const row = await database('admin_item_library').where('id', id).where('is_active', true).first();
+      if (!row) return res.status(404).json({ status: 'error', message: 'Item not found' });
+      if (!canAccessItem(row, actor, appName)) {
+        return res.status(403).json({ status: 'error', message: 'No rights for this file' });
+      }
+
+      return res.json({
+        status: 'success',
+        data: {
+          id: Number(row.id),
+          file_name: String(row.file_name || ''),
+          mime_type: String(row.mime_type || 'application/octet-stream'),
+          file_base64: String(row.file_base64 || ''),
+        },
+      });
+    } catch (error: any) {
+      logger?.error('item-library/file failed', error);
+      return res.status(500).json({ status: 'error', message: error?.message || 'Failed to load file' });
+    }
+  });
+
+  router.post('/item-library/upsert', async (req: any, res: any) => {
+    try {
+      if (!req.accountability?.user) return res.status(401).json({ status: 'error', message: 'Authentication required' });
+      await ensureItemLibraryTable(database);
+
+      const actor = await getActorContext(database, String(req.accountability.user));
+      if (!actor || Number(actor.role_rank) < ROLE_RANK.admin) {
+        return res.status(403).json({ status: 'error', message: 'Admin access required' });
+      }
+
+      const body = req.body || {};
+      const id = Number(body.id);
+      const title = String(body.title || '').trim();
+      if (!title) return res.status(400).json({ status: 'error', message: 'title is required' });
+
+      const requestedKey = slugifyItemKey(body.item_key || title);
+      if (!requestedKey) {
+        return res.status(400).json({ status: 'error', message: 'item_key is invalid' });
+      }
+
+      const parsedFile = parseDataUrl(body.file_data_url);
+      const rolesCsv = listToCsv(body.allowed_roles);
+      const appsCsv = listToCsv(body.allowed_apps);
+
+      let savedRow: Record<string, any> | null = null;
+
+      if (Number.isFinite(id) && id > 0) {
+        const existing = await database('admin_item_library').where('id', id).first();
+        if (!existing) return res.status(404).json({ status: 'error', message: 'Item not found for update' });
+
+        const keyConflict = await database('admin_item_library')
+          .where('item_key', requestedKey)
+          .whereNot('id', id)
+          .first();
+        if (keyConflict) {
+          return res.status(409).json({ status: 'error', message: `Item key already exists: ${requestedKey}` });
+        }
+
+        await database('admin_item_library')
+          .where('id', id)
+          .update({
+            item_key: requestedKey,
+            title,
+            description: String(body.description || '').trim() || null,
+            file_name: parsedFile ? (String(body.file_name || '').trim() || existing.file_name) : existing.file_name,
+            mime_type: parsedFile ? (String(body.mime_type || parsedFile.mimeType).trim() || parsedFile.mimeType) : existing.mime_type,
+            file_base64: parsedFile ? parsedFile.base64 : existing.file_base64,
+            allowed_roles_csv: rolesCsv,
+            allowed_apps_csv: appsCsv,
+            updated_by_email: actor.email || null,
+            updated_at: new Date(),
+          });
+
+        savedRow = await database('admin_item_library').where('id', id).first();
+      } else {
+        if (!parsedFile) {
+          return res.status(400).json({ status: 'error', message: 'file_data_url is required for new item' });
+        }
+
+        const existingKey = await database('admin_item_library').where('item_key', requestedKey).first();
+        if (existingKey) {
+          return res.status(409).json({ status: 'error', message: `Item key already exists: ${requestedKey}` });
+        }
+
+        const inserted = await database('admin_item_library')
+          .insert({
+            item_key: requestedKey,
+            title,
+            description: String(body.description || '').trim() || null,
+            file_name: String(body.file_name || '').trim() || 'item.bin',
+            mime_type: String(body.mime_type || parsedFile.mimeType).trim() || parsedFile.mimeType,
+            file_base64: parsedFile.base64,
+            allowed_roles_csv: rolesCsv,
+            allowed_apps_csv: appsCsv,
+            is_active: true,
+            created_by_email: actor.email || null,
+            updated_by_email: actor.email || null,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+          .returning('*');
+
+        savedRow = Array.isArray(inserted) ? inserted[0] : inserted;
+      }
+
+      const rows = await database('admin_item_library')
+        .select('*')
+        .where('is_active', true)
+        .orderBy('updated_at', 'desc');
+
+      return res.json({
+        status: 'success',
+        data: {
+          item: savedRow ? mapLibraryRow(savedRow) : null,
+          items: rows.map(mapLibraryRow),
+        },
+      });
+    } catch (error: any) {
+      logger?.error('item-library/upsert failed', error);
+      return res.status(500).json({ status: 'error', message: error?.message || 'Failed to save item' });
+    }
+  });
+
+  router.delete('/item-library/:id', async (req: any, res: any) => {
+    try {
+      if (!req.accountability?.user) return res.status(401).json({ status: 'error', message: 'Authentication required' });
+      await ensureItemLibraryTable(database);
+
+      const actor = await getActorContext(database, String(req.accountability.user));
+      if (!actor || Number(actor.role_rank) < ROLE_RANK.admin) {
+        return res.status(403).json({ status: 'error', message: 'Admin access required' });
+      }
+
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id) || id <= 0) {
+        return res.status(400).json({ status: 'error', message: 'Invalid item ID' });
+      }
+
+      const affected = await database('admin_item_library').where('id', id).update({
+        is_active: false,
+        updated_by_email: actor.email || null,
+        updated_at: new Date(),
+      });
+
+      if (!affected) {
+        return res.status(404).json({ status: 'error', message: 'Item not found' });
+      }
+
+      return res.json({ status: 'success', data: { id } });
+    } catch (error: any) {
+      logger?.error('item-library/delete failed', error);
+      return res.status(500).json({ status: 'error', message: error?.message || 'Failed to delete item' });
+    }
+  });
+
   router.get('/tax-rates-live', async (req: any, res: any) => {
     try {
       const year = Number.parseInt(String(req.query?.year || ''), 10) || new Date().getFullYear();

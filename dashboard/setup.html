@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M-CodeZ - Setup Landing</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f3f7ff;
+      color: #1a1d23;
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: #eaf3ff;
+      border: 1px solid #d3dff5;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .head h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #2e5090;
+    }
+    .btn {
+      border: 1px solid #c4d2ea;
+      background: #fff;
+      color: #2f3d53;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn:hover {
+      border-color: #8fb0df;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #dbe4f2;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 8px 20px rgba(24, 43, 78, 0.08);
+      text-decoration: none;
+      color: inherit;
+    }
+    .card.placeholder {
+      border-style: dashed;
+      background: linear-gradient(180deg, #fcfdff 0%, #f7faff 100%);
+    }
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      color: #2e5090;
+    }
+    .card ul {
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: #475467;
+      font-size: 13px;
+    }
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: #2d4b6d;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .section-span-2 {
+      grid-column: 1 / -1;
+    }
+    .pill {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid #d8e1f0;
+      background: #f3f7ff;
+      color: #35527e;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .muted { color: #637086; font-size: 13px; }
+    .status {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #59667d;
+      padding: 10px 12px;
+      border: 1px solid #d8e1f0;
+      border-radius: 10px;
+      background: #fff;
+    }
+    .status.err {
+      color: #b42318;
+      border-color: #f0c8c5;
+      background: #fff6f5;
+    }
+    .status.ok {
+      color: #146c43;
+      border-color: #bfe3cd;
+      background: #f0fbf5;
+    }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .network-panel {
+      margin-top: 14px;
+      border: 1px solid #dbe4f2;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 8px 20px rgba(24, 43, 78, 0.08);
+      padding: 14px;
+      display: none;
+    }
+    .network-panel.open {
+      display: block;
+    }
+    .network-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .network-title {
+      margin: 0;
+      font-size: 18px;
+      color: #2e5090;
+    }
+    .network-filters {
+      display: grid;
+      grid-template-columns: 1fr 180px;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .network-filters input,
+    .network-filters select {
+      width: 100%;
+      border: 1px solid #ccd8ec;
+      border-radius: 8px;
+      height: 36px;
+      padding: 0 10px;
+      font-size: 13px;
+    }
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid #dde6f4;
+      border-radius: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 920px;
+      font-size: 12px;
+    }
+    th, td {
+      border-bottom: 1px solid #edf1f8;
+      text-align: left;
+      padding: 8px;
+      vertical-align: top;
+    }
+    th {
+      background: #f4f8ff;
+      color: #2d4b6d;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .badge {
+      display: inline-block;
+      border: 1px solid #cad8f0;
+      background: #eef4ff;
+      color: #2a4f8f;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .btn-danger {
+      border: 1px solid #f2c7cf;
+      background: #fff3f5;
+      color: #8f1f34;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-danger:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .suggestions {
+      margin-top: 12px;
+      border: 1px solid #f2d7a6;
+      background: #fffaf0;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .suggestions h3 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      color: #7d4b00;
+    }
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: 1fr; }
+      .network-filters { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <h1>Setup</h1>
+      <div class="toolbar">
+        <button class="btn" id="btnEditNetwork" type="button" style="display:none;">Edit Network</button>
+        <a class="btn" id="btnBackHub" href="./app-hub.html">Back to App Hub</a>
+      </div>
+    </div>
+
+    <div class="grid" id="setupGrid" style="display:none;">
+      <a class="card" id="linkDeptDesignation" href="./new_designation_Dept.html">
+        <h2>Edit / Add Department</h2>
+        <div class="muted">Create, edit and categorize departments, addresses, and contacts.</div>
+      </a>
+      <a class="card" id="linkDesignation" href="./new_designation_Dept.html">
+        <h2>Edit / Add / Change Designation</h2>
+        <div class="muted">Manage industry/profession category, provider category, PE defaults, and department linkage.</div>
+      </a>
+      <a class="card" id="linkLogos" href="./new_designation_Dept.html">
+        <h2>Update Logo</h2>
+        <div class="muted">Update department logos and whole-group logo.</div>
+      </a>
+      <a class="card" id="linkAddItem" href="./admin-items.html">
+        <h2>Add Item</h2>
+        <div class="muted">Upload file assets, set access rights, replace, amend, delete, and make available to modules like payroll.</div>
+      </a>
+      <div class="section-span-2">
+        <div class="section-title">Payroll Yearly Tasks</div>
+      </div>
+      <div class="card placeholder" id="payrollYearlyTasksPlaceholder">
+        <h2>Government Bonus and Yearly Payroll Setup</h2>
+        <div class="muted">Placeholder for yearly payroll admin work such as statutory/government bonus setup, overtime tax settings, COLA, and other start-of-year payroll values.</div>
+        <ul>
+          <li>Statutory / government bonus amounts and accrual periods.</li>
+          <li>Which bonus month is payable and how prorata should apply.</li>
+          <li>Overtime tax rate and other yearly payroll constants.</li>
+          <li>Admin-editable values loaded once per payroll year.</li>
+        </ul>
+        <div class="pill">Placeholder only</div>
+      </div>
+      <div class="card placeholder" id="leaveTypesPlaceholder">
+        <h2>Leave Types and Benefit Rules</h2>
+        <div class="muted">Placeholder for the payroll admin setup section where HR/Admin will define leave categories and how they affect payroll.</div>
+        <ul>
+          <li>Add leave title, for example Maternity Leave.</li>
+          <li>Choose which payroll the leave applies to and who is eligible.</li>
+          <li>Define whether it is paid by employer, government, benefit, or unpaid.</li>
+          <li>Set benefit amount, SSC handling, deduction handling, and payslip visibility.</li>
+          <li>Extended unpaid absences such as sabbaticals should be handled under unpaid leave rules, not as a separate payroll category.</li>
+        </ul>
+        <div class="pill">Placeholder only</div>
+      </div>
+    </div>
+
+    <div class="network-panel" id="networkPanel">
+      <div class="network-header">
+        <div>
+          <h2 class="network-title">Network Devices and Users</h2>
+          <div class="muted">Review PCs/mobile entries and remove access for past employees.</div>
+        </div>
+        <button class="btn" id="btnRefreshNetwork" type="button">Refresh List</button>
+      </div>
+
+      <div class="network-filters">
+        <input id="searchInput" type="text" placeholder="Search hostname, user, or IP" />
+        <select id="deviceTypeFilter">
+          <option value="all">All Types</option>
+          <option value="workstation">Workstation</option>
+          <option value="mobile">Mobile</option>
+        </select>
+      </div>
+
+      <div class="status" id="networkStatus">Click Refresh List to load devices.</div>
+
+      <div class="suggestions" id="inactiveSuggestions" style="display:none;">
+        <h3 id="inactiveSuggestionsTitle">Inactive User Suggestions</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Device</th>
+                <th>User</th>
+                <th>User Status</th>
+                <th>Reason</th>
+                <th>Last Seen</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="inactiveSuggestionsBody">
+              <tr><td colspan="6" class="muted">No suggestions.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="margin-top: 10px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>Hostname</th>
+              <th>IP</th>
+              <th>User</th>
+              <th>Location</th>
+              <th>Last Seen</th>
+              <th>Status</th>
+              <th>Type</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="networkTableBody">
+            <tr><td colspan="9" class="muted">No devices loaded yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="status" id="statusLine">Checking access...</div>
+  </div>
+
+  <script>
+    const AUTH_STORAGE_KEY = 'empinfo.auth.v1';
+    const API_ORIGIN_STORAGE_KEY = 'empinfo.api_origin.v1';
+
+    function normalizeApiOrigin(rawValue) {
+      let value = String(rawValue || '').trim();
+      for (let i = 0; i < 3; i += 1) {
+        try {
+          const decoded = decodeURIComponent(value);
+          if (decoded === value) break;
+          value = decoded;
+        } catch {
+          break;
+        }
+      }
+      value = value.replace(/^(https?:\/\/)2F+/i, '$1');
+      value = value.replace(/\/$/, '');
+      if (!/^https?:\/\//i.test(value)) return 'http://localhost:8055';
+      return value;
+    }
+
+    const apiOriginFromQuery = new URLSearchParams(window.location.search).get('api_origin');
+    const API_ORIGIN = normalizeApiOrigin(apiOriginFromQuery || localStorage.getItem(API_ORIGIN_STORAGE_KEY) || 'http://localhost:8055');
+    const ROLE_RANK = { 'general user': 1, management: 2, hr: 3, full: 4, admin: 5, administrator: 5, superadmin: 5 };
+
+    const statusLine = document.getElementById('statusLine');
+    const setupGrid = document.getElementById('setupGrid');
+    const btnBackHub = document.getElementById('btnBackHub');
+    const btnEditNetwork = document.getElementById('btnEditNetwork');
+    const networkPanel = document.getElementById('networkPanel');
+    const btnRefreshNetwork = document.getElementById('btnRefreshNetwork');
+    const networkStatus = document.getElementById('networkStatus');
+    const networkTableBody = document.getElementById('networkTableBody');
+    const inactiveSuggestions = document.getElementById('inactiveSuggestions');
+    const inactiveSuggestionsTitle = document.getElementById('inactiveSuggestionsTitle');
+    const inactiveSuggestionsBody = document.getElementById('inactiveSuggestionsBody');
+    const searchInput = document.getElementById('searchInput');
+    const deviceTypeFilter = document.getElementById('deviceTypeFilter');
+
+    const links = [
+      document.getElementById('linkDeptDesignation'),
+      document.getElementById('linkDesignation'),
+      document.getElementById('linkLogos'),
+      document.getElementById('linkAddItem')
+    ];
+
+    const state = {
+      devices: [],
+      inactiveSuggestions: [],
+      networkOpen: false,
+      token: ''
+    };
+
+    function setNetworkStatus(message, tone) {
+      networkStatus.className = 'status';
+      if (tone === 'ok') networkStatus.classList.add('ok');
+      if (tone === 'err') networkStatus.classList.add('err');
+      networkStatus.textContent = message;
+    }
+
+    function getToken() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || '{}');
+        return String(stored?.access_token || '').trim();
+      } catch {
+        return '';
+      }
+    }
+
+    function roleRank(roleName) {
+      const normalized = String(roleName || '').trim().toLowerCase();
+      if (!normalized) return 0;
+      if (ROLE_RANK[normalized]) return ROLE_RANK[normalized];
+      if (normalized.includes('super') || normalized.includes('admin')) return ROLE_RANK.admin;
+      if (normalized.includes('full')) return ROLE_RANK.full;
+      if (normalized.includes('hr')) return ROLE_RANK.hr;
+      if (normalized.includes('manag')) return ROLE_RANK.management;
+      if (normalized.includes('general') || normalized.includes('user')) return ROLE_RANK['general user'];
+      return 0;
+    }
+
+    function applyLinks() {
+      const common = `api_origin=${encodeURIComponent(API_ORIGIN)}`;
+      document.getElementById('linkDeptDesignation').href = `./new_designation_Dept.html?section=departments&${common}`;
+      document.getElementById('linkDesignation').href = `./new_designation_Dept.html?section=designations&${common}`;
+      document.getElementById('linkLogos').href = `./new_designation_Dept.html?section=logos&${common}`;
+      document.getElementById('linkAddItem').href = `./admin-items.html?${common}`;
+      btnBackHub.href = `./app-hub.html?api_origin=${encodeURIComponent(API_ORIGIN)}`;
+    }
+
+    function safe(v) {
+      return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function formatDateTime(value) {
+      if (!value) return '-';
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return String(value);
+      return d.toLocaleString();
+    }
+
+    function filteredDevices() {
+      const search = String(searchInput.value || '').trim().toLowerCase();
+      const type = String(deviceTypeFilter.value || 'all');
+      return state.devices.filter((item) => {
+        const rowType = String(item.device_type || 'workstation');
+        if (type !== 'all' && rowType !== type) return false;
+        if (!search) return true;
+        const hay = [
+          item.workstation_name,
+          item.hostname,
+          item.current_ip,
+          item.assigned_user_name,
+          item.assigned_user_email,
+          item.location_name,
+          item.department_name,
+          item.physical_address_name
+        ].map((v) => String(v || '').toLowerCase()).join(' | ');
+        return hay.includes(search);
+      });
+    }
+
+    function renderNetworkRows() {
+      const rows = filteredDevices();
+      if (!rows.length) {
+        networkTableBody.innerHTML = '<tr><td colspan="9" class="muted">No devices match current filters.</td></tr>';
+        return;
+      }
+
+      networkTableBody.innerHTML = rows.map((item) => {
+        const userLabel = item.assigned_user_name || item.assigned_user_email || 'Unassigned';
+        const location = [item.location_name, item.department_name, item.physical_address_name].filter(Boolean).join(' / ') || '-';
+        const isSession = item.is_session_device === true;
+        const canRevoke = item.can_revoke !== false && !isSession;
+        const note = isSession && item.detection_note
+          ? `<div class="muted" style="margin-top:4px;">${safe(item.detection_note)}</div>`
+          : '';
+        const actionBtn = canRevoke
+          ? `<button class="btn-danger" data-revoke-id="${safe(item.id)}" type="button">Remove Access</button>`
+          : '<span class="muted">N/A</span>';
+
+        return `
+          <tr>
+            <td>${safe(item.workstation_name || item.hostname || '(Unnamed)')}${note}</td>
+            <td>${safe(item.hostname || '-')}</td>
+            <td>${safe(item.current_ip || '-')}</td>
+            <td>${safe(userLabel)}</td>
+            <td>${safe(location)}</td>
+            <td>${safe(formatDateTime(item.last_seen_at))}</td>
+            <td>${safe(item.status || 'active')}</td>
+            <td><span class="badge">${safe(item.device_type || 'workstation')}</span></td>
+            <td>${actionBtn}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderInactiveSuggestions() {
+      const rows = Array.isArray(state.inactiveSuggestions) ? state.inactiveSuggestions : [];
+      if (!rows.length) {
+        inactiveSuggestions.style.display = 'none';
+        inactiveSuggestionsTitle.textContent = 'Inactive User Suggestions';
+        inactiveSuggestionsBody.innerHTML = '<tr><td colspan="6" class="muted">No suggestions.</td></tr>';
+        return;
+      }
+
+      inactiveSuggestions.style.display = 'block';
+      inactiveSuggestionsTitle.textContent = `Inactive User Suggestions (${rows.length})`;
+      inactiveSuggestionsBody.innerHTML = rows.map((item) => {
+        const userLabel = item.assigned_user_name || item.assigned_user_email || item.assigned_user_id || 'Unknown user';
+        const canRevoke = item.can_revoke !== false;
+        const actionBtn = canRevoke
+          ? `<button class="btn-danger" data-revoke-id="${safe(item.workstation_id)}" type="button">Remove Access</button>`
+          : '<span class="muted">N/A</span>';
+
+        return `
+          <tr>
+            <td>${safe(item.workstation_name || item.hostname || '(Unnamed)')}</td>
+            <td>${safe(userLabel)}</td>
+            <td>${safe(item.assigned_user_status || 'unknown')}</td>
+            <td>${safe(item.reason || 'Needs review')}</td>
+            <td>${safe(formatDateTime(item.last_seen_at))}</td>
+            <td>${actionBtn}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function loadNetworkDevices() {
+      setNetworkStatus('Loading devices...', '');
+      try {
+        const response = await fetch(`${API_ORIGIN}/workstations-admin/network/devices`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${state.token}`,
+            Accept: 'application/json'
+          }
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload?.status !== 'success') {
+          throw new Error(payload?.message || `Request failed (${response.status})`);
+        }
+
+        state.devices = Array.isArray(payload?.data?.devices) ? payload.data.devices : [];
+        state.inactiveSuggestions = Array.isArray(payload?.data?.inactive_suggestions)
+          ? payload.data.inactive_suggestions
+          : [];
+        renderNetworkRows();
+        renderInactiveSuggestions();
+        if (payload?.data?.warning) {
+          setNetworkStatus(`${state.devices.length} device(s) loaded. ${payload.data.warning}`, '');
+        } else {
+          const extra = state.inactiveSuggestions.length
+            ? ` ${state.inactiveSuggestions.length} inactive-user suggestion(s) found.`
+            : '';
+          setNetworkStatus(`${state.devices.length} device(s) loaded.${extra}`, 'ok');
+        }
+      } catch (error) {
+        state.devices = [];
+        state.inactiveSuggestions = [];
+        renderNetworkRows();
+        renderInactiveSuggestions();
+        setNetworkStatus(`Could not load devices: ${error?.message || error}`, 'err');
+      }
+    }
+
+    async function revokeDevice(deviceId) {
+      if (!deviceId) return;
+      const reason = window.prompt('Reason for removing access (optional):', 'Past employee or unauthorized device');
+      if (reason === null) return;
+      if (!window.confirm('Remove access for this device?')) return;
+
+      setNetworkStatus('Applying revoke...', '');
+      try {
+        const response = await fetch(`${API_ORIGIN}/workstations-admin/network/revoke`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${state.token}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json'
+          },
+          body: JSON.stringify({ workstation_id: deviceId, reason: String(reason || '').trim() })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload?.status !== 'success') {
+          throw new Error(payload?.message || `Request failed (${response.status})`);
+        }
+        setNetworkStatus('Access removed successfully. Refreshing list...', 'ok');
+        await loadNetworkDevices();
+      } catch (error) {
+        setNetworkStatus(`Failed to remove access: ${error?.message || error}`, 'err');
+      }
+    }
+
+    function toggleNetwork() {
+      state.networkOpen = !state.networkOpen;
+      networkPanel.classList.toggle('open', state.networkOpen);
+      btnEditNetwork.textContent = state.networkOpen ? 'Hide Network' : 'Edit Network';
+      if (state.networkOpen) {
+        loadNetworkDevices();
+      }
+    }
+
+    function bindNetworkHandlers() {
+      btnEditNetwork.addEventListener('click', toggleNetwork);
+      btnRefreshNetwork.addEventListener('click', loadNetworkDevices);
+      searchInput.addEventListener('input', renderNetworkRows);
+      deviceTypeFilter.addEventListener('change', renderNetworkRows);
+      networkTableBody.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        const id = target.getAttribute('data-revoke-id');
+        if (id) revokeDevice(id);
+      });
+    }
+
+    async function init() {
+      applyLinks();
+      state.token = getToken();
+
+      if (!state.token) {
+        window.location.href = `./login.html?api_origin=${encodeURIComponent(API_ORIGIN)}`;
+        return;
+      }
+
+      const response = await fetch(`${API_ORIGIN}/users/me?fields=id,email,role.name`, {
+        headers: { Authorization: `Bearer ${state.token}` }
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        statusLine.className = 'status err';
+        statusLine.textContent = 'Unable to validate access.';
+        return;
+      }
+
+      const roleName = String(payload?.data?.role?.name || '').trim();
+      if (roleRank(roleName) < ROLE_RANK.hr) {
+        statusLine.className = 'status err';
+        statusLine.textContent = 'Setup is only available for HR/Admin-level users.';
+        links.forEach((a) => { if (a) a.style.display = 'none'; });
+        return;
+      }
+
+      setupGrid.style.display = 'grid';
+      btnEditNetwork.style.display = 'inline-block';
+      bindNetworkHandlers();
+      statusLine.className = 'status ok';
+      statusLine.textContent = `Access granted (${roleName || 'HR/Admin'})`;
+    }
+
+    init().catch((error) => {
+      statusLine.className = 'status err';
+      statusLine.textContent = error?.message || 'Failed to initialize setup page.';
+    });
+  </script>
+</body>
+</html>

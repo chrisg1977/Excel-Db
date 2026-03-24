@@ -1,9 +1,12 @@
 import dotenv from 'dotenv';
 import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 const resolveEnvPath = (): string | undefined => {
   const override = process.env.OD_ENV_PATH;
   if (override && override.trim()) return override.trim();
+  const localEnv = resolve(process.cwd(), '.env');
+  if (existsSync(localEnv)) return localEnv;
   const fallback = 'M:\\.env';
   return existsSync(fallback) ? fallback : undefined;
 };

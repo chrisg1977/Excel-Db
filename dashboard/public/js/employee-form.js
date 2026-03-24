@@ -50,11 +50,20 @@
   const btnTerminate   = document.getElementById('btnTerminate');
   const btnContract    = document.getElementById('btnContract');
   const toast          = document.getElementById('toast');
+  const permInventoryEnabled = document.getElementById('permInventoryEnabled');
+  const permSellEnabled = document.getElementById('permSellEnabled');
+  const permApproveSensitive = document.getElementById('permApproveSensitive');
+  const permOverrideDept = document.getElementById('permOverrideDept');
+  const permEffectiveFrom = document.getElementById('permEffectiveFrom');
+  const permInactiveFrom = document.getElementById('permInactiveFrom');
+  const departmentScopeContainer = document.getElementById('departmentScopeContainer');
+  const btnSaveInventoryAccess = document.getElementById('btnSaveInventoryAccess');
 
   /* ── State ────────────────────────────────────────────────────────────────── */
   let originalData   = null;
   let empList        = [];   // Array of IDs from sessionStorage
   let currentIndex   = -1;
+  let inventoryAccessPayload = null;
 
   /* ── Initialise ───────────────────────────────────────────────────────────── */
   hdrYear.textContent = new Date().getFullYear();
@@ -82,9 +91,159 @@
       originalData = data;
       populateForm(data);
       updateNavButtons(id);
+      await loadInventoryAccess(id);
     } catch (err) {
       showToast(`Failed to load employee: ${err.message}`, 6000);
     }
+  }
+
+  async function loadInventoryAccess(id) {
+    try {
+      const res = await fetch(`/api/employees/${encodeURIComponent(id)}/inventory-access`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const payload = await res.json();
+      inventoryAccessPayload = payload;
+      renderInventoryAccess(payload);
+    } catch (err) {
+      showToast(`Failed to load inventory access: ${err.message}`, 6000);
+    }
+  }
+
+  function toDateInput(value) {
+    if (!value) return '';
+    return String(value).slice(0, 10);
+  }
+
+  function renderInventoryAccess(payload) {
+    const access = payload.access || {};
+    permInventoryEnabled.checked = access.inventory_access_enabled === true;
+    permSellEnabled.checked = access.sell_access_enabled === true;
+    permApproveSensitive.checked = access.can_approve_sensitive === true;
+    permOverrideDept.checked = access.can_override_department_scope === true;
+    permEffectiveFrom.value = toDateInput(access.effective_from);
+    permInactiveFrom.value = toDateInput(access.inactive_from);
+
+    const departments = Array.isArray(payload.department_scopes) ? payload.department_scopes : [];
+    const locations = Array.isArray(payload.locations) ? payload.locations : [];
+
+    const locationByDepartment = new Map();
+    locations.forEach((location) => {
+      const departmentId = Number(location.department_id || 0);
+      if (!departmentId) return;
+      if (!locationByDepartment.has(departmentId)) {
+        locationByDepartment.set(departmentId, []);
+      }
+      locationByDepartment.get(departmentId).push(location);
+    });
+
+    const rowsHtml = departments.map((scope) => {
+      const departmentId = Number(scope.department_id || 0);
+      const selected = new Set((scope.selected_location_ids || []).map((id) => Number(id)));
+      const options = (locationByDepartment.get(departmentId) || []).map((location) => {
+        const id = Number(location.location_id || 0);
+        const selectedAttr = selected.has(id) ? ' selected' : '';
+        return `<option value="${id}"${selectedAttr}>${esc(location.location_code || '')} - ${esc(location.location_name || '')}</option>`;
+      }).join('');
+      const mode = String(scope.location_mode || 'all').toLowerCase() === 'selected' ? 'selected' : 'all';
+      const disabledAttr = mode === 'selected' ? '' : ' disabled';
+      return `
+        <tr class="scope-row" data-department-id="${departmentId}">
+          <td>${esc(scope.department_code || '')} - ${esc(scope.department_name || '')}</td>
+          <td>
+            <select class="scope-level">
+              <option value="none"${scope.scope_level === 'none' ? ' selected' : ''}>none</option>
+              <option value="view"${scope.scope_level === 'view' ? ' selected' : ''}>view</option>
+              <option value="post"${scope.scope_level === 'post' ? ' selected' : ''}>post</option>
+              <option value="approve"${scope.scope_level === 'approve' ? ' selected' : ''}>approve</option>
+              <option value="full"${scope.scope_level === 'full' ? ' selected' : ''}>full</option>
+            </select>
+          </td>
+          <td>
+            <select class="scope-mode">
+              <option value="all"${mode === 'all' ? ' selected' : ''}>all locations</option>
+              <option value="selected"${mode === 'selected' ? ' selected' : ''}>selected only</option>
+            </select>
+          </td>
+          <td>
+            <select class="scope-locations" multiple${disabledAttr}>${options}</select>
+          </td>
+        </tr>`;
+    }).join('');
+
+    departmentScopeContainer.innerHTML = `
+      <table class="scope-table">
+        <thead>
+          <tr>
+            <th>Department</th>
+            <th>Scope</th>
+            <th>Location access</th>
+            <th>Selected locations</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>`;
+
+    departmentScopeContainer.querySelectorAll('.scope-mode').forEach((select) => {
+      select.addEventListener('change', () => {
+        const row = select.closest('.scope-row');
+        if (!row) return;
+        const locationsSelect = row.querySelector('.scope-locations');
+        if (!locationsSelect) return;
+        const isSelectedMode = select.value === 'selected';
+        locationsSelect.disabled = !isSelectedMode;
+      });
+    });
+  }
+
+  async function saveInventoryAccess() {
+    if (!employeeId || !inventoryAccessPayload) {
+      showToast('Employee context not loaded.', 4000);
+      return;
+    }
+
+    const departmentScopes = Array.from(departmentScopeContainer.querySelectorAll('.scope-row')).map((row) => {
+      const departmentId = Number(row.dataset.departmentId || 0);
+      const scopeLevelEl = row.querySelector('.scope-level');
+      const scopeModeEl = row.querySelector('.scope-mode');
+      const locationsEl = row.querySelector('.scope-locations');
+
+      const selectedLocationIds = locationsEl
+        ? Array.from(locationsEl.selectedOptions).map((option) => Number(option.value)).filter((id) => Number.isFinite(id) && id > 0)
+        : [];
+
+      return {
+        department_id: departmentId,
+        scope_level: scopeLevelEl ? scopeLevelEl.value : 'none',
+        location_mode: scopeModeEl ? scopeModeEl.value : 'all',
+        selected_location_ids: selectedLocationIds,
+      };
+    });
+
+    const updatedByUserId = Number(window.localStorage.getItem('eos.inventory.userId') || '1') || 1;
+    const payload = {
+      updated_by_user_id: updatedByUserId,
+      access: {
+        inventory_access_enabled: permInventoryEnabled.checked,
+        sell_access_enabled: permSellEnabled.checked,
+        can_approve_sensitive: permApproveSensitive.checked,
+        can_override_department_scope: permOverrideDept.checked,
+        effective_from: permEffectiveFrom.value || null,
+        inactive_from: permInactiveFrom.value || null,
+      },
+      department_scopes: departmentScopes,
+    };
+
+    const res = await fetch(`/api/employees/${encodeURIComponent(employeeId)}/inventory-access`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(body.error || `HTTP ${res.status}`);
+    }
+
+    await loadInventoryAccess(employeeId);
   }
 
   /* ── Populate form ────────────────────────────────────────────────────────── */
@@ -169,6 +328,17 @@
     disableEdit();
   });
 
+  if (btnSaveInventoryAccess) {
+    btnSaveInventoryAccess.addEventListener('click', async () => {
+      try {
+        await saveInventoryAccess();
+        showToast('Inventory access wiring saved.', 3500);
+      } catch (err) {
+        showToast(`Save inventory access failed: ${err.message}`, 6000);
+      }
+    });
+  }
+
   /* ── Action buttons ───────────────────────────────────────────────────────── */
   btnWeeklyHours.addEventListener('click', () => showToast('Weekly Hours feature coming soon.', 3000));
   btnPayroll.addEventListener('click',     () => showToast('Payroll feature coming soon.',     3000));
@@ -230,6 +400,15 @@
     toast.classList.remove('hidden');
     if (toastTimer) clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toast.classList.add('hidden'), duration || 3000);
+  }
+
+  function esc(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
 }());

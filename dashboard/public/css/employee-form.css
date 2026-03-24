@@ -275,6 +275,100 @@ html, body { min-height: 100%; background: var(--gray-100); color: var(--gray-90
 
 .balance-input:focus { border-color: var(--green); }
 
+.permission-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.permission-card .card-title {
+  margin: -14px -14px 10px -14px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--purple);
+}
+
+.perm-grid {
+  display: grid;
+  gap: 6px;
+}
+
+.perm-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.perm-dates {
+  display: grid;
+  gap: 8px;
+}
+
+.perm-dates label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: var(--gray-700);
+}
+
+.perm-dates input,
+.scope-table select {
+  width: 100%;
+  border: 1px solid var(--gray-200);
+  border-radius: 4px;
+  padding: 6px 7px;
+  font-size: 12px;
+}
+
+.perm-note {
+  font-size: 11px;
+  color: var(--gray-700);
+}
+
+.scope-container {
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid var(--gray-200);
+  border-radius: 4px;
+}
+
+.scope-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.scope-table th,
+.scope-table td {
+  border-bottom: 1px solid var(--gray-200);
+  padding: 6px;
+  vertical-align: top;
+}
+
+.scope-table th {
+  text-align: left;
+  position: sticky;
+  top: 0;
+  background: #fafbff;
+}
+
+.scope-locations {
+  min-width: 150px;
+  min-height: 74px;
+}
+
+.scope-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 /* ─── Bottom Navigation ──────────────────────────────────────────────────────── */
 .emp-footer {
   display: flex;

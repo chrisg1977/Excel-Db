@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M-CodeZ - Usage Report</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f4f7fb;
+      color: #1a1d23;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 20px;
+      background: #eaf3ff;
+      border-bottom: 1px solid #cddbf4;
+    }
+    .title {
+      margin: 0;
+      font-size: 20px;
+      color: #2e5090;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .save-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid #d8dfeb;
+      background: #ffffff;
+      color: #2f3d53;
+      font-size: 12px;
+      font-weight: 600;
+      min-height: 34px;
+    }
+    .save-status-logo-btn {
+      border: 1px solid #d8dfeb;
+      background: #fff;
+      border-radius: 999px;
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 2px;
+    }
+    .save-status-logo-btn:hover { border-color: #2e5090; }
+    .save-status-logo {
+      max-width: 22px;
+      max-height: 22px;
+      object-fit: contain;
+      pointer-events: none;
+    }
+    .save-status-text { white-space: nowrap; }
+    .btn-logout {
+      background: #e8edf6;
+      color: #2f3d53;
+      border: 1px solid #c7d2e3;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-logout:hover {
+      background: #dde6f5;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 24px auto;
+      padding: 0 16px;
+      display: grid;
+      gap: 16px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #dbe4f0;
+      border-radius: 10px;
+      padding: 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: end;
+    }
+    .field {
+      display: grid;
+      gap: 4px;
+    }
+    label {
+      font-size: 12px;
+      color: #4a5568;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .2px;
+    }
+    input[type="date"], input[type="month"] {
+      border: 1px solid #c7d2e3;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 14px;
+      background: #fff;
+      color: #1a1d23;
+      min-width: 140px;
+    }
+    button {
+      border: 0;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-primary { background: #2e5090; color: #fff; }
+    .btn-secondary { background: #e8edf6; color: #2f3d53; }
+    .muted { color: #6d7788; font-size: 13px; }
+    .error { color: #b42318; font-size: 14px; font-weight: 600; }
+    .ok { color: #17693a; font-size: 14px; font-weight: 600; }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .kpi {
+      border: 1px solid #e3e9f3;
+      border-radius: 8px;
+      padding: 10px;
+      background: #fafcff;
+    }
+    .kpi .k {
+      font-size: 12px;
+      color: #5b677c;
+      text-transform: uppercase;
+    }
+    .kpi .v {
+      margin-top: 2px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #1f2a3d;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px;
+      border-bottom: 1px solid #e6ecf5;
+      font-size: 14px;
+    }
+    th {
+      font-size: 12px;
+      color: #5d6980;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
+    }
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover { background: #f6faff; }
+    .chip {
+      display: inline-block;
+      font-size: 12px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: #e8edf6;
+      color: #2f3d53;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body data-app-id="mythings-usage-report">
+  <div class="header">
+    <h1 class="title">My Things - Usage Report</h1>
+    <div class="header-right">
+      <div class="save-status" id="saveStatus">
+        <button class="save-status-logo-btn" id="btnSaveStatusLogo" type="button" title="M-CodeZ Home">
+          <img class="save-status-logo" src="assets/logos/database-logo.png" alt="M-CodeZ" />
+        </button>
+        <span class="save-status-text" id="saveStatusText">No DB save on this page</span>
+      </div>
+      <a class="muted" id="backLink" href="./app-hub.html">Back to App Hub</a>
+      <button id="btnLogout" class="btn-logout" type="button">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="toolbar">
+        <div class="field">
+          <label for="monthInput">Month Summary</label>
+          <input id="monthInput" type="month" />
+        </div>
+        <button id="loadMonthBtn" class="btn-primary" type="button">Load Monthly Users</button>
+        <div class="field">
+          <label for="dayInput">Daily Reading</label>
+          <input id="dayInput" type="date" />
+        </div>
+        <button id="loadDayBtn" class="btn-secondary" type="button">Load Day Total</button>
+      </div>
+      <p class="muted" id="whoAmI"></p>
+      <p id="statusLine" class="muted"></p>
+      <div class="summary-grid">
+        <div class="kpi"><div class="k">Selected Month Total</div><div class="v" id="monthTotal">00:00</div></div>
+        <div class="kpi"><div class="k">Selected Day Total</div><div class="v" id="dayTotal">00:00</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0;">Users - Monthly Total <span class="chip" id="monthLabel"></span></h3>
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Hours</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody id="usersBody">
+          <tr><td colspan="3" class="muted">No data loaded.</td></tr>
+        </tbody>
+      </table>
+      <p class="muted">Click a user row to load per-page usage.</p>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0;">Per Page Usage <span class="chip" id="selectedUserChip">No user selected</span></h3>
+      <div class="toolbar" style="margin-top:10px;">
+        <div class="field">
+          <label for="fromDateInput">From Date</label>
+          <input id="fromDateInput" type="date" />
+        </div>
+        <div class="field">
+          <label for="toDateInput">To Date</label>
+          <input id="toDateInput" type="date" />
+        </div>
+        <button id="loadPagesBtn" class="btn-secondary" type="button">Load Page Breakdown</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Page</th>
+            <th>Hours</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody id="pagesBody">
+          <tr><td colspan="3" class="muted">Select a user to view page-level usage.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="assets/js/usage-tracker.js"></script>
+  <script src="assets/js/idle-logout.js"></script>
+  <script>if (typeof window.initIdleLogout === 'function') window.initIdleLogout('');</script>
+  <script>
+    const AUTH_STORAGE_KEY = 'empinfo.auth.v1';
+    const API_ORIGIN_STORAGE_KEY = 'empinfo.api_origin.v1';
+    const ALLOWED_EMAILS = new Set(['drchrisgauci@gmail.com', 'chrisgauci@mediatrixmalta.com']);
+    const params = new URLSearchParams(window.location.search);
+    const API_ORIGIN = params.get('api_origin') || localStorage.getItem(API_ORIGIN_STORAGE_KEY) || 'http://localhost:8055';
+
+    const monthInput = document.getElementById('monthInput');
+    const dayInput = document.getElementById('dayInput');
+    const fromDateInput = document.getElementById('fromDateInput');
+    const toDateInput = document.getElementById('toDateInput');
+    const loadMonthBtn = document.getElementById('loadMonthBtn');
+    const loadDayBtn = document.getElementById('loadDayBtn');
+    const loadPagesBtn = document.getElementById('loadPagesBtn');
+    const whoAmIEl = document.getElementById('whoAmI');
+    const statusLineEl = document.getElementById('statusLine');
+    const monthTotalEl = document.getElementById('monthTotal');
+    const dayTotalEl = document.getElementById('dayTotal');
+    const monthLabelEl = document.getElementById('monthLabel');
+    const selectedUserChip = document.getElementById('selectedUserChip');
+    const usersBody = document.getElementById('usersBody');
+    const pagesBody = document.getElementById('pagesBody');
+    const backLink = document.getElementById('backLink');
+    const btnLogout = document.getElementById('btnLogout');
+    const btnSaveStatusLogo = document.getElementById('btnSaveStatusLogo');
+
+    let selectedUser = null;
+
+    function todayIso() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function monthIso() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      return `${yyyy}-${mm}`;
+    }
+
+    function getAccessToken() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || '{}');
+        return stored?.access_token || '';
+      } catch {
+        return '';
+      }
+    }
+
+    function toHHMM(totalSeconds) {
+      const seconds = Math.max(0, Number(totalSeconds || 0));
+      const minutes = Math.floor(seconds / 60);
+      const hh = String(Math.floor(minutes / 60)).padStart(2, '0');
+      const mm = String(minutes % 60).padStart(2, '0');
+      return `${hh}:${mm}`;
+    }
+
+    function setStatus(type, message) {
+      statusLineEl.className = type;
+      statusLineEl.textContent = message;
+    }
+
+    async function fetchJson(url, token) {
+      const res = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const message = payload?.errors?.[0]?.message || payload?.error || `Request failed (${res.status})`;
+        throw new Error(message);
+      }
+      return payload;
+    }
+
+    async function ensureOwner(token) {
+      const me = await fetchJson(`${API_ORIGIN}/users/me?fields=id,email,first_name,last_name`, token);
+      const meEmail = String(me?.data?.email || '').trim().toLowerCase();
+      const displayName = [me?.data?.first_name, me?.data?.last_name].filter(Boolean).join(' ').trim() || meEmail;
+      whoAmIEl.textContent = `Signed in as: ${displayName} (${meEmail})`;
+
+      if (!ALLOWED_EMAILS.has(meEmail)) {
+        setStatus('error', 'Access denied. This report is restricted to the owner account.');
+        throw new Error('Access denied');
+      }
+    }
+
+    async function loadMonthUsers() {
+      const token = getAccessToken();
+      if (!token) {
+        window.location.href = `./login.html?api_origin=${encodeURIComponent(API_ORIGIN)}`;
+        return;
+      }
+
+      try {
+        await ensureOwner(token);
+        const month = monthInput.value || monthIso();
+        monthLabelEl.textContent = month;
+        setStatus('muted', 'Loading monthly summary...');
+
+        const data = await fetchJson(`${API_ORIGIN}/usage-analytics/usage/report?month=${encodeURIComponent(month)}&group_by=user&all=true`, token);
+        const rows = Array.isArray(data?.data?.rows) ? data.data.rows : [];
+        const totalSec = Number(data?.data?.total_seconds || 0);
+
+        monthTotalEl.textContent = toHHMM(totalSec);
+        if (!rows.length) {
+          usersBody.innerHTML = '<tr><td colspan="3" class="muted">No usage data for selected month.</td></tr>';
+          setStatus('ok', `Loaded month ${month}.`);
+          return;
+        }
+
+        usersBody.innerHTML = rows.map((row, idx) => {
+          const sec = Number(row.active_seconds || 0);
+          const email = row.directus_user_email || row.directus_user_id || `user-${idx + 1}`;
+          const safeEmail = String(email).replace(/"/g, '&quot;');
+          const safeId = String(row.directus_user_id || '').replace(/"/g, '&quot;');
+          return `
+            <tr class="clickable" data-user-id="${safeId}" data-user-email="${safeEmail}">
+              <td>${email}</td>
+              <td>${(sec / 3600).toFixed(2)}</td>
+              <td>${toHHMM(sec)}</td>
+            </tr>
+          `;
+        }).join('');
+
+        usersBody.querySelectorAll('tr.clickable').forEach((tr) => {
+          tr.addEventListener('click', () => {
+            selectedUser = {
+              id: tr.getAttribute('data-user-id') || '',
+              email: tr.getAttribute('data-user-email') || ''
+            };
+            selectedUserChip.textContent = selectedUser.email || selectedUser.id || 'Selected user';
+            loadUserPages();
+          });
+        });
+
+        setStatus('ok', `Loaded ${rows.length} user(s) for ${month}. Click a user row for details.`);
+      } catch (error) {
+        setStatus('error', error instanceof Error ? error.message : 'Failed to load monthly summary');
+      }
+    }
+
+    async function loadDayTotal() {
+      const token = getAccessToken();
+      if (!token) return;
+      try {
+        await ensureOwner(token);
+        const day = dayInput.value || todayIso();
+        const data = await fetchJson(`${API_ORIGIN}/usage-analytics/usage/daily?date=${encodeURIComponent(day)}&all=true`, token);
+        const totalSec = Number(data?.data?.total_seconds || 0);
+        dayTotalEl.textContent = toHHMM(totalSec);
+        setStatus('ok', `Daily total loaded for ${day}.`);
+      } catch (error) {
+        setStatus('error', error instanceof Error ? error.message : 'Failed to load daily total');
+      }
+    }
+
+    async function loadUserPages() {
+      if (!selectedUser) {
+        pagesBody.innerHTML = '<tr><td colspan="3" class="muted">Select a user first.</td></tr>';
+        return;
+      }
+
+      const token = getAccessToken();
+      if (!token) return;
+      try {
+        await ensureOwner(token);
+
+        const from = fromDateInput.value || todayIso();
+        const to = toDateInput.value || from;
+        const userId = selectedUser.id;
+        const url = `${API_ORIGIN}/usage-analytics/usage/report?group_by=page&all=true&user_id=${encodeURIComponent(userId)}&date_from=${encodeURIComponent(from)}&date_to=${encodeURIComponent(to)}`;
+        const data = await fetchJson(url, token);
+        const rows = Array.isArray(data?.data?.rows) ? data.data.rows : [];
+
+        if (!rows.length) {
+          pagesBody.innerHTML = '<tr><td colspan="3" class="muted">No page-level usage in selected date range.</td></tr>';
+          setStatus('ok', `No page usage rows for ${selectedUser.email} between ${from} and ${to}.`);
+          return;
+        }
+
+        pagesBody.innerHTML = rows.map((row) => {
+          const sec = Number(row.active_seconds || 0);
+          const page = row.page_path || '(unknown)';
+          return `
+            <tr>
+              <td>${page}</td>
+              <td>${(sec / 3600).toFixed(2)}</td>
+              <td>${toHHMM(sec)}</td>
+            </tr>
+          `;
+        }).join('');
+
+        setStatus('ok', `Loaded page usage for ${selectedUser.email} (${from} to ${to}).`);
+      } catch (error) {
+        setStatus('error', error instanceof Error ? error.message : 'Failed to load page breakdown');
+      }
+    }
+
+    const now = todayIso();
+    const month = monthIso();
+    monthInput.value = month;
+    dayInput.value = now;
+    fromDateInput.value = now;
+    toDateInput.value = now;
+    monthLabelEl.textContent = month;
+    backLink.href = `./app-hub.html?api_origin=${encodeURIComponent(API_ORIGIN)}`;
+
+    if (btnLogout) {
+      btnLogout.addEventListener('click', () => {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        window.location.href = `./login.html?api_origin=${encodeURIComponent(API_ORIGIN)}`;
+      });
+    }
+    if (btnSaveStatusLogo) {
+      btnSaveStatusLogo.addEventListener('click', () => {
+        window.location.href = `./app-hub.html?api_origin=${encodeURIComponent(API_ORIGIN)}`;
+      });
+    }
+
+    loadMonthBtn.addEventListener('click', loadMonthUsers);
+    loadDayBtn.addEventListener('click', loadDayTotal);
+    loadPagesBtn.addEventListener('click', loadUserPages);
+
+    loadMonthUsers();
+    loadDayTotal();
+  </script>
+</body>
+</html>

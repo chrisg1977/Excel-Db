@@ -1,0 +1,1446 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M-CodeZ - Department and Designation Manager</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f4f7fb;
+      color: #1a1d23;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #d5dfef;
+      background: #eaf3ff;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 22px;
+      color: #2e5090;
+      letter-spacing: 0.01em;
+    }
+    .actions { display: flex; gap: 8px; align-items: center; }
+    .btn {
+      border: 1px solid #c7d2e3;
+      background: #fff;
+      color: #2f3d53;
+      border-radius: 7px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn.primary {
+      background: #2e5090;
+      color: #fff;
+      border-color: #2e5090;
+    }
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .status {
+      margin: 10px 16px 0;
+      font-size: 13px;
+      color: #607089;
+    }
+    .status.ok { color: #17693a; }
+    .status.err { color: #b42318; }
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      padding: 14px 16px 20px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #dbe4f0;
+      border-radius: 12px;
+      box-shadow: 0 6px 14px rgba(21, 33, 58, 0.06);
+      overflow: hidden;
+    }
+    .card-head {
+      margin: 0;
+      padding: 12px 14px;
+      text-align: center;
+      font-size: 24px;
+      color: #2e5090;
+      background: #f3f7ff;
+      border-bottom: 1px solid #e1e8f5;
+      letter-spacing: 0.02em;
+    }
+    .card-body { padding: 12px 14px; }
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .field-grid.single { grid-template-columns: 1fr; }
+    label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 12px;
+      color: #4d5c74;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+    input[type="text"], input[type="email"], input[type="number"], select, textarea {
+      width: 100%;
+      border: 1px solid #c7d2e3;
+      border-radius: 7px;
+      padding: 8px 9px;
+      font-size: 13px;
+      background: #fff;
+    }
+    textarea {
+      min-height: 56px;
+      resize: vertical;
+    }
+    .list {
+      border: 1px solid #e3ebf8;
+      border-radius: 10px;
+      max-height: 300px;
+      overflow: auto;
+      background: #fbfdff;
+    }
+    .dept-item, .desig-item {
+      display: grid;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-bottom: 1px solid #eef2f9;
+      cursor: pointer;
+    }
+    .dept-item {
+      grid-template-columns: 44px 1fr auto;
+    }
+    .desig-item {
+      grid-template-columns: 1fr auto auto;
+    }
+    .dept-item:last-child, .desig-item:last-child { border-bottom: none; }
+    .dept-item.active, .desig-item.active { background: #eaf3ff; }
+    .logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      border: 1px solid #c9d5eb;
+      object-fit: contain;
+      background: #fff;
+    }
+    .chip {
+      border: 1px solid #ced9ee;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #36527f;
+      background: #f1f6ff;
+      white-space: nowrap;
+    }
+    .muted { color: #6c7688; font-size: 12px; }
+    .section-subtitle {
+      font-size: 13px;
+      font-weight: 700;
+      color: #334665;
+      margin: 10px 0 8px;
+    }
+    .drop {
+      border: 2px dashed #b9c8e3;
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+      font-size: 12px;
+      color: #4e5f7e;
+      background: #f8fbff;
+    }
+    .drop.drag { background: #eaf3ff; border-color: #3c73c9; }
+    .drop img {
+      margin-top: 8px;
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+      border: 1px solid #d3def0;
+      border-radius: 8px;
+      background: #fff;
+    }
+    .logo-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .logo-slot {
+      border: 1px solid #d9e3f2;
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 8px;
+      text-align: center;
+    }
+    .logo-slot-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #3e557c;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .logo-slot img {
+      margin: 0;
+      width: 74px;
+      height: 74px;
+      object-fit: contain;
+      border: 1px solid #d3def0;
+      border-radius: 8px;
+      background: #fff;
+    }
+    .logo-empty {
+      font-size: 11px;
+      color: #6d7b92;
+      padding: 28px 8px;
+      border: 1px dashed #d3deef;
+      border-radius: 8px;
+      background: #f9fbff;
+      min-height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .checks {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: #3e4e69;
+    }
+    .checks label {
+      margin: 0;
+      font-weight: 600;
+      color: #3e4e69;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .desig-title {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 800;
+      color: #2e5090;
+      margin: 0 0 8px;
+    }
+    @media (max-width: 1200px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>Department and Designation Setup</h1>
+    <div class="actions">
+      <button class="btn" id="reloadBtn" type="button">Reload</button>
+      <button class="btn" id="closeBtn" type="button">Close</button>
+    </div>
+  </header>
+  <p id="statusLine" class="status">Loading...</p>
+
+  <main class="layout">
+    <section class="card" id="departmentsCard">
+      <h2 class="card-head">Departments</h2>
+      <div class="card-body">
+        <p class="section-subtitle">Current list (sorted: Dental, Hospitality, Other)</p>
+        <div id="departmentList" class="list"></div>
+
+        <p class="section-subtitle">Add / Edit Department</p>
+        <div class="field-grid">
+          <div>
+            <label for="deptCategory">Category</label>
+            <select id="deptCategory">
+              <option value="DENTAL">Dental</option>
+              <option value="HOSPITALITY">Hospitality</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="deptAbbrev">Abbrev.</label>
+            <input id="deptAbbrev" type="text" placeholder="MDCQ" />
+          </div>
+          <div style="grid-column:1 / span 2;">
+            <label for="deptName">Department Name</label>
+            <input id="deptName" type="text" placeholder="Department Name" />
+          </div>
+        </div>
+
+        <div class="field-grid single">
+          <div>
+            <label>Department Logo</label>
+            <div id="logoDrop" class="drop">
+              Drag and drop logo here or select file
+              <div class="row" style="justify-content:center; margin-top:8px;">
+                <input id="logoInput" type="file" accept="image/*" />
+              </div>
+              <div class="logo-compare">
+                <div class="logo-slot">
+                  <div class="logo-slot-title">Current Logo</div>
+                  <div id="logoCurrentEmpty" class="logo-empty">No current logo</div>
+                  <img id="logoCurrentPreview" style="display:none;" alt="Current logo" />
+                </div>
+                <div class="logo-slot">
+                  <div class="logo-slot-title">New Logo</div>
+                  <div id="logoNewEmpty" class="logo-empty">No new logo selected</div>
+                  <img id="logoPreview" style="display:none;" alt="New logo preview" />
+                </div>
+              </div>
+            </div>
+            <div class="row" style="margin-top:8px;">
+              <button class="btn" id="saveDeptLogoBtn" type="button">Save Dept Logo</button>
+            </div>
+          </div>
+        </div>
+
+        <p class="section-subtitle" id="logosSection">Group Logo</p>
+        <div class="field-grid single">
+          <div>
+            <label for="groupName">Group Name</label>
+            <input id="groupName" type="text" placeholder="Mediatrix Group" />
+          </div>
+          <div>
+            <div id="groupLogoDrop" class="drop">
+              Drag and drop whole-group logo here or select file
+              <div class="row" style="justify-content:center; margin-top:8px;">
+                <input id="groupLogoInput" type="file" accept="image/*" />
+              </div>
+              <div class="logo-compare">
+                <div class="logo-slot">
+                  <div class="logo-slot-title">Current Group Logo</div>
+                  <div id="groupLogoCurrentEmpty" class="logo-empty">No current group logo</div>
+                  <img id="groupLogoCurrentPreview" style="display:none;" alt="Current group logo" />
+                </div>
+                <div class="logo-slot">
+                  <div class="logo-slot-title">New Group Logo</div>
+                  <div id="groupLogoNewEmpty" class="logo-empty">No new group logo selected</div>
+                  <img id="groupLogoPreview" style="display:none;" alt="New group logo preview" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <button class="btn" id="saveBrandingBtn" type="button">Save Group Logo</button>
+          </div>
+        </div>
+
+        <div class="field-grid">
+          <div>
+            <label for="addressExisting">Department Address</label>
+            <select id="addressExisting">
+              <option value="">New address</option>
+            </select>
+          </div>
+          <div>
+            <label for="contactExisting">Contact details</label>
+            <select id="contactExisting">
+              <option value="">New contact</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-grid">
+          <div>
+            <label for="addressLabel">Address label</label>
+            <input id="addressLabel" type="text" placeholder="Main clinic address" />
+          </div>
+          <div>
+            <label for="addressLine1">Address line</label>
+            <input id="addressLine1" type="text" placeholder="Address line 1" />
+          </div>
+          <div>
+            <label for="addressCity">City</label>
+            <input id="addressCity" type="text" placeholder="City" />
+          </div>
+          <div>
+            <label for="addressPostcode">Postcode</label>
+            <input id="addressPostcode" type="text" placeholder="Postcode" />
+          </div>
+        </div>
+
+        <div class="field-grid">
+          <div>
+            <label for="contactLabel">Contact label</label>
+            <input id="contactLabel" type="text" placeholder="Front desk contacts" />
+          </div>
+          <div>
+            <label for="contactPerson">Contact person</label>
+            <input id="contactPerson" type="text" placeholder="Name" />
+          </div>
+          <div>
+            <label for="contactPhone">Phone</label>
+            <input id="contactPhone" type="text" placeholder="+356 ..." />
+          </div>
+          <div>
+            <label for="contactEmail">Email</label>
+            <input id="contactEmail" type="email" placeholder="name@domain.com" />
+          </div>
+        </div>
+
+        <div class="checks">
+          <label><input id="deptFinancials" type="checkbox" checked /> Create financial profile</label>
+          <label><input id="deptEmployeeProfile" type="checkbox" checked /> Create employee info profile</label>
+        </div>
+        <div class="muted" style="margin-top:8px;">
+          Reports are available by Department, Category, and Address (from this catalog data).
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn primary" id="saveDepartmentBtn" type="button">Save Department</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="designationsCard">
+      <h2 class="card-head">Designations</h2>
+      <div class="card-body">
+        <p class="desig-title">Designations</p>
+        <div id="designationList" class="list"></div>
+        <p class="section-subtitle">Add / Edit Designation</p>
+        <div class="field-grid">
+          <div>
+            <label for="industryCategory">Industry / Profession</label>
+            <select id="industryCategory">
+              <option value="DENTISTRY">Dentistry</option>
+              <option value="PHYSIOTHERAPY">Physiotherapy</option>
+              <option value="PODIATRY">Podiatry</option>
+              <option value="HOSPITALITY">Hospitality</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="professionCategory">Profession Category</label>
+            <input id="professionCategory" type="text" placeholder="Provider / Assistant / Maintenance..." />
+          </div>
+          <div>
+            <label for="designationCategory">Category</label>
+            <select id="designationCategory">
+              <option value="PROVIDER">Provider</option>
+              <option value="ASSISTANT">Assistant</option>
+              <option value="RECEPTION">Reception</option>
+              <option value="HOUSEKEEPING">Housekeeping</option>
+              <option value="MAINTENANCE">Maintenance</option>
+              <option value="MANAGEMENT">Management</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="designationName">Designation Name</label>
+            <input id="designationName" type="text" placeholder="Dental Surgeon / Handyman..." />
+          </div>
+          <div>
+            <label for="linkedDepartment">Linked Department (optional)</label>
+            <select id="linkedDepartment">
+              <option value="">Not linked to one department</option>
+            </select>
+          </div>
+          <div>
+            <label for="defaultPeNumber">Default PE number (optional)</label>
+            <input id="defaultPeNumber" type="text" placeholder="PE12345" />
+          </div>
+          <div>
+            <label for="designationColor">Row Color</label>
+            <input id="designationColor" type="text" value="#2E5090" />
+          </div>
+          <div>
+            <label for="designationOrder">Display order</label>
+            <input id="designationOrder" type="number" value="1000" />
+          </div>
+        </div>
+        <div class="checks">
+          <label><input id="isProvider" type="checkbox" /> Provider designation</label>
+          <label><input id="requiresPeChange" type="checkbox" /> PE number change required on move</label>
+        </div>
+        <div class="muted" style="margin-top:8px;">
+          Employees can move designations without changing FS4 unless PE number changes.
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn primary" id="saveDesignationBtn" type="button">Save Designation</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function normalizeApiOrigin(rawValue) {
+      let value = String(rawValue || '').trim();
+      for (let i = 0; i < 3; i += 1) {
+        try {
+          const decoded = decodeURIComponent(value);
+          if (decoded === value) break;
+          value = decoded;
+        } catch {
+          break;
+        }
+      }
+      value = value.replace(/^(https?:\/\/)2F+/i, '$1');
+      value = value.replace(/\/$/, '');
+      if (!/^https?:\/\//i.test(value)) return 'http://localhost:8055';
+      return value;
+    }
+
+    const API_ORIGIN = normalizeApiOrigin(new URLSearchParams(window.location.search).get('api_origin') || 'http://localhost:8055');
+    const EMPLOYEE_FORM_BASE = `${API_ORIGIN}/employee-form/payroll/employee-form`;
+    const AUTH_STORAGE_KEY = 'empinfo.auth.v1';
+    const state = {
+      bootstrap: null,
+      selectedDepartmentId: null,
+      selectedDesignationId: null,
+      logoDataUrl: '',
+      groupLogoDataUrl: '',
+      currentLogoDataUrl: '',
+      currentGroupLogoDataUrl: '',
+      catalogMode: 'v2'
+    };
+
+    const els = {
+      status: document.getElementById('statusLine'),
+      departmentList: document.getElementById('departmentList'),
+      designationList: document.getElementById('designationList'),
+      reloadBtn: document.getElementById('reloadBtn'),
+      closeBtn: document.getElementById('closeBtn'),
+      saveDepartmentBtn: document.getElementById('saveDepartmentBtn'),
+      saveDesignationBtn: document.getElementById('saveDesignationBtn'),
+      saveBrandingBtn: document.getElementById('saveBrandingBtn'),
+      saveDeptLogoBtn: document.getElementById('saveDeptLogoBtn'),
+      logoDrop: document.getElementById('logoDrop'),
+      logoInput: document.getElementById('logoInput'),
+      logoCurrentPreview: document.getElementById('logoCurrentPreview'),
+      logoCurrentEmpty: document.getElementById('logoCurrentEmpty'),
+      logoNewEmpty: document.getElementById('logoNewEmpty'),
+      logoPreview: document.getElementById('logoPreview'),
+      groupLogoDrop: document.getElementById('groupLogoDrop'),
+      groupLogoInput: document.getElementById('groupLogoInput'),
+      groupLogoCurrentPreview: document.getElementById('groupLogoCurrentPreview'),
+      groupLogoCurrentEmpty: document.getElementById('groupLogoCurrentEmpty'),
+      groupLogoNewEmpty: document.getElementById('groupLogoNewEmpty'),
+      groupLogoPreview: document.getElementById('groupLogoPreview'),
+      groupName: document.getElementById('groupName'),
+      deptCategory: document.getElementById('deptCategory'),
+      deptAbbrev: document.getElementById('deptAbbrev'),
+      deptName: document.getElementById('deptName'),
+      addressExisting: document.getElementById('addressExisting'),
+      contactExisting: document.getElementById('contactExisting'),
+      addressLabel: document.getElementById('addressLabel'),
+      addressLine1: document.getElementById('addressLine1'),
+      addressCity: document.getElementById('addressCity'),
+      addressPostcode: document.getElementById('addressPostcode'),
+      contactLabel: document.getElementById('contactLabel'),
+      contactPerson: document.getElementById('contactPerson'),
+      contactPhone: document.getElementById('contactPhone'),
+      contactEmail: document.getElementById('contactEmail'),
+      deptFinancials: document.getElementById('deptFinancials'),
+      deptEmployeeProfile: document.getElementById('deptEmployeeProfile'),
+      industryCategory: document.getElementById('industryCategory'),
+      professionCategory: document.getElementById('professionCategory'),
+      designationCategory: document.getElementById('designationCategory'),
+      designationName: document.getElementById('designationName'),
+      linkedDepartment: document.getElementById('linkedDepartment'),
+      defaultPeNumber: document.getElementById('defaultPeNumber'),
+      designationColor: document.getElementById('designationColor'),
+      designationOrder: document.getElementById('designationOrder'),
+      isProvider: document.getElementById('isProvider'),
+      requiresPeChange: document.getElementById('requiresPeChange')
+    };
+
+    function setStatus(text, kind) {
+      els.status.className = `status${kind ? ` ${kind}` : ''}`;
+      els.status.textContent = text;
+    }
+
+    function authToken() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || '{}');
+        return String(stored?.access_token || '').trim();
+      } catch {
+        return '';
+      }
+    }
+
+    function redirectToLogin() {
+      const loginUrl = `./login.html?api_origin=${encodeURIComponent(API_ORIGIN)}`;
+      if (window.location.pathname.toLowerCase().includes('/dashboard/')) {
+        window.location.href = `../login.html?api_origin=${encodeURIComponent(API_ORIGIN)}`;
+      } else {
+        window.location.href = loginUrl;
+      }
+    }
+
+    async function apiRequest(url, options = {}) {
+      const token = authToken();
+      if (!token) {
+        redirectToLogin();
+        throw new Error('Authentication required');
+      }
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(options.headers || {})
+        }
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        redirectToLogin();
+        throw new Error('Authentication required');
+      }
+      if (!response.ok) {
+        throw new Error(payload?.error || payload?.message || `Request failed (${response.status})`);
+      }
+      return payload;
+    }
+
+    function normalizeLegacyCatalogPayload(payload) {
+      const departmentsRaw = Array.isArray(payload?.departments) ? payload.departments : [];
+      const designationsRaw = Array.isArray(payload?.designations) ? payload.designations : [];
+
+      const departments = departmentsRaw
+        .map((entry, index) => {
+          const name = String((typeof entry === 'string' ? entry : (entry?.name || entry?.department_name || entry?.abbreviation || '')) || '').trim();
+          if (!name) return null;
+          const abbreviation = String(entry?.abbreviation || name).trim();
+          return {
+            id: Number(entry?.id) > 0 ? Number(entry.id) : index + 1,
+            category: String(entry?.category || 'OTHER').toUpperCase(),
+            abbreviation,
+            department_name: name,
+            address_id: null,
+            contact_id: null,
+            address_label: '',
+            address_line_1: '',
+            city: '',
+            postcode: '',
+            contact_label: '',
+            contact_person: '',
+            phone_primary: '',
+            email: '',
+            logo_data_url: '',
+            create_financial_profile: true,
+            create_employee_profile: true
+          };
+        })
+        .filter(Boolean);
+
+      const designations = designationsRaw
+        .map((entry, index) => {
+          const name = String((typeof entry === 'string' ? entry : (entry?.name || entry?.designation_name || '')) || '').trim();
+          if (!name) return null;
+          return {
+            id: Number(entry?.id) > 0 ? Number(entry.id) : index + 1,
+            industry_category: String(entry?.industry_category || 'OTHER').toUpperCase(),
+            profession_category: String(entry?.profession_category || ''),
+            designation_category: String(entry?.designation_category || 'OTHER').toUpperCase(),
+            designation_name: name,
+            linked_department_id: null,
+            default_pe_number: String(entry?.default_pe_number || ''),
+            color_hex: String(entry?.color_hex || '#2E5090'),
+            display_order: Number(entry?.display_order) > 0 ? Number(entry.display_order) : (index + 1),
+            is_provider: entry?.is_provider === true,
+            requires_pe_change: entry?.requires_pe_change === true
+          };
+        })
+        .filter(Boolean);
+
+      return {
+        departments,
+        designations,
+        addresses: [],
+        contacts: [],
+        branding: {
+          group_name: 'Mediatrix Group',
+          group_logo_data_url: ''
+        }
+      };
+    }
+
+    function bootstrapFromLookups(payload) {
+      const departmentsRaw = Array.isArray(payload?.departments) ? payload.departments : [];
+      const designationsRaw = Array.isArray(payload?.designations) ? payload.designations : [];
+
+      const departments = departmentsRaw.map((value, index) => {
+        const name = String(value || '').trim();
+        return {
+          id: index + 1,
+          category: 'OTHER',
+          abbreviation: name,
+          department_name: name,
+          address_id: null,
+          contact_id: null,
+          address_label: '',
+          address_line_1: '',
+          city: '',
+          postcode: '',
+          contact_label: '',
+          contact_person: '',
+          phone_primary: '',
+          email: '',
+          logo_data_url: '',
+          create_financial_profile: true,
+          create_employee_profile: true
+        };
+      }).filter((row) => row.department_name);
+
+      const designations = designationsRaw.map((value, index) => {
+        const name = String(value || '').trim();
+        return {
+          id: index + 1,
+          industry_category: 'OTHER',
+          profession_category: '',
+          designation_category: 'OTHER',
+          designation_name: name,
+          linked_department_id: null,
+          default_pe_number: '',
+          color_hex: '#2E5090',
+          display_order: index + 1,
+          is_provider: false,
+          requires_pe_change: false
+        };
+      }).filter((row) => row.designation_name);
+
+      return {
+        departments,
+        designations,
+        addresses: [],
+        contacts: [],
+        branding: {
+          group_name: 'Mediatrix Group',
+          group_logo_data_url: ''
+        }
+      };
+    }
+
+    function buildLegacyCatalogPayload() {
+      const departmentsRows = Array.isArray(state.bootstrap?.departments) ? state.bootstrap.departments : [];
+      const designationsRows = Array.isArray(state.bootstrap?.designations) ? state.bootstrap.designations : [];
+      const departmentNames = [];
+      const seenDepartments = new Set();
+
+      departmentsRows.forEach((entry) => {
+        const name = String(entry?.department_name || entry?.abbreviation || '').trim();
+        if (!name) return;
+        const key = name.toLowerCase();
+        if (seenDepartments.has(key)) return;
+        seenDepartments.add(key);
+        departmentNames.push({ name });
+      });
+
+      const designationRows = [];
+      const seenDesignations = new Set();
+      designationsRows.forEach((entry, index) => {
+        const name = String(entry?.designation_name || '').trim();
+        if (!name) return;
+        const key = name.toLowerCase();
+        if (seenDesignations.has(key)) return;
+        seenDesignations.add(key);
+        designationRows.push({
+          name,
+          color_hex: String(entry?.color_hex || '#2E5090').trim() || '#2E5090',
+          display_order: Number(entry?.display_order) > 0 ? Number(entry.display_order) : (index + 1)
+        });
+      });
+
+      return {
+        departments: departmentNames,
+        designations: designationRows
+      };
+    }
+
+    async function persistLegacyCatalog() {
+      await apiRequest(`${EMPLOYEE_FORM_BASE}/catalog/save`, {
+        method: 'POST',
+        body: JSON.stringify(buildLegacyCatalogPayload())
+      });
+      const refreshed = await apiRequest(`${EMPLOYEE_FORM_BASE}/catalog`);
+      state.bootstrap = normalizeLegacyCatalogPayload(refreshed || {});
+      fillAddressSelect();
+      fillContactSelect();
+      fillLinkedDepartmentSelect();
+      renderDepartments();
+      renderDesignations();
+    }
+
+    function esc(v) {
+      return String(v || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function categoryRank(cat) {
+      const c = String(cat || '').toUpperCase();
+      if (c === 'DENTAL') return 1;
+      if (c === 'HOSPITALITY') return 2;
+      return 3;
+    }
+
+    function renderDepartments() {
+      const rows = Array.isArray(state.bootstrap?.departments) ? state.bootstrap.departments.slice() : [];
+      rows.sort((a, b) => {
+        const r = categoryRank(a.category) - categoryRank(b.category);
+        if (r !== 0) return r;
+        return String(a.department_name || '').localeCompare(String(b.department_name || ''), undefined, { sensitivity: 'base' });
+      });
+      els.departmentList.innerHTML = rows.map((row) => {
+        const active = Number(row.id) === Number(state.selectedDepartmentId);
+        const logo = String(row.logo_data_url || '').trim();
+        const logoHtml = logo
+          ? `<img class="logo" src="${esc(logo)}" alt="${esc(row.abbreviation || row.department_name || 'logo')}" />`
+          : `<div class="logo" style="display:flex;align-items:center;justify-content:center;font-size:11px;color:#6b7585;">No logo</div>`;
+        return `
+          <div class="dept-item${active ? ' active' : ''}" data-dept-id="${esc(row.id)}">
+            ${logoHtml}
+            <div>
+              <div><strong>${esc(row.department_name)}</strong> <span class="chip">${esc(row.abbreviation)}</span></div>
+              <div class="muted">${esc(row.category || 'OTHER')}</div>
+            </div>
+            <div class="muted">Edit</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderDesignations() {
+      const rows = Array.isArray(state.bootstrap?.designations) ? state.bootstrap.designations.slice() : [];
+      els.designationList.innerHTML = rows.map((row) => {
+        const active = Number(row.id) === Number(state.selectedDesignationId);
+        const color = String(row.color_hex || '#2E5090');
+        return `
+          <div class="desig-item${active ? ' active' : ''}" data-desig-id="${esc(row.id)}">
+            <div>
+              <div><strong>${esc(row.designation_name)}</strong> <span class="chip">${esc(row.industry_category || 'OTHER')}</span></div>
+              <div class="muted">${esc(row.designation_category || '')}${row.default_pe_number ? ` | PE: ${esc(row.default_pe_number)}` : ''}</div>
+            </div>
+            <div class="chip" style="border-color:${esc(color)}; color:${esc(color)};">${esc(row.linked_department_abbreviation || 'ALL')}</div>
+            <div class="muted">Edit</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function fillAddressSelect() {
+      const rows = Array.isArray(state.bootstrap?.addresses) ? state.bootstrap.addresses : [];
+      const current = String(els.addressExisting.value || '');
+      els.addressExisting.innerHTML = '<option value="">New address</option>';
+      rows.forEach((row) => {
+        const o = document.createElement('option');
+        o.value = String(row.id);
+        o.textContent = row.label || `Address #${row.id}`;
+        els.addressExisting.appendChild(o);
+      });
+      if ([...els.addressExisting.options].some((o) => o.value === current)) {
+        els.addressExisting.value = current;
+      }
+    }
+
+    function fillContactSelect() {
+      const rows = Array.isArray(state.bootstrap?.contacts) ? state.bootstrap.contacts : [];
+      const current = String(els.contactExisting.value || '');
+      els.contactExisting.innerHTML = '<option value="">New contact</option>';
+      rows.forEach((row) => {
+        const o = document.createElement('option');
+        o.value = String(row.id);
+        o.textContent = row.label || `Contact #${row.id}`;
+        els.contactExisting.appendChild(o);
+      });
+      if ([...els.contactExisting.options].some((o) => o.value === current)) {
+        els.contactExisting.value = current;
+      }
+    }
+
+    function fillLinkedDepartmentSelect() {
+      const rows = Array.isArray(state.bootstrap?.departments) ? state.bootstrap.departments : [];
+      const current = String(els.linkedDepartment.value || '');
+      els.linkedDepartment.innerHTML = '<option value="">Not linked to one department</option>';
+      rows.forEach((row) => {
+        const o = document.createElement('option');
+        o.value = String(row.id);
+        o.textContent = `${row.abbreviation || ''} - ${row.department_name || ''}`.trim();
+        els.linkedDepartment.appendChild(o);
+      });
+      if ([...els.linkedDepartment.options].some((o) => o.value === current)) {
+        els.linkedDepartment.value = current;
+      }
+    }
+
+    function applyLogoPreview(dataUrl) {
+      const url = String(dataUrl || '').trim();
+      state.logoDataUrl = url;
+      if (!url) {
+        els.logoPreview.style.display = 'none';
+        els.logoNewEmpty.style.display = 'flex';
+        els.logoPreview.removeAttribute('src');
+        return;
+      }
+      els.logoPreview.src = url;
+      els.logoPreview.style.display = '';
+      els.logoNewEmpty.style.display = 'none';
+    }
+
+    function applyGroupLogoPreview(dataUrl) {
+      const url = String(dataUrl || '').trim();
+      state.groupLogoDataUrl = url;
+      if (!url) {
+        els.groupLogoPreview.style.display = 'none';
+        els.groupLogoNewEmpty.style.display = 'flex';
+        els.groupLogoPreview.removeAttribute('src');
+        return;
+      }
+      els.groupLogoPreview.src = url;
+      els.groupLogoPreview.style.display = '';
+      els.groupLogoNewEmpty.style.display = 'none';
+    }
+
+    function applyCurrentLogoPreview(dataUrl) {
+      const url = String(dataUrl || '').trim();
+      state.currentLogoDataUrl = url;
+      if (!url) {
+        els.logoCurrentPreview.style.display = 'none';
+        els.logoCurrentEmpty.style.display = 'flex';
+        els.logoCurrentPreview.removeAttribute('src');
+        return;
+      }
+      els.logoCurrentPreview.src = url;
+      els.logoCurrentPreview.style.display = '';
+      els.logoCurrentEmpty.style.display = 'none';
+    }
+
+    function applyCurrentGroupLogoPreview(dataUrl) {
+      const url = String(dataUrl || '').trim();
+      state.currentGroupLogoDataUrl = url;
+      if (!url) {
+        els.groupLogoCurrentPreview.style.display = 'none';
+        els.groupLogoCurrentEmpty.style.display = 'flex';
+        els.groupLogoCurrentPreview.removeAttribute('src');
+        return;
+      }
+      els.groupLogoCurrentPreview.src = url;
+      els.groupLogoCurrentPreview.style.display = '';
+      els.groupLogoCurrentEmpty.style.display = 'none';
+    }
+
+    function parseImageFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('Failed to read image'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function clearDepartmentForm() {
+      state.selectedDepartmentId = null;
+      els.deptCategory.value = 'DENTAL';
+      els.deptAbbrev.value = '';
+      els.deptName.value = '';
+      els.addressExisting.value = '';
+      els.contactExisting.value = '';
+      els.addressLabel.value = '';
+      els.addressLine1.value = '';
+      els.addressCity.value = '';
+      els.addressPostcode.value = '';
+      els.contactLabel.value = '';
+      els.contactPerson.value = '';
+      els.contactPhone.value = '';
+      els.contactEmail.value = '';
+      els.deptFinancials.checked = true;
+      els.deptEmployeeProfile.checked = true;
+      applyCurrentLogoPreview('');
+      applyLogoPreview('');
+      renderDepartments();
+    }
+
+    function clearDesignationForm() {
+      state.selectedDesignationId = null;
+      els.industryCategory.value = 'DENTISTRY';
+      els.professionCategory.value = '';
+      els.designationCategory.value = 'PROVIDER';
+      els.designationName.value = '';
+      els.linkedDepartment.value = '';
+      els.defaultPeNumber.value = '';
+      els.designationColor.value = '#2E5090';
+      els.designationOrder.value = '1000';
+      els.isProvider.checked = false;
+      els.requiresPeChange.checked = false;
+      renderDesignations();
+    }
+
+    function pickDepartment(id) {
+      const row = (state.bootstrap?.departments || []).find((r) => Number(r.id) === Number(id));
+      if (!row) return;
+      state.selectedDepartmentId = Number(row.id);
+      els.deptCategory.value = String(row.category || 'OTHER');
+      els.deptAbbrev.value = String(row.abbreviation || '');
+      els.deptName.value = String(row.department_name || '');
+      els.addressExisting.value = row.address_id ? String(row.address_id) : '';
+      els.contactExisting.value = row.contact_id ? String(row.contact_id) : '';
+      els.addressLabel.value = String(row.address_label || '');
+      els.addressLine1.value = String(row.address_line_1 || '');
+      els.addressCity.value = String(row.city || '');
+      els.addressPostcode.value = String(row.postcode || '');
+      els.contactLabel.value = String(row.contact_label || '');
+      els.contactPerson.value = String(row.contact_person || '');
+      els.contactPhone.value = String(row.phone_primary || '');
+      els.contactEmail.value = String(row.email || '');
+      els.deptFinancials.checked = row.create_financial_profile !== false;
+      els.deptEmployeeProfile.checked = row.create_employee_profile !== false;
+      applyCurrentLogoPreview(row.logo_data_url || '');
+      applyLogoPreview('');
+      state.logoDataUrl = state.currentLogoDataUrl;
+      renderDepartments();
+    }
+
+    function pickDesignation(id) {
+      const row = (state.bootstrap?.designations || []).find((r) => Number(r.id) === Number(id));
+      if (!row) return;
+      state.selectedDesignationId = Number(row.id);
+      els.industryCategory.value = String(row.industry_category || 'OTHER');
+      els.professionCategory.value = String(row.profession_category || '');
+      els.designationCategory.value = String(row.designation_category || 'OTHER');
+      els.designationName.value = String(row.designation_name || '');
+      els.linkedDepartment.value = row.linked_department_id ? String(row.linked_department_id) : '';
+      els.defaultPeNumber.value = String(row.default_pe_number || '');
+      els.designationColor.value = String(row.color_hex || '#2E5090');
+      els.designationOrder.value = String(row.display_order || '1000');
+      els.isProvider.checked = row.is_provider === true;
+      els.requiresPeChange.checked = row.requires_pe_change === true;
+      renderDesignations();
+    }
+
+    async function loadBootstrap() {
+      setStatus('Loading Department/Designation catalog...', '');
+      try {
+        const payload = await apiRequest(`${EMPLOYEE_FORM_BASE}/catalog-v2`);
+        state.catalogMode = 'v2';
+        state.bootstrap = payload || {};
+      } catch (_v2Error) {
+        try {
+          const payload = await apiRequest(`${EMPLOYEE_FORM_BASE}/catalog`);
+          state.catalogMode = 'legacy';
+          state.bootstrap = normalizeLegacyCatalogPayload(payload || {});
+        } catch (_legacyError) {
+          const payload = await apiRequest(`${EMPLOYEE_FORM_BASE}/lookups`);
+          state.catalogMode = 'lookups';
+          state.bootstrap = bootstrapFromLookups(payload || {});
+        }
+      }
+      fillAddressSelect();
+      fillContactSelect();
+      fillLinkedDepartmentSelect();
+      renderDepartments();
+      renderDesignations();
+      const branding = state.bootstrap?.branding || {};
+      const resolvedGroupName = String(
+        branding.group_name
+        || branding.company_name
+        || branding.organization_name
+        || state.bootstrap?.group_name
+        || 'Mediatrix Group'
+      );
+      const resolvedGroupLogo = String(
+        branding.group_logo_data_url
+        || branding.whole_group_logo_data_url
+        || branding.logo_data_url
+        || branding.group_logo
+        || state.bootstrap?.group_logo_data_url
+        || state.bootstrap?.whole_group_logo_data_url
+        || state.bootstrap?.logo_data_url
+        || state.bootstrap?.group_logo
+        || ''
+      );
+      els.groupName.value = resolvedGroupName;
+      applyCurrentGroupLogoPreview(resolvedGroupLogo);
+      applyGroupLogoPreview('');
+      state.groupLogoDataUrl = state.currentGroupLogoDataUrl;
+      const statusText = state.catalogMode === 'legacy'
+        ? 'Loaded in compatibility mode (legacy catalog API).'
+        : (state.catalogMode === 'lookups'
+          ? 'Loaded in read-only compatibility mode (lookups API).'
+          : 'Loaded successfully.');
+      setStatus(statusText, 'ok');
+    }
+
+    async function saveBranding() {
+      if (state.catalogMode === 'legacy' || state.catalogMode === 'lookups') {
+        setStatus('Branding save is unavailable in compatibility mode.', 'err');
+        return;
+      }
+      const payload = {
+        group_name: String(els.groupName.value || '').trim() || 'Mediatrix Group',
+        group_logo_data_url: state.groupLogoDataUrl || null,
+        whole_group_logo_data_url: state.groupLogoDataUrl || null,
+        logo_data_url: state.groupLogoDataUrl || null
+      };
+      els.saveBrandingBtn.disabled = true;
+      const originalText = els.saveBrandingBtn.textContent;
+      els.saveBrandingBtn.textContent = 'Saving...';
+      try {
+        setStatus('Saving group logo...', '');
+        await apiRequest(`${EMPLOYEE_FORM_BASE}/catalog-v2/branding/update`, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        setStatus('Group logo saved.', 'ok');
+        await loadBootstrap();
+      } finally {
+        els.saveBrandingBtn.disabled = false;
+        els.saveBrandingBtn.textContent = originalText;
+      }
+    }
+
+    function findDepartmentForLogoSave() {
+      const departments = Array.isArray(state.bootstrap?.departments) ? state.bootstrap.departments : [];
+      if (state.selectedDepartmentId) {
+        return departments.find((row) => Number(row.id) === Number(state.selectedDepartmentId)) || null;
+      }
+      const abbrev = String(els.deptAbbrev.value || '').trim().toUpperCase();
+      if (!abbrev) return null;
+      const matches = departments.filter((row) => String(row.abbreviation || '').trim().toUpperCase() === abbrev);
+      if (matches.length === 1) {
+        state.selectedDepartmentId = Number(matches[0].id);
+        return matches[0];
+      }
+      return null;
+    }
+
+    async function saveDepartmentLogoOnly() {
+      if (state.catalogMode === 'legacy' || state.catalogMode === 'lookups') {
+        setStatus('Department logo save is unavailable in compatibility mode.', 'err');
+        return;
+      }
+      const target = findDepartmentForLogoSave();
+      if (!target) {
+        setStatus('Select a department row first (or enter a unique department Abbrev.) before saving logo.', 'err');
+        return;
+      }
+
+      const payload = {
+        id: Number(target.id),
+        category: String(target.category || 'OTHER').toUpperCase(),
+        department_name: String(target.department_name || '').trim(),
+        abbreviation: String(target.abbreviation || '').trim(),
+        logo_data_url: state.logoDataUrl || null,
+        address_id: Number(target.address_id || 0) || null,
+        contact_id: Number(target.contact_id || 0) || null,
+        address_label: String(target.address_label || '').trim(),
+        address_line_1: String(target.address_line_1 || '').trim(),
+        city: String(target.city || '').trim(),
+        postcode: String(target.postcode || '').trim(),
+        contact_label: String(target.contact_label || '').trim(),
+        contact_person: String(target.contact_person || '').trim(),
+        phone_primary: String(target.phone_primary || '').trim(),
+        email: String(target.email || '').trim(),
+        create_financial_profile: target.create_financial_profile !== false,
+        create_employee_profile: target.create_employee_profile !== false
+      };
+
+      els.saveDeptLogoBtn.disabled = true;
+      const originalText = els.saveDeptLogoBtn.textContent;
+      els.saveDeptLogoBtn.textContent = 'Saving...';
+      try {
+        setStatus(`Saving logo for ${payload.abbreviation || payload.department_name}...`, '');
+        const refreshed = await apiRequest(`${EMPLOYEE_FORM_BASE}/catalog-v2/department/upsert`, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        state.bootstrap = refreshed;
+        fillAddressSelect();
+        fillContactSelect();
+        fillLinkedDepartmentSelect();
+        const updated = (state.bootstrap?.departments || []).find((row) => Number(row.id) === Number(payload.id));
+        applyCurrentLogoPreview(updated?.logo_data_url || '');
+        applyLogoPreview('');
+        state.logoDataUrl = state.currentLogoDataUrl;
+        renderDepartments();
+        setStatus('Department logo saved.', 'ok');
+      } finally {
+        els.saveDeptLogoBtn.disabled = false;
+        els.saveDeptLogoBtn.textContent = originalText;
+      }
+    }
+
+    async function saveDepartment() {
+      const payload = {
+        id: state.selectedDepartmentId,
+        category: String(els.deptCategory.value || '').toUpperCase(),
+        department_name: String(els.deptName.value || '').trim(),
+        abbreviation: String(els.deptAbbrev.value || '').trim(),
+        logo_data_url: state.logoDataUrl || null,
+        address_id: Number(els.addressExisting.value || 0) || null,
+        contact_id: Number(els.contactExisting.value || 0) || null,
+        address_label: String(els.addressLabel.value || '').trim(),
+        address_line_1: String(els.addressLine1.value || '').trim(),
+        city: String(els.addressCity.value || '').trim(),
+        postcode: String(els.addressPostcode.value || '').trim(),
+        contact_label: String(els.contactLabel.value || '').trim(),
+        contact_person: String(els.contactPerson.value || '').trim(),
+        phone_primary: String(els.contactPhone.value || '').trim(),
+        email: String(els.contactEmail.value || '').trim(),
+        create_financial_profile: els.deptFinancials.checked,
+        create_employee_profile: els.deptEmployeeProfile.checked
+      };
+      if (!payload.department_name || !payload.abbreviation) {
+        setStatus('Department Name and Abbrev. are required.', 'err');
+        return;
+      }
+      if (state.catalogMode === 'lookups') {
+        setStatus('Department save is unavailable in lookups compatibility mode.', 'err');
+        return;
+      }
+      setStatus('Saving department...', '');
+      if (state.catalogMode === 'legacy') {
+        const currentRows = Array.isArray(state.bootstrap?.departments) ? state.bootstrap.departments.slice() : [];
+        const entryId = Number(payload.id) > 0
+          ? Number(payload.id)
+          : (currentRows.length ? Math.max(...currentRows.map((row) => Number(row.id) || 0)) + 1 : 1);
+        const nextEntry = { ...payload, id: entryId };
+        const idx = currentRows.findIndex((row) => Number(row.id) === entryId);
+        if (idx >= 0) {
+          currentRows[idx] = { ...currentRows[idx], ...nextEntry };
+        } else {
+          currentRows.push(nextEntry);
+        }
+        state.bootstrap = {
+          ...(state.bootstrap || {}),
+          departments: currentRows
+        };
+        await persistLegacyCatalog();
+      } else {
+        const refreshed = await apiRequest(`${EMPLOYEE_FORM_BASE}/catalog-v2/department/upsert`, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        state.bootstrap = refreshed;
+      }
+      fillAddressSelect();
+      fillContactSelect();
+      fillLinkedDepartmentSelect();
+      clearDepartmentForm();
+      renderDesignations();
+      setStatus('Department saved.', 'ok');
+    }
+
+    async function saveDesignation() {
+      const payload = {
+        id: state.selectedDesignationId,
+        industry_category: String(els.industryCategory.value || '').trim(),
+        profession_category: String(els.professionCategory.value || '').trim(),
+        designation_category: String(els.designationCategory.value || '').trim(),
+        designation_name: String(els.designationName.value || '').trim(),
+        linked_department_id: Number(els.linkedDepartment.value || 0) || null,
+        default_pe_number: String(els.defaultPeNumber.value || '').trim(),
+        requires_pe_change: els.requiresPeChange.checked,
+        color_hex: String(els.designationColor.value || '#2E5090').trim(),
+        display_order: Number(els.designationOrder.value || 1000) || 1000,
+        is_provider: els.isProvider.checked
+      };
+      if (!payload.designation_name) {
+        setStatus('Designation Name is required.', 'err');
+        return;
+      }
+      if (state.catalogMode === 'lookups') {
+        setStatus('Designation save is unavailable in lookups compatibility mode.', 'err');
+        return;
+      }
+      setStatus('Saving designation...', '');
+      if (state.catalogMode === 'legacy') {
+        const currentRows = Array.isArray(state.bootstrap?.designations) ? state.bootstrap.designations.slice() : [];
+        const entryId = Number(payload.id) > 0
+          ? Number(payload.id)
+          : (currentRows.length ? Math.max(...currentRows.map((row) => Number(row.id) || 0)) + 1 : 1);
+        const nextEntry = { ...payload, id: entryId };
+        const idx = currentRows.findIndex((row) => Number(row.id) === entryId);
+        if (idx >= 0) {
+          currentRows[idx] = { ...currentRows[idx], ...nextEntry };
+        } else {
+          currentRows.push(nextEntry);
+        }
+        state.bootstrap = {
+          ...(state.bootstrap || {}),
+          designations: currentRows
+        };
+        await persistLegacyCatalog();
+      } else {
+        const refreshed = await apiRequest(`${EMPLOYEE_FORM_BASE}/catalog-v2/designation/upsert`, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        state.bootstrap = refreshed;
+      }
+      fillLinkedDepartmentSelect();
+      clearDesignationForm();
+      renderDepartments();
+      setStatus('Designation saved.', 'ok');
+    }
+
+    els.departmentList.addEventListener('click', (event) => {
+      const row = event.target.closest('[data-dept-id]');
+      if (!row) return;
+      pickDepartment(row.getAttribute('data-dept-id'));
+    });
+    els.designationList.addEventListener('click', (event) => {
+      const row = event.target.closest('[data-desig-id]');
+      if (!row) return;
+      pickDesignation(row.getAttribute('data-desig-id'));
+    });
+    els.addressExisting.addEventListener('change', () => {
+      const id = Number(els.addressExisting.value || 0);
+      const row = (state.bootstrap?.addresses || []).find((r) => Number(r.id) === id);
+      if (!row) return;
+      els.addressLabel.value = String(row.label || '');
+      els.addressLine1.value = String(row.address_line_1 || '');
+      els.addressCity.value = String(row.city || '');
+      els.addressPostcode.value = String(row.postcode || '');
+    });
+    els.contactExisting.addEventListener('change', () => {
+      const id = Number(els.contactExisting.value || 0);
+      const row = (state.bootstrap?.contacts || []).find((r) => Number(r.id) === id);
+      if (!row) return;
+      els.contactLabel.value = String(row.label || '');
+      els.contactPerson.value = String(row.contact_person || '');
+      els.contactPhone.value = String(row.phone_primary || '');
+      els.contactEmail.value = String(row.email || '');
+    });
+
+    els.logoInput.addEventListener('change', async () => {
+      const file = els.logoInput.files?.[0];
+      if (!file) return;
+      try {
+        const dataUrl = await parseImageFile(file);
+        applyLogoPreview(dataUrl);
+      } catch (error) {
+        setStatus('Failed to load logo image.', 'err');
+      }
+    });
+    els.groupLogoInput.addEventListener('change', async () => {
+      const file = els.groupLogoInput.files?.[0];
+      if (!file) return;
+      try {
+        const dataUrl = await parseImageFile(file);
+        applyGroupLogoPreview(dataUrl);
+      } catch (error) {
+        setStatus('Failed to load group logo image.', 'err');
+      }
+    });
+
+    ['dragenter', 'dragover'].forEach((evt) => {
+      els.logoDrop.addEventListener(evt, (event) => {
+        event.preventDefault();
+        els.logoDrop.classList.add('drag');
+      });
+    });
+    ['dragleave', 'drop'].forEach((evt) => {
+      els.logoDrop.addEventListener(evt, (event) => {
+        event.preventDefault();
+        els.logoDrop.classList.remove('drag');
+      });
+    });
+    els.logoDrop.addEventListener('drop', async (event) => {
+      const file = event.dataTransfer?.files?.[0];
+      if (!file) return;
+      try {
+        const dataUrl = await parseImageFile(file);
+        applyLogoPreview(dataUrl);
+      } catch {
+        setStatus('Failed to read dropped logo.', 'err');
+      }
+    });
+    ['dragenter', 'dragover'].forEach((evt) => {
+      els.groupLogoDrop.addEventListener(evt, (event) => {
+        event.preventDefault();
+        els.groupLogoDrop.classList.add('drag');
+      });
+    });
+    ['dragleave', 'drop'].forEach((evt) => {
+      els.groupLogoDrop.addEventListener(evt, (event) => {
+        event.preventDefault();
+        els.groupLogoDrop.classList.remove('drag');
+      });
+    });
+    els.groupLogoDrop.addEventListener('drop', async (event) => {
+      const file = event.dataTransfer?.files?.[0];
+      if (!file) return;
+      try {
+        const dataUrl = await parseImageFile(file);
+        applyGroupLogoPreview(dataUrl);
+      } catch {
+        setStatus('Failed to read dropped group logo.', 'err');
+      }
+    });
+
+    els.saveDepartmentBtn.addEventListener('click', () => {
+      saveDepartment().catch((error) => {
+        setStatus(`Department save failed: ${error?.message || 'Unknown error'}`, 'err');
+      });
+    });
+    els.saveDesignationBtn.addEventListener('click', () => {
+      saveDesignation().catch((error) => {
+        setStatus(`Designation save failed: ${error?.message || 'Unknown error'}`, 'err');
+      });
+    });
+    els.saveBrandingBtn.addEventListener('click', () => {
+      saveBranding().catch((error) => {
+        setStatus(`Branding save failed: ${error?.message || 'Unknown error'}`, 'err');
+      });
+    });
+    els.saveDeptLogoBtn.addEventListener('click', () => {
+      saveDepartmentLogoOnly().catch((error) => {
+        setStatus(`Department logo save failed: ${error?.message || 'Unknown error'}`, 'err');
+      });
+    });
+
+    function handleLoadError(error) {
+      const message = String(error?.message || error || 'Unknown error');
+      const isAuth = /authentication required|request failed \(401\)|unauthorized/i.test(message);
+      if (isAuth) {
+        setStatus('Session expired. Redirecting to login...', 'err');
+        setTimeout(() => redirectToLogin(), 150);
+        return;
+      }
+      // Build marker helps verify the browser is serving the latest patched file.
+      setStatus(`Load failed [NDD-2026-03-23B]: ${message}. Check ID/API response immediately.`, 'err');
+    }
+
+    els.reloadBtn.addEventListener('click', () => {
+      loadBootstrap().catch((error) => {
+        handleLoadError(error);
+      });
+    });
+    els.closeBtn.addEventListener('click', () => window.close());
+
+    loadBootstrap().catch((error) => {
+      handleLoadError(error);
+    });
+    const section = String(new URLSearchParams(window.location.search).get('section') || '').toLowerCase();
+    if (section === 'designations') {
+      document.getElementById('designationsCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (section === 'logos') {
+      document.getElementById('logosSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (section === 'departments') {
+      document.getElementById('departmentsCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  </script>
+</body>
+</html>

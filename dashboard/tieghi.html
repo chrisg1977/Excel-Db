@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M-CodeZ - Tieghi</title>
+  <link rel="icon" type="image/png" href="/dashboard/assets/logos/database-logo.png" />
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --brand: #2e5090;
+      --brand-dark: #1f3e72;
+      --ink: #1b2230;
+      --muted: #617089;
+      --line: #d8e2f1;
+      --line-strong: #bfd0ea;
+      --surface: #ffffff;
+      --good: #156c43;
+      --good-bg: #eef9f1;
+      --warn: #8a5b10;
+      --warn-bg: #fff8e8;
+      --danger: #9d2235;
+      --danger-bg: #fff1f4;
+      --shadow: 0 10px 28px rgba(24, 43, 78, 0.12);
+      --radius: 14px;
+      --font: "Segoe UI", Arial, sans-serif;
+    }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: linear-gradient(160deg, #eaf3ff 0%, #f7f9fd 52%, #eef4ff 100%);
+      color: var(--ink);
+      font-family: var(--font);
+    }
+    .wrap {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+    .page-head, .section, .access-card, .status {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--shadow);
+    }
+    .page-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+    }
+    .eyebrow {
+      display: inline-flex;
+      padding: 6px 10px;
+      border: 1px solid #f1d7a4;
+      border-radius: 999px;
+      background: #fff8e8;
+      color: #8a5b10;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+    .page-head h1 {
+      margin: 0;
+      font-size: 32px;
+      color: var(--brand);
+    }
+    .subtle, .section-copy, .planner-copy, .placeholder {
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .subtle { margin: 8px 0 0; font-size: 14px; max-width: 760px; }
+    .head-actions, .inline-actions, .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .head-actions { justify-content: flex-end; }
+    .btn, .btn-link, .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 40px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn, .btn-link {
+      background: var(--brand);
+      color: #ffffff;
+    }
+    .btn:hover, .btn-link:hover { background: var(--brand-dark); }
+    .btn.secondary, .btn-link.secondary, .tab-btn {
+      background: #ffffff;
+      color: var(--brand);
+      border-color: var(--line-strong);
+    }
+    .btn.warn { background: #fff6e5; border-color: #f0d4a2; color: #8a5b10; }
+    .btn.good { background: #eaf8ef; border-color: #bfe4cb; color: var(--good); }
+    .tab-btn.active { background: var(--brand); color: #ffffff; border-color: var(--brand); }
+    .status {
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: #41526b;
+    }
+    .status.err { background: var(--danger-bg); border-color: #f0c1cc; color: var(--danger); }
+    .status.ok { background: var(--good-bg); border-color: #bde1ca; color: var(--good); }
+    .hidden { display: none !important; }
+    .access-card { padding: 20px; max-width: 720px; }
+    .access-card h2 { margin: 0 0 8px; color: var(--danger); }
+    .intro-note {
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border: 1px solid #f0d4a2;
+      border-radius: 12px;
+      background: #fff9ee;
+      color: #7c5715;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .section { padding: 16px; }
+    .section + .section { margin-top: 14px; }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .section-head h2 {
+      margin: 0;
+      color: var(--brand);
+      font-size: 20px;
+    }
+    .section-copy { margin: 6px 0 0; font-size: 13px; max-width: 760px; }
+    .muted { color: var(--muted); }
+    .filters-grid, .form-grid, .forecast-grid, .cards-grid, .planner-layout {
+      display: grid;
+      gap: 12px;
+    }
+    .filters-grid, .form-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .forecast-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .cards-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 14px 0; }
+    .planner-layout {
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      margin-top: 14px;
+      margin-bottom: 14px;
+    }
+    .field { display: grid; gap: 6px; }
+    .field label {
+      font-size: 12px;
+      font-weight: 800;
+      color: #41526b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      min-width: 0;
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      background: #ffffff;
+      color: var(--ink);
+      font: inherit;
+    }
+    .field textarea { min-height: 94px; resize: vertical; }
+    .metric-card, .planner-card, .placeholder {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      padding: 14px;
+    }
+    .metric-label, .planner-kicker {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .metric-value, .planner-title {
+      display: block;
+      color: var(--brand);
+      font-size: 24px;
+      font-weight: 800;
+      margin: 0;
+    }
+    .metric-meta { display: block; margin-top: 6px; color: #51627b; font-size: 12px; }
+    .planner-copy { margin-top: 8px; font-size: 13px; }
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #ffffff;
+    }
+    table {
+      width: 100%;
+      min-width: 1120px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e7edf8;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      background: #f3f7ff;
+      color: #35527d;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    tbody tr:nth-child(even) { background: #fbfdff; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid #cad7ec;
+      border-radius: 999px;
+      background: #eef4ff;
+      color: var(--brand);
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    .badge.warn { background: #fff8e8; border-color: #f0d4a2; color: #8a5b10; }
+    .badge.good { background: #eef9f1; border-color: #c3e5cf; color: var(--good); }
+    @media (max-width: 1200px) {
+      .cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .planner-layout { grid-template-columns: 1fr; }
+      .forecast-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 860px) {
+      .page-head { flex-direction: column; }
+      .head-actions { width: 100%; justify-content: flex-start; }
+      .filters-grid, .form-grid, .forecast-grid, .cards-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="page-head">
+      <div>
+        <div class="eyebrow">Admin Only</div>
+        <h1>Tieghi</h1>
+        <p class="subtle">Receipt-books planning, receipt usage review, and virtual month balancing. Finance linkage comes later, so monthly totals currently use the saved receipt-book entry month and generated receipt month.</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn secondary" id="btnRefresh" type="button">Refresh</button>
+        <a class="btn-link secondary" id="btnBackHub" href="./app-hub.html">Back to App Hub</a>
+      </div>
+    </header>
+
+    <div class="status" id="statusLine">Checking session...</div>
+
+    <section class="access-card hidden" id="deniedPanel">
+      <h2>Access restricted</h2>
+      <p class="subtle" id="deniedCopy">Tieghi is available only to admin users.</p>
+    </section>
+
+    <div class="hidden" id="contentPanel">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab-target="receiptBooksTab" type="button">Receipt Books</button>
+        <button class="tab-btn" data-tab-target="employeeStatsTab" type="button">Employee Statistics</button>
+        <button class="tab-btn" data-tab-target="financeLaterTab" type="button">Finance Later</button>
+        <button class="tab-btn" data-tab-target="otherLaterTab" type="button">Other Later</button>
+      </div>
+
+      <section class="tab-panel" id="receiptBooksTab">
+        <div class="intro-note">This first Tieghi build works from Directus receipt-book data already in the system. It shows monthly receipt income by receipt type, proposes the next print range from usage, stores confirmed print batches, and can generate virtual receipts for a month while reserving those serial numbers.</div>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>Monthly Income By Receipt Type</h2>
+              <p class="section-copy">Filter the current receipt-book records and review manual income, virtual income, cancellation load, and the next serial number that should be kept free for printing.</p>
+            </div>
+            <button class="btn secondary" id="btnReloadMonthly" type="button">Reload Data</button>
+          </div>
+
+          <div class="filters-grid">
+            <div class="field"><label for="filterYear">Year</label><select id="filterYear"></select></div>
+            <div class="field"><label for="filterDepartment">Department</label><select id="filterDepartment"></select></div>
+            <div class="field"><label for="filterIdentifier">Receipt Type</label><select id="filterIdentifier"></select></div>
+            <div class="field"><label for="btnApplyFilters">Apply</label><button class="btn" id="btnApplyFilters" type="button">Refresh View</button></div>
+          </div>
+
+          <div class="cards-grid">
+            <div class="metric-card"><span class="metric-label">Manual Income</span><span class="metric-value" id="manualIncomeValue">EUR0.00</span><span class="metric-meta" id="manualIncomeMeta">0 saved books in view</span></div>
+            <div class="metric-card"><span class="metric-label">Virtual Income</span><span class="metric-value" id="virtualIncomeValue">EUR0.00</span><span class="metric-meta" id="virtualIncomeMeta">0 generated receipts in view</span></div>
+            <div class="metric-card"><span class="metric-label">Combined Income</span><span class="metric-value" id="combinedIncomeValue">EUR0.00</span><span class="metric-meta" id="combinedIncomeMeta">0 receipt rows in view</span></div>
+            <div class="metric-card"><span class="metric-label">Highest Reserved Serial</span><span class="metric-value" id="highestSerialValue">-</span><span class="metric-meta" id="highestSerialMeta">Next print number will appear per row below</span></div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Department</th>
+                  <th>Receipt Type</th>
+                  <th>Manual Income</th>
+                  <th>Virtual Income</th>
+                  <th>Total Income</th>
+                  <th>Receipts</th>
+                  <th>Cancelled</th>
+                  <th>Avg Positive</th>
+                  <th>Next Print No.</th>
+                </tr>
+              </thead>
+              <tbody id="monthlySummaryBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="planner-layout">
+          <section class="section">
+            <div class="section-head">
+              <div>
+                <h2>Six-Month Print Planning</h2>
+                <p class="section-copy">Ask M-CodeZ for the next 6 months requirement. The system reads the last 6 months of receipt usage for the selected receipt type, adds 5%, and proposes the next safe print range without duplicate serials.</p>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="field"><label for="forecastDepartment">Department</label><select id="forecastDepartment"></select></div>
+              <div class="field"><label for="forecastIdentifier">Receipt Type</label><select id="forecastIdentifier"></select></div>
+              <div class="field"><label for="forecastReceiptsPerBook">Receipts Per Book</label><input id="forecastReceiptsPerBook" type="number" min="50" step="50" value="100" /></div>
+              <div class="field"><label for="btnAssessForecast">Assessment</label><button class="btn" id="btnAssessForecast" type="button">Assess Next 6 Months</button></div>
+            </div>
+
+            <div class="planner-card">
+              <span class="planner-kicker">No assessment yet</span>
+              <h3 class="planner-title" id="forecastTitle">Waiting for a 6-month receipt usage check</h3>
+              <div class="planner-copy" id="forecastCopy">Run the assessment to calculate expected usage, add the 5% leeway, and prepare a safe print batch.</div>
+            </div>
+
+            <div class="forecast-grid">
+              <div class="field"><label for="orderBooksCount">Books Count</label><input id="orderBooksCount" type="number" min="1" step="1" /></div>
+              <div class="field"><label for="orderStartReceiptNo">Start Receipt No.</label><input id="orderStartReceiptNo" type="number" min="1" step="1" /></div>
+              <div class="field"><label for="orderEndReceiptNo">End Receipt No.</label><input id="orderEndReceiptNo" type="number" min="1" step="1" readonly /></div>
+              <div class="field"><label for="orderReceiptsPerBookConfirm">Receipts Per Book</label><input id="orderReceiptsPerBookConfirm" type="number" min="50" step="50" value="100" /></div>
+              <div class="field"><label for="orderNotes">Notes</label><input id="orderNotes" type="text" placeholder="Optional print note" /></div>
+            </div>
+
+            <div class="inline-actions"><button class="btn good" id="btnConfirmOrder" type="button">Confirm Print Batch</button></div>
+          </section>
+
+          <section class="section">
+            <div class="section-head">
+              <div>
+                <h2>Virtual Month Fill</h2>
+                <p class="section-copy">Add a virtual receipt batch for a month. M-CodeZ uses the selected month history to estimate an average receipt amount, mixes in cancelled zeros, finds safe receipt numbers, and writes them to Directus so those numbers can no longer be printed.</p>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="field"><label for="virtualMonth">Month</label><input id="virtualMonth" type="month" /></div>
+              <div class="field"><label for="virtualDepartment">Department</label><select id="virtualDepartment"></select></div>
+              <div class="field"><label for="virtualIdentifier">Receipt Type</label><select id="virtualIdentifier"></select></div>
+              <div class="field"><label for="virtualTargetAmount">Total To Add</label><input id="virtualTargetAmount" type="number" min="0.01" step="0.01" placeholder="10000.00" /></div>
+            </div>
+
+            <div class="field" style="margin-top:12px;">
+              <label for="virtualNotes">Notes</label>
+              <textarea id="virtualNotes" placeholder="Reason for this virtual month fill"></textarea>
+            </div>
+
+            <div class="planner-card">
+              <span class="planner-kicker">Not generated yet</span>
+              <h3 class="planner-title" id="virtualTitle">Waiting for a virtual month fill</h3>
+              <div class="planner-copy" id="virtualCopy">Enter the month and amount to add, then M-CodeZ will reserve sequential receipt numbers and create the generated receipt rows.</div>
+            </div>
+
+            <div class="inline-actions"><button class="btn warn" id="btnGenerateVirtual" type="button">Generate Virtual Batch</button></div>
+          </section>
+        </div>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>Stored Print Orders</h2>
+              <p class="section-copy">Every confirmed batch is treated as reserved straight away, even before physical printing, so the next batch cannot overlap the same serial range.</p>
+            </div>
+            <button class="btn secondary" id="btnReloadOrders" type="button">Reload Orders</button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ordered At</th>
+                  <th>Department</th>
+                  <th>Receipt Type</th>
+                  <th>Books</th>
+                  <th>Per Book</th>
+                  <th>Range</th>
+                  <th>Status</th>
+                  <th>Ordered By</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody id="ordersBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="tab-panel hidden" id="employeeStatsTab">
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>Timings</h2>
+              <p class="section-copy">Receipt-book timing is captured from page open until the book is saved, pauses when the draft is left, and resumes when the same draft is reopened.</p>
+            </div>
+          </div>
+
+          <div class="cards-grid">
+            <div class="metric-card"><span class="metric-label">Timed Books</span><span class="metric-value" id="timedBooksValue">0</span><span class="metric-meta" id="timedBooksMeta">No completed timing rows yet</span></div>
+            <div class="metric-card"><span class="metric-label">Average Time</span><span class="metric-value" id="averageTimingValue">0m</span><span class="metric-meta" id="averageTimingMeta">Per completed receipt book</span></div>
+            <div class="metric-card"><span class="metric-label">Total Active Time</span><span class="metric-value" id="totalTimingValue">0m</span><span class="metric-meta" id="totalTimingMeta">All timed receipt books</span></div>
+            <div class="metric-card"><span class="metric-label">Longest Book</span><span class="metric-value" id="longestTimingValue">0m</span><span class="metric-meta" id="longestTimingMeta">No timing data yet</span></div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>By Employee</h2>
+              <p class="section-copy">Average and total active time for each user with timed receipt-book entries.</p>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Books</th>
+                  <th>Average Time</th>
+                  <th>Total Time</th>
+                  <th>Last Completed</th>
+                  <th>Last Receipt Range</th>
+                </tr>
+              </thead>
+              <tbody id="employeeTimingBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>Receiptbook Entries</h2>
+              <p class="section-copy">Detailed completed receipt-book timings for admin review.</p>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Completed</th>
+                  <th>Employee</th>
+                  <th>Department</th>
+                  <th>Receipt Type</th>
+                  <th>Receipt Range</th>
+                  <th>Total</th>
+                  <th>Time Taken</th>
+                  <th>Sessions</th>
+                </tr>
+              </thead>
+              <tbody id="receiptTimingEntriesBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="tab-panel hidden" id="financeLaterTab">
+        <div class="placeholder">This tab is reserved for the finance linkage. When that stage is added, Tieghi can align monthly receipt patterns and planning against the financial recording instead of using the receipt-book save month.</div>
+      </section>
+
+      <section class="tab-panel hidden" id="otherLaterTab">
+        <div class="placeholder">This space is reserved for further admin tools that should sit under Tieghi after the receipt-books workflow is stable.</div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const AUTH_STORAGE_KEY = "empinfo.auth.v1";
+    const API_ORIGIN_STORAGE_KEY = "empinfo.api_origin.v1";
+    const ROLE_RANK = { "general user": 1, management: 2, hr: 3, full: 4, admin: 5, administrator: 5, superadmin: 5 };
+    const DEPARTMENT_OPTIONS = ["MDCZ", "MDCQ"];
+    const IDENTIFIER_OPTIONS = [
+      { value: "GREEN", label: "Green" },
+      { value: "DEPOSIT", label: "Deposit" },
+      { value: "OTHER", label: "Other" }
+    ];
+    const DEFAULT_API_ORIGIN = window.location.port === "8055"
+      ? window.location.origin
+      : `${window.location.protocol}//${window.location.hostname}:8055`;
+    const MONEY_FORMATTER = new Intl.NumberFormat("en-MT", {
+      style: "currency",
+      currency: "EUR",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+    const INTEGER_FORMATTER = new Intl.NumberFormat("en-MT");
+    const MONTH_FORMATTER = new Intl.DateTimeFormat("en-MT", { month: "long", year: "numeric" });
+    const PAGE_QUERY = new URLSearchParams(window.location.search);
+    const RECEIPT_TIMING_NOTE_PREFIX = "__receipt_books_timing__:";
+
+    const refs = {
+      statusLine: document.getElementById("statusLine"),
+      deniedPanel: document.getElementById("deniedPanel"),
+      deniedCopy: document.getElementById("deniedCopy"),
+      contentPanel: document.getElementById("contentPanel"),
+      btnBackHub: document.getElementById("btnBackHub"),
+      btnRefresh: document.getElementById("btnRefresh"),
+      tabButtons: Array.from(document.querySelectorAll(".tab-btn")),
+      tabPanels: Array.from(document.querySelectorAll(".tab-panel")),
+      filterYear: document.getElementById("filterYear"),
+      filterDepartment: document.getElementById("filterDepartment"),
+      filterIdentifier: document.getElementById("filterIdentifier"),
+      btnApplyFilters: document.getElementById("btnApplyFilters"),
+      btnReloadMonthly: document.getElementById("btnReloadMonthly"),
+      monthlySummaryBody: document.getElementById("monthlySummaryBody"),
+      manualIncomeValue: document.getElementById("manualIncomeValue"),
+      manualIncomeMeta: document.getElementById("manualIncomeMeta"),
+      virtualIncomeValue: document.getElementById("virtualIncomeValue"),
+      virtualIncomeMeta: document.getElementById("virtualIncomeMeta"),
+      combinedIncomeValue: document.getElementById("combinedIncomeValue"),
+      combinedIncomeMeta: document.getElementById("combinedIncomeMeta"),
+      highestSerialValue: document.getElementById("highestSerialValue"),
+      highestSerialMeta: document.getElementById("highestSerialMeta"),
+      forecastDepartment: document.getElementById("forecastDepartment"),
+      forecastIdentifier: document.getElementById("forecastIdentifier"),
+      forecastReceiptsPerBook: document.getElementById("forecastReceiptsPerBook"),
+      btnAssessForecast: document.getElementById("btnAssessForecast"),
+      forecastTitle: document.getElementById("forecastTitle"),
+      forecastCopy: document.getElementById("forecastCopy"),
+      orderBooksCount: document.getElementById("orderBooksCount"),
+      orderStartReceiptNo: document.getElementById("orderStartReceiptNo"),
+      orderEndReceiptNo: document.getElementById("orderEndReceiptNo"),
+      orderReceiptsPerBookConfirm: document.getElementById("orderReceiptsPerBookConfirm"),
+      orderNotes: document.getElementById("orderNotes"),
+      btnConfirmOrder: document.getElementById("btnConfirmOrder"),
+      virtualMonth: document.getElementById("virtualMonth"),
+      virtualDepartment: document.getElementById("virtualDepartment"),
+      virtualIdentifier: document.getElementById("virtualIdentifier"),
+      virtualTargetAmount: document.getElementById("virtualTargetAmount"),
+      virtualNotes: document.getElementById("virtualNotes"),
+      virtualTitle: document.getElementById("virtualTitle"),
+      virtualCopy: document.getElementById("virtualCopy"),
+      btnGenerateVirtual: document.getElementById("btnGenerateVirtual"),
+      ordersBody: document.getElementById("ordersBody"),
+      btnReloadOrders: document.getElementById("btnReloadOrders"),
+      timedBooksValue: document.getElementById("timedBooksValue"),
+      timedBooksMeta: document.getElementById("timedBooksMeta"),
+      averageTimingValue: document.getElementById("averageTimingValue"),
+      averageTimingMeta: document.getElementById("averageTimingMeta"),
+      totalTimingValue: document.getElementById("totalTimingValue"),
+      totalTimingMeta: document.getElementById("totalTimingMeta"),
+      longestTimingValue: document.getElementById("longestTimingValue"),
+      longestTimingMeta: document.getElementById("longestTimingMeta"),
+      employeeTimingBody: document.getElementById("employeeTimingBody"),
+      receiptTimingEntriesBody: document.getElementById("receiptTimingEntriesBody")
+    };
+
+    const state = {
+      apiOrigin: "",
+      token: "",
+      busy: false,
+      currentUser: {
+        id: "",
+        email: "",
+        name: "",
+        role: "",
+        roleRank: 0
+      },
+      entries: [],
+      generated: [],
+      orders: [],
+      filters: {
+        year: String(new Date().getFullYear()),
+        department: "",
+        identifier: ""
+      },
+      lastForecast: null,
+      userNamesByEmail: {}
+    };
+
+    function normalizeApiOrigin(value) {
+      return String(value || "").trim().replace(/\/$/, "");
+    }
+
+    function getApiOrigin() {
+      const queryOrigin = normalizeApiOrigin(PAGE_QUERY.get("api_origin"));
+      if (queryOrigin) return queryOrigin;
+      try {
+        const stored = normalizeApiOrigin(localStorage.getItem(API_ORIGIN_STORAGE_KEY));
+        if (stored) return stored;
+      } catch {}
+      return DEFAULT_API_ORIGIN;
+    }
+
+    function persistApiOrigin(value) {
+      const normalized = normalizeApiOrigin(value);
+      if (!normalized) return;
+      state.apiOrigin = normalized;
+      try {
+        localStorage.setItem(API_ORIGIN_STORAGE_KEY, normalized);
+      } catch {}
+    }
+
+    function getStoredAuthRecord() {
+      try {
+        return JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || "{}");
+      } catch {
+        return {};
+      }
+    }
+
+    function getAuthToken() {
+      const stored = getStoredAuthRecord();
+      return String(stored?.access_token || "").trim();
+    }
+
+    function getRoleRank(roleName) {
+      const normalized = String(roleName || "").trim().toLowerCase();
+      if (!normalized) return 0;
+      if (ROLE_RANK[normalized]) return ROLE_RANK[normalized];
+      if (normalized.includes("super") || normalized.includes("admin")) return ROLE_RANK.admin;
+      if (normalized.includes("full")) return ROLE_RANK.full;
+      if (normalized.includes("hr")) return ROLE_RANK.hr;
+      if (normalized.includes("manag")) return ROLE_RANK.management;
+      if (normalized.includes("general") || normalized.includes("user")) return ROLE_RANK["general user"];
+      return 0;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function buildHubHref() {
+      return `./app-hub.html?api_origin=${encodeURIComponent(state.apiOrigin)}`;
+    }
+
+    function formatMoney(value) {
+      return MONEY_FORMATTER.format(Number(value || 0));
+    }
+
+    function formatInteger(value) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return "-";
+      return INTEGER_FORMATTER.format(number);
+    }
+
+    function formatMonthLabel(monthKey) {
+      if (!/^\d{4}-\d{2}$/.test(String(monthKey || ""))) return String(monthKey || "-");
+      return MONTH_FORMATTER.format(new Date(`${monthKey}-01T00:00:00`));
+    }
+
+    function formatDateTime(value) {
+      if (!value) return "-";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
+      return date.toLocaleString("en-MT");
+    }
+
+    function formatDuration(totalMs) {
+      const ms = Math.max(0, Math.round(Number(totalMs || 0) || 0));
+      const totalSeconds = Math.round(ms / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      if (hours > 0) return `${hours}h ${minutes}m`;
+      if (minutes > 0) return `${minutes}m ${seconds}s`;
+      return `${seconds}s`;
+    }
+
+    function formatEmailName(email) {
+      const localPart = String(email || "").trim().split("@")[0] || "";
+      if (!localPart) return "Unknown User";
+      return localPart
+        .replace(/[._-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .replace(/\b[a-z]/g, (match) => match.toUpperCase());
+    }
+
+    function titleCase(value) {
+      return String(value || "")
+        .toLowerCase()
+        .replace(/\b\w/g, (match) => match.toUpperCase());
+    }
+
+    function identifierLabel(value) {
+      const normalized = String(value || "").trim().toUpperCase();
+      const option = IDENTIFIER_OPTIONS.find((item) => item.value === normalized);
+      return option ? option.label : titleCase(normalized);
+    }
+
+    function classifyIdentifierBucket(identifier) {
+      const key = String(identifier || "").trim().toLowerCase();
+      return key === "green" || key === "deposit" || key === "deposits" ? "PRIMARY" : "ADMIN_OTHER";
+    }
+
+    function parseNumber(value) {
+      const number = Number(value);
+      return Number.isFinite(number) ? number : 0;
+    }
+
+    function parseInteger(value) {
+      const number = Number.parseInt(String(value ?? "").trim(), 10);
+      return Number.isFinite(number) ? number : NaN;
+    }
+
+    function asArray(value) {
+      return Array.isArray(value) ? value : [];
+    }
+
+    function asNumberArray(value) {
+      return asArray(value)
+        .map((item) => Number(item))
+        .filter((item) => Number.isFinite(item) && item >= 0)
+        .map((item) => Number(item.toFixed(2)));
+    }
+
+    function getMonthKey(value) {
+      const text = String(value || "").trim();
+      const match = text.match(/^(\d{4})-(\d{2})/);
+      return match ? `${match[1]}-${match[2]}` : "";
+    }
+
+    function getRecentMonthKeys(count = 6) {
+      const months = [];
+      const current = new Date();
+      current.setDate(1);
+      current.setHours(0, 0, 0, 0);
+      for (let index = 0; index < count; index += 1) {
+        const monthDate = new Date(current.getFullYear(), current.getMonth() - index, 1);
+        months.push(`${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, "0")}`);
+      }
+      return months;
+    }
+
+    function buildCurrentMonthInputValue() {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    }
+
+    function normalizeReceiptsPerBook(value) {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric) || numeric <= 0) return 100;
+      return Math.max(50, Math.ceil(numeric / 50) * 50);
+    }
+
+    function buildDisplayName(user) {
+      const first = String(user?.first_name || "").trim();
+      const last = String(user?.last_name || "").trim();
+      const full = `${first} ${last}`.trim();
+      if (full) return full;
+      return String(user?.email || "").trim() || "Admin user";
+    }
+
+    function resolveEmployeeDisplayName(email) {
+      const normalizedEmail = String(email || "").trim().toLowerCase();
+      if (!normalizedEmail) return "Unknown User";
+      return state.userNamesByEmail[normalizedEmail] || formatEmailName(normalizedEmail);
+    }
+
+    function normalizeReceiptTiming(value) {
+      const source = value && typeof value === "object" ? value : {};
+      return {
+        firstOpenedAt: String(source.firstOpenedAt || source.first_opened_at || "").trim(),
+        lastResumedAt: String(source.lastResumedAt || source.last_resumed_at || "").trim(),
+        lastPausedAt: String(source.lastPausedAt || source.last_paused_at || "").trim(),
+        completedAt: String(source.completedAt || source.completed_at || "").trim(),
+        totalMs: Math.max(0, Math.round(Number(source.totalMs ?? source.total_ms ?? 0) || 0)),
+        sessionCount: Math.max(0, Math.round(Number(source.sessionCount ?? source.session_count ?? 0) || 0))
+      };
+    }
+
+    function parseReceiptTimingNote(note) {
+      const raw = String(note || "").trim();
+      if (!raw.startsWith(RECEIPT_TIMING_NOTE_PREFIX)) return null;
+      try {
+        return normalizeReceiptTiming(JSON.parse(raw.slice(RECEIPT_TIMING_NOTE_PREFIX.length)));
+      } catch {
+        return null;
+      }
+    }
+
+    function pairKey(department, identifier) {
+      return `${String(department || "").trim().toUpperCase()}__${String(identifier || "").trim().toUpperCase()}`;
+    }
+
+    function setStatus(message, tone = "") {
+      refs.statusLine.textContent = message;
+      refs.statusLine.classList.remove("err", "ok");
+      if (tone) refs.statusLine.classList.add(tone);
+    }
+
+    function setBusy(value, message) {
+      state.busy = Boolean(value);
+      document.querySelectorAll("button, input, select, textarea").forEach((element) => {
+        if (element.id === "btnBackHub") return;
+        element.disabled = state.busy;
+      });
+      if (message) setStatus(message);
+    }
+
+    function showDenied(message) {
+      refs.deniedPanel.classList.remove("hidden");
+      refs.contentPanel.classList.add("hidden");
+      refs.deniedCopy.textContent = message;
+    }
+
+    function showContent() {
+      refs.deniedPanel.classList.add("hidden");
+      refs.contentPanel.classList.remove("hidden");
+    }
+
+    function renderSelectOptions(select, options, placeholderLabel) {
+      select.innerHTML = [
+        `<option value="">${escapeHtml(placeholderLabel)}</option>`,
+        ...options.map((option) => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`)
+      ].join("");
+    }
+
+    function initStaticSelects() {
+      const departmentOptions = DEPARTMENT_OPTIONS.map((value) => ({ value, label: value }));
+      renderSelectOptions(refs.filterDepartment, departmentOptions, "All departments");
+      renderSelectOptions(refs.filterIdentifier, IDENTIFIER_OPTIONS, "All receipt types");
+      renderSelectOptions(refs.forecastDepartment, departmentOptions, "Select department");
+      renderSelectOptions(refs.forecastIdentifier, IDENTIFIER_OPTIONS, "Select receipt type");
+      renderSelectOptions(refs.virtualDepartment, departmentOptions, "Select department");
+      renderSelectOptions(refs.virtualIdentifier, IDENTIFIER_OPTIONS, "Select receipt type");
+      refs.virtualMonth.value = buildCurrentMonthInputValue();
+      refs.forecastDepartment.value = DEPARTMENT_OPTIONS[0];
+      refs.virtualDepartment.value = DEPARTMENT_OPTIONS[0];
+      refs.forecastIdentifier.value = IDENTIFIER_OPTIONS[0].value;
+      refs.virtualIdentifier.value = IDENTIFIER_OPTIONS[0].value;
+      refs.orderReceiptsPerBookConfirm.value = String(normalizeReceiptsPerBook(refs.forecastReceiptsPerBook.value));
+    }
+
+    function renderYearOptions() {
+      const yearSet = new Set([state.filters.year, String(new Date().getFullYear())]);
+      state.entries.forEach((entry) => {
+        const monthKey = getMonthKey(entry.entry_date);
+        if (monthKey) yearSet.add(monthKey.slice(0, 4));
+      });
+      state.generated.forEach((entry) => {
+        const monthKey = getMonthKey(entry.entry_date);
+        if (monthKey) yearSet.add(monthKey.slice(0, 4));
+      });
+      const years = Array.from(yearSet).filter(Boolean).sort((left, right) => Number(right) - Number(left));
+      refs.filterYear.innerHTML = [
+        "<option value=\"\">All years</option>",
+        ...years.map((year) => `<option value="${escapeHtml(year)}">${escapeHtml(year)}</option>`)
+      ].join("");
+      refs.filterYear.value = state.filters.year || "";
+    }
+
+    function getManualReceiptCount(entry) {
+      const first = parseInteger(entry?.first_receipt_number);
+      const last = parseInteger(entry?.last_receipt_number);
+      if (Number.isFinite(first) && Number.isFinite(last) && last >= first) {
+        return last - first + 1;
+      }
+      return asNumberArray(entry?.calculator_values_json).length;
+    }
+
+    function getCancelledReceiptCount(entry) {
+      return asArray(entry?.cancelled_receipt_numbers_json).length;
+    }
+
+    function getPositiveManualAmounts(entry) {
+      return asNumberArray(entry?.calculator_values_json).filter((value) => value > 0);
+    }
+
+    function getManualRange(entry) {
+      const start = parseInteger(entry?.first_receipt_number);
+      const end = parseInteger(entry?.last_receipt_number);
+      if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return null;
+      return { start, end };
+    }
+
+    function getUsedNumberSetForPair(department, identifier) {
+      const used = new Set();
+      state.entries.forEach((entry) => {
+        if (pairKey(entry.department_code, entry.identifier) !== pairKey(department, identifier)) return;
+        const range = getManualRange(entry);
+        if (!range) return;
+        for (let value = range.start; value <= range.end; value += 1) used.add(value);
+      });
+      state.generated.forEach((entry) => {
+        if (pairKey(entry.department_code, entry.identifier) !== pairKey(department, identifier)) return;
+        const receiptNumber = Number(entry.receipt_number);
+        if (Number.isFinite(receiptNumber) && receiptNumber > 0) used.add(receiptNumber);
+      });
+      return used;
+    }
+
+    function getOrdersForPair(department, identifier) {
+      return state.orders
+        .filter((order) => pairKey(order.department_code, order.identifier) === pairKey(department, identifier))
+        .slice()
+        .sort((left, right) => Number(left.start_receipt_no || 0) - Number(right.start_receipt_no || 0));
+    }
+
+    function computeHighestReservedSerial(department, identifier) {
+      let highest = 0;
+      state.entries.forEach((entry) => {
+        if (pairKey(entry.department_code, entry.identifier) !== pairKey(department, identifier)) return;
+        const range = getManualRange(entry);
+        if (range) highest = Math.max(highest, range.end);
+      });
+      state.generated.forEach((entry) => {
+        if (pairKey(entry.department_code, entry.identifier) !== pairKey(department, identifier)) return;
+        const receiptNumber = Number(entry.receipt_number);
+        if (Number.isFinite(receiptNumber)) highest = Math.max(highest, receiptNumber);
+      });
+      state.orders.forEach((order) => {
+        if (pairKey(order.department_code, order.identifier) !== pairKey(department, identifier)) return;
+        const end = Number(order.end_receipt_no);
+        if (Number.isFinite(end)) highest = Math.max(highest, end);
+      });
+      return highest;
+    }
+
+    function computeNextPrintNumber(department, identifier) {
+      const highest = computeHighestReservedSerial(department, identifier);
+      return highest > 0 ? highest + 1 : 1;
+    }
+
+    function buildMonthlyRows() {
+      const rows = new Map();
+
+      state.entries.forEach((entry) => {
+        const monthKey = getMonthKey(entry.entry_date);
+        if (!monthKey) return;
+        const key = `${monthKey}__${pairKey(entry.department_code, entry.identifier)}`;
+        if (!rows.has(key)) {
+          rows.set(key, {
+            monthKey,
+            department: String(entry.department_code || "").trim().toUpperCase(),
+            identifier: String(entry.identifier || "").trim().toUpperCase(),
+            manualIncome: 0,
+            virtualIncome: 0,
+            manualReceiptCount: 0,
+            virtualReceiptCount: 0,
+            cancelledCount: 0,
+            positiveTotal: 0,
+            positiveCount: 0,
+            manualBookCount: 0
+          });
+        }
+
+        const row = rows.get(key);
+        const manualIncome = parseNumber(entry.total_amount);
+        const receiptCount = getManualReceiptCount(entry);
+        const cancelled = getCancelledReceiptCount(entry);
+        const positiveAmounts = getPositiveManualAmounts(entry);
+        row.manualIncome += manualIncome;
+        row.manualReceiptCount += receiptCount;
+        row.cancelledCount += cancelled;
+        row.positiveTotal += positiveAmounts.reduce((sum, amount) => sum + amount, 0);
+        row.positiveCount += positiveAmounts.length;
+        row.manualBookCount += 1;
+      });
+
+      state.generated.forEach((entry) => {
+        const monthKey = getMonthKey(entry.entry_date);
+        if (!monthKey) return;
+        const key = `${monthKey}__${pairKey(entry.department_code, entry.identifier)}`;
+        if (!rows.has(key)) {
+          rows.set(key, {
+            monthKey,
+            department: String(entry.department_code || "").trim().toUpperCase(),
+            identifier: String(entry.identifier || "").trim().toUpperCase(),
+            manualIncome: 0,
+            virtualIncome: 0,
+            manualReceiptCount: 0,
+            virtualReceiptCount: 0,
+            cancelledCount: 0,
+            positiveTotal: 0,
+            positiveCount: 0,
+            manualBookCount: 0
+          });
+        }
+
+        const row = rows.get(key);
+        const amount = parseNumber(entry.amount);
+        const cancelled = Boolean(entry.is_cancelled) || amount === 0;
+        row.virtualIncome += amount;
+        row.virtualReceiptCount += 1;
+        if (cancelled) row.cancelledCount += 1;
+        if (!cancelled && amount > 0) {
+          row.positiveTotal += amount;
+          row.positiveCount += 1;
+        }
+      });
+
+      return Array.from(rows.values())
+        .map((row) => Object.assign(row, {
+          totalIncome: row.manualIncome + row.virtualIncome,
+          receiptCount: row.manualReceiptCount + row.virtualReceiptCount,
+          avgPositive: row.positiveCount ? row.positiveTotal / row.positiveCount : 0,
+          nextPrintNo: computeNextPrintNumber(row.department, row.identifier)
+        }))
+        .filter((row) => {
+          if (state.filters.year && row.monthKey.slice(0, 4) !== state.filters.year) return false;
+          if (state.filters.department && row.department !== state.filters.department) return false;
+          if (state.filters.identifier && row.identifier !== state.filters.identifier) return false;
+          return true;
+        })
+        .sort((left, right) => {
+          if (left.monthKey !== right.monthKey) return right.monthKey.localeCompare(left.monthKey);
+          if (left.department !== right.department) return left.department.localeCompare(right.department);
+          return left.identifier.localeCompare(right.identifier);
+        });
+    }
+
+    function renderMonthlySummary() {
+      const rows = buildMonthlyRows();
+      if (!rows.length) {
+        refs.monthlySummaryBody.innerHTML = "<tr><td colspan=\"10\" class=\"muted\">No receipt-book rows match the current filters.</td></tr>";
+      } else {
+        refs.monthlySummaryBody.innerHTML = rows.map((row) => `
+          <tr>
+            <td>${escapeHtml(formatMonthLabel(row.monthKey))}</td>
+            <td>${escapeHtml(row.department || "-")}</td>
+            <td><span class="badge">${escapeHtml(identifierLabel(row.identifier))}</span></td>
+            <td>${escapeHtml(formatMoney(row.manualIncome))}</td>
+            <td>${escapeHtml(formatMoney(row.virtualIncome))}</td>
+            <td>${escapeHtml(formatMoney(row.totalIncome))}</td>
+            <td>${escapeHtml(formatInteger(row.receiptCount))}</td>
+            <td>${escapeHtml(formatInteger(row.cancelledCount))}</td>
+            <td>${escapeHtml(formatMoney(row.avgPositive))}</td>
+            <td>${escapeHtml(formatInteger(row.nextPrintNo))}</td>
+          </tr>
+        `).join("");
+      }
+
+      const manualIncome = rows.reduce((sum, row) => sum + row.manualIncome, 0);
+      const virtualIncome = rows.reduce((sum, row) => sum + row.virtualIncome, 0);
+      const totalIncome = manualIncome + virtualIncome;
+      const totalReceipts = rows.reduce((sum, row) => sum + row.receiptCount, 0);
+      const highestVisibleSerial = rows.reduce((highest, row) => Math.max(highest, Number(row.nextPrintNo || 0) - 1), 0);
+      const visibleManualBooks = rows.reduce((sum, row) => sum + row.manualBookCount, 0);
+      const visibleVirtualReceipts = rows.reduce((sum, row) => sum + row.virtualReceiptCount, 0);
+
+      refs.manualIncomeValue.textContent = formatMoney(manualIncome);
+      refs.manualIncomeMeta.textContent = `${formatInteger(visibleManualBooks)} saved books in view`;
+      refs.virtualIncomeValue.textContent = formatMoney(virtualIncome);
+      refs.virtualIncomeMeta.textContent = `${formatInteger(visibleVirtualReceipts)} generated receipts in view`;
+      refs.combinedIncomeValue.textContent = formatMoney(totalIncome);
+      refs.combinedIncomeMeta.textContent = `${formatInteger(totalReceipts)} receipts in view`;
+      refs.highestSerialValue.textContent = highestVisibleSerial > 0 ? formatInteger(highestVisibleSerial) : "-";
+      refs.highestSerialMeta.textContent = rows.length ? `${formatInteger(rows.length)} month rows currently visible` : "No visible rows";
+    }
+
+    function renderOrdersTable() {
+      const filteredOrders = state.orders
+        .filter((order) => {
+          if (state.filters.department && String(order.department_code || "").trim().toUpperCase() !== state.filters.department) return false;
+          if (state.filters.identifier && String(order.identifier || "").trim().toUpperCase() !== state.filters.identifier) return false;
+          const orderYear = getMonthKey(order.ordered_at).slice(0, 4);
+          if (state.filters.year && orderYear !== state.filters.year) return false;
+          return true;
+        })
+        .slice()
+        .sort((left, right) => String(right.ordered_at || "").localeCompare(String(left.ordered_at || "")));
+
+      if (!filteredOrders.length) {
+        refs.ordersBody.innerHTML = "<tr><td colspan=\"9\" class=\"muted\">No stored print orders match the current filters.</td></tr>";
+        return;
+      }
+
+      refs.ordersBody.innerHTML = filteredOrders.map((order) => {
+        const status = String(order.status || "ORDERED").trim().toUpperCase();
+        const badgeClass = status === "ARRIVED" || status === "USED" ? "badge good" : "badge warn";
+        return `
+          <tr>
+            <td>${escapeHtml(formatDateTime(order.ordered_at))}</td>
+            <td>${escapeHtml(String(order.department_code || "").trim().toUpperCase())}</td>
+            <td>${escapeHtml(identifierLabel(order.identifier))}</td>
+            <td>${escapeHtml(formatInteger(order.books_count))}</td>
+            <td>${escapeHtml(formatInteger(order.receipts_per_book))}</td>
+            <td>${escapeHtml(`${formatInteger(order.start_receipt_no)} to ${formatInteger(order.end_receipt_no)}`)}</td>
+            <td><span class="${badgeClass}">${escapeHtml(status)}</span></td>
+            <td>${escapeHtml(String(order.ordered_by_email || "").trim() || state.currentUser.name || "-")}</td>
+            <td>${escapeHtml(String(order.notes || "").trim() || "-")}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function buildTimedReceiptEntries() {
+      return state.entries
+        .map((entry) => {
+          const timing = parseReceiptTimingNote(entry.notes);
+          if (!timing) return null;
+          return {
+            id: String(entry.id || ""),
+            completedAt: timing.completedAt || String(entry.created_at || entry.entry_date || "").trim(),
+            employeeEmail: String(entry.created_by_email || "").trim().toLowerCase(),
+            employeeName: resolveEmployeeDisplayName(entry.created_by_email),
+            department: String(entry.department_code || "").trim().toUpperCase(),
+            identifier: String(entry.identifier || "").trim().toUpperCase(),
+            firstReceiptNumber: Number(entry.first_receipt_number || 0),
+            lastReceiptNumber: Number(entry.last_receipt_number || 0),
+            totalAmount: parseNumber(entry.total_amount),
+            totalMs: timing.totalMs,
+            sessionCount: timing.sessionCount,
+            timing
+          };
+        })
+        .filter(Boolean)
+        .sort((left, right) => String(right.completedAt || "").localeCompare(String(left.completedAt || "")));
+    }
+
+    function renderEmployeeTimingStats() {
+      const timedEntries = buildTimedReceiptEntries();
+      const totalMs = timedEntries.reduce((sum, entry) => sum + entry.totalMs, 0);
+      const averageMs = timedEntries.length ? Math.round(totalMs / timedEntries.length) : 0;
+      const longestEntry = timedEntries.reduce((current, entry) => (entry.totalMs > (current?.totalMs || 0) ? entry : current), null);
+
+      refs.timedBooksValue.textContent = formatInteger(timedEntries.length);
+      refs.timedBooksMeta.textContent = timedEntries.length ? `${formatInteger(timedEntries.length)} completed receipt books with timing data` : "No completed timing rows yet";
+      refs.averageTimingValue.textContent = formatDuration(averageMs);
+      refs.averageTimingMeta.textContent = timedEntries.length ? "Per completed receipt book" : "Waiting for timed receipt books";
+      refs.totalTimingValue.textContent = formatDuration(totalMs);
+      refs.totalTimingMeta.textContent = timedEntries.length ? "All timed receipt books" : "No timing data yet";
+      refs.longestTimingValue.textContent = longestEntry ? formatDuration(longestEntry.totalMs) : "0s";
+      refs.longestTimingMeta.textContent = longestEntry
+        ? `${longestEntry.employeeName} on ${formatDateTime(longestEntry.completedAt)}`
+        : "No timing data yet";
+
+      if (!timedEntries.length) {
+        refs.employeeTimingBody.innerHTML = "<tr><td colspan=\"6\" class=\"muted\">No completed receipt-book timings have been saved yet.</td></tr>";
+        refs.receiptTimingEntriesBody.innerHTML = "<tr><td colspan=\"8\" class=\"muted\">No completed receipt-book timings have been saved yet.</td></tr>";
+        return;
+      }
+
+      const grouped = new Map();
+      timedEntries.forEach((entry) => {
+        const key = entry.employeeEmail || entry.employeeName;
+        if (!grouped.has(key)) {
+          grouped.set(key, {
+            employeeName: entry.employeeName,
+            books: 0,
+            totalMs: 0,
+            lastCompletedAt: "",
+            lastRange: ""
+          });
+        }
+        const row = grouped.get(key);
+        row.books += 1;
+        row.totalMs += entry.totalMs;
+        if (String(entry.completedAt || "") > String(row.lastCompletedAt || "")) {
+          row.lastCompletedAt = entry.completedAt;
+          row.lastRange = `${formatInteger(entry.firstReceiptNumber)} to ${formatInteger(entry.lastReceiptNumber)}`;
+        }
+      });
+
+      const employeeRows = Array.from(grouped.values())
+        .map((row) => Object.assign(row, {
+          averageMs: row.books ? Math.round(row.totalMs / row.books) : 0
+        }))
+        .sort((left, right) => {
+          if (right.books !== left.books) return right.books - left.books;
+          return right.totalMs - left.totalMs;
+        });
+
+      refs.employeeTimingBody.innerHTML = employeeRows.map((row) => `
+        <tr>
+          <td>${escapeHtml(row.employeeName)}</td>
+          <td>${escapeHtml(formatInteger(row.books))}</td>
+          <td>${escapeHtml(formatDuration(row.averageMs))}</td>
+          <td>${escapeHtml(formatDuration(row.totalMs))}</td>
+          <td>${escapeHtml(formatDateTime(row.lastCompletedAt))}</td>
+          <td>${escapeHtml(row.lastRange || "-")}</td>
+        </tr>
+      `).join("");
+
+      refs.receiptTimingEntriesBody.innerHTML = timedEntries.map((entry) => `
+        <tr>
+          <td>${escapeHtml(formatDateTime(entry.completedAt))}</td>
+          <td>${escapeHtml(entry.employeeName)}</td>
+          <td>${escapeHtml(entry.department || "-")}</td>
+          <td>${escapeHtml(identifierLabel(entry.identifier))}</td>
+          <td>${escapeHtml(`${formatInteger(entry.firstReceiptNumber)} to ${formatInteger(entry.lastReceiptNumber)}`)}</td>
+          <td>${escapeHtml(formatMoney(entry.totalAmount))}</td>
+          <td>${escapeHtml(formatDuration(entry.totalMs))}</td>
+          <td>${escapeHtml(formatInteger(entry.sessionCount || 0))}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderAll() {
+      renderYearOptions();
+      renderMonthlySummary();
+      renderOrdersTable();
+      renderEmployeeTimingStats();
+      refs.btnBackHub.href = buildHubHref();
+    }
+
+    function getHeaders(hasBody) {
+      const headers = { Accept: "application/json" };
+      if (state.token) headers.Authorization = `Bearer ${state.token}`;
+      if (hasBody) headers["Content-Type"] = "application/json";
+      return headers;
+    }
+
+    async function fetchJson(path, options = {}) {
+      const hasBody = Object.prototype.hasOwnProperty.call(options, "body");
+      const response = await fetch(`${state.apiOrigin}${path}`, {
+        method: options.method || "GET",
+        headers: getHeaders(hasBody),
+        body: hasBody ? JSON.stringify(options.body) : undefined
+      });
+
+      const text = await response.text();
+      let data = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = { raw: text };
+      }
+      return { response, data };
+    }
+
+    function getErrorMessage(payload, fallback) {
+      return payload?.errors?.[0]?.message || payload?.error || payload?.raw || fallback;
+    }
+
+    async function fetchAllItems(collection, fields, sort) {
+      const rows = [];
+      const limit = 200;
+      let page = 1;
+
+      while (true) {
+        const params = new URLSearchParams();
+        params.set("limit", String(limit));
+        params.set("page", String(page));
+        if (Array.isArray(fields) && fields.length) params.set("fields", fields.join(","));
+        if (sort) params.set("sort", sort);
+        const { response, data } = await fetchJson(`/items/${collection}?${params.toString()}`);
+        if (!response.ok) {
+          throw new Error(getErrorMessage(data, `Failed to load ${collection} (${response.status})`));
+        }
+        const chunk = Array.isArray(data?.data) ? data.data : [];
+        rows.push(...chunk);
+        if (chunk.length < limit) break;
+        page += 1;
+      }
+
+      return rows;
+    }
+
+    async function fetchCurrentUser() {
+      const { response, data } = await fetchJson("/users/me?fields=id,email,first_name,last_name,role.name");
+      if (!response.ok) {
+        throw new Error(getErrorMessage(data, `Failed to verify current user (${response.status})`));
+      }
+
+      const user = data?.data || {};
+      const roleName = String(user?.role?.name || "").trim();
+      return {
+        id: String(user?.id || "").trim(),
+        email: String(user?.email || "").trim().toLowerCase(),
+        name: buildDisplayName(user),
+        role: roleName,
+        roleRank: getRoleRank(roleName)
+      };
+    }
+
+    async function loadUsersDirectory() {
+      const users = [];
+      const limit = 200;
+      let page = 1;
+
+      while (true) {
+        const params = new URLSearchParams();
+        params.set("limit", String(limit));
+        params.set("page", String(page));
+        params.set("fields", "email,first_name,last_name");
+        const { response, data } = await fetchJson(`/users?${params.toString()}`);
+        if (!response.ok) {
+          throw new Error(getErrorMessage(data, `Failed to load users (${response.status})`));
+        }
+        const chunk = Array.isArray(data?.data) ? data.data : [];
+        users.push(...chunk);
+        if (chunk.length < limit) break;
+        page += 1;
+      }
+
+      state.userNamesByEmail = users.reduce((map, user) => {
+        const email = String(user?.email || "").trim().toLowerCase();
+        if (!email) return map;
+        map[email] = buildDisplayName(user);
+        return map;
+      }, {});
+    }
+
+    async function loadReceiptData() {
+      const [entries, generated, orders] = await Promise.all([
+        fetchAllItems("receipt_book_entries", [
+          "id",
+          "created_at",
+          "entry_date",
+          "department_code",
+          "identifier",
+          "identifier_bucket",
+          "first_receipt_number",
+          "last_receipt_number",
+          "total_amount",
+          "notes",
+          "cancelled_receipt_numbers_json",
+          "calculator_values_json",
+          "created_by_email",
+          "book_order_id"
+        ], "-entry_date,-id"),
+        fetchAllItems("receipt_book_generated_receipts", [
+          "id",
+          "entry_date",
+          "department_code",
+          "identifier",
+          "identifier_bucket",
+          "receipt_number",
+          "amount",
+          "is_cancelled",
+          "notes",
+          "created_by_email",
+          "created_at"
+        ], "-entry_date,-id"),
+        fetchAllItems("receipt_book_stock_orders", [
+          "id",
+          "order_uid",
+          "department_code",
+          "identifier",
+          "identifier_bucket",
+          "receipts_per_book",
+          "books_count",
+          "start_receipt_no",
+          "end_receipt_no",
+          "next_receipt_no",
+          "status",
+          "ordered_by_email",
+          "ordered_at",
+          "notes"
+        ], "-ordered_at,-id")
+      ]);
+
+      state.entries = entries;
+      state.generated = generated;
+      state.orders = orders;
+    }
+
+    function applyFiltersFromInputs() {
+      state.filters.year = String(refs.filterYear.value || "").trim();
+      state.filters.department = String(refs.filterDepartment.value || "").trim().toUpperCase();
+      state.filters.identifier = String(refs.filterIdentifier.value || "").trim().toUpperCase();
+      renderAll();
+      setStatus(`Loaded ${formatInteger(state.entries.length)} receipt books, ${formatInteger(state.generated.length)} generated receipts, and ${formatInteger(state.orders.length)} print orders.`, "ok");
+    }
+
+    function updateOrderEndField() {
+      const booksCount = Math.max(1, Math.round(parseNumber(refs.orderBooksCount.value)));
+      const receiptsPerBook = normalizeReceiptsPerBook(refs.orderReceiptsPerBookConfirm.value);
+      const start = Math.max(1, Math.round(parseNumber(refs.orderStartReceiptNo.value)));
+      refs.orderBooksCount.value = String(booksCount);
+      refs.orderReceiptsPerBookConfirm.value = String(receiptsPerBook);
+      refs.orderStartReceiptNo.value = String(start);
+      refs.orderEndReceiptNo.value = String(start + (booksCount * receiptsPerBook) - 1);
+    }
+
+    function findPrintRangeConflict(department, identifier, start, end) {
+      const overlappingOrder = getOrdersForPair(department, identifier).find((order) => {
+        const orderStart = Number(order.start_receipt_no);
+        const orderEnd = Number(order.end_receipt_no);
+        return Number.isFinite(orderStart) && Number.isFinite(orderEnd) && start <= orderEnd && end >= orderStart;
+      });
+      if (overlappingOrder) {
+        return `The requested print range overlaps an existing stored batch (${overlappingOrder.start_receipt_no} to ${overlappingOrder.end_receipt_no}).`;
+      }
+
+      const overlappingManual = state.entries.find((entry) => {
+        if (pairKey(entry.department_code, entry.identifier) !== pairKey(department, identifier)) return false;
+        const range = getManualRange(entry);
+        return Boolean(range) && start <= range.end && end >= range.start;
+      });
+      if (overlappingManual) {
+        return `The requested print range overlaps an already used manual receipt range (${overlappingManual.first_receipt_number} to ${overlappingManual.last_receipt_number}).`;
+      }
+
+      const overlappingGenerated = state.generated.find((entry) => {
+        if (pairKey(entry.department_code, entry.identifier) !== pairKey(department, identifier)) return false;
+        const receiptNumber = Number(entry.receipt_number);
+        return Number.isFinite(receiptNumber) && receiptNumber >= start && receiptNumber <= end;
+      });
+      if (overlappingGenerated) {
+        return `The requested print range overlaps a generated receipt number (${overlappingGenerated.receipt_number}).`;
+      }
+
+      return "";
+    }
+
+    function buildForecast() {
+      const department = String(refs.forecastDepartment.value || "").trim().toUpperCase();
+      const identifier = String(refs.forecastIdentifier.value || "").trim().toUpperCase();
+      const receiptsPerBook = normalizeReceiptsPerBook(refs.forecastReceiptsPerBook.value);
+
+      if (!department || !identifier) {
+        throw new Error("Choose the department and receipt type before running the 6-month assessment.");
+      }
+
+      refs.forecastReceiptsPerBook.value = String(receiptsPerBook);
+      refs.orderReceiptsPerBookConfirm.value = String(receiptsPerBook);
+
+      const recentMonths = new Set(getRecentMonthKeys(6));
+      let manualReceiptUsage = 0;
+      let generatedReceiptUsage = 0;
+
+      state.entries.forEach((entry) => {
+        if (pairKey(entry.department_code, entry.identifier) !== pairKey(department, identifier)) return;
+        if (!recentMonths.has(getMonthKey(entry.entry_date))) return;
+        manualReceiptUsage += getManualReceiptCount(entry);
+      });
+
+      state.generated.forEach((entry) => {
+        if (pairKey(entry.department_code, entry.identifier) !== pairKey(department, identifier)) return;
+        if (!recentMonths.has(getMonthKey(entry.entry_date))) return;
+        generatedReceiptUsage += 1;
+      });
+
+      const usedReceipts = manualReceiptUsage + generatedReceiptUsage;
+      const requiredReceipts = Math.ceil(usedReceipts * 1.05);
+      const booksCount = Math.max(requiredReceipts > 0 ? Math.ceil(requiredReceipts / receiptsPerBook) : 0, usedReceipts > 0 ? 1 : 0) || 1;
+      const startReceiptNo = computeNextPrintNumber(department, identifier);
+      const endReceiptNo = startReceiptNo + (booksCount * receiptsPerBook) - 1;
+
+      return {
+        department,
+        identifier,
+        receiptsPerBook,
+        manualReceiptUsage,
+        generatedReceiptUsage,
+        usedReceipts,
+        requiredReceipts,
+        booksCount,
+        startReceiptNo,
+        endReceiptNo
+      };
+    }
+
+    function renderForecast(forecast) {
+      state.lastForecast = forecast;
+      refs.forecastTitle.textContent = `Print ${formatInteger(forecast.booksCount)} books of ${formatInteger(forecast.receiptsPerBook)} receipts each`;
+      refs.forecastCopy.textContent = `In the last 6 months, ${identifierLabel(forecast.identifier)} used ${formatInteger(forecast.usedReceipts)} receipts in ${forecast.department}. M-CodeZ added 5% leeway and proposes ${formatInteger(forecast.requiredReceipts)} receipts, starting from ${formatInteger(forecast.startReceiptNo)} and ending at ${formatInteger(forecast.endReceiptNo)}.`;
+      refs.orderBooksCount.value = String(forecast.booksCount);
+      refs.orderStartReceiptNo.value = String(forecast.startReceiptNo);
+      refs.orderReceiptsPerBookConfirm.value = String(forecast.receiptsPerBook);
+      refs.orderEndReceiptNo.value = String(forecast.endReceiptNo);
+    }
+
+    async function confirmPrintOrder() {
+      const department = String(refs.forecastDepartment.value || "").trim().toUpperCase();
+      const identifier = String(refs.forecastIdentifier.value || "").trim().toUpperCase();
+      const booksCount = Math.max(1, Math.round(parseNumber(refs.orderBooksCount.value)));
+      const receiptsPerBook = normalizeReceiptsPerBook(refs.orderReceiptsPerBookConfirm.value);
+      const startReceiptNo = Math.max(1, Math.round(parseNumber(refs.orderStartReceiptNo.value)));
+      const endReceiptNo = startReceiptNo + (booksCount * receiptsPerBook) - 1;
+      const notes = String(refs.orderNotes.value || "").trim();
+
+      if (!department || !identifier) {
+        throw new Error("Choose the department and receipt type before confirming the print batch.");
+      }
+
+      const conflictMessage = findPrintRangeConflict(department, identifier, startReceiptNo, endReceiptNo);
+      if (conflictMessage) throw new Error(conflictMessage);
+
+      const payload = {
+        order_uid: `stock_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+        department_code: department,
+        identifier,
+        identifier_bucket: classifyIdentifierBucket(identifier),
+        receipts_per_book: receiptsPerBook,
+        books_count: booksCount,
+        start_receipt_no: startReceiptNo,
+        end_receipt_no: endReceiptNo,
+        next_receipt_no: startReceiptNo,
+        status: "ORDERED",
+        ordered_by_user_id: state.currentUser.id || null,
+        ordered_by_email: state.currentUser.email || null,
+        notes
+      };
+
+      setBusy(true, "Saving the confirmed print batch...");
+      try {
+        const { response, data } = await fetchJson("/items/receipt_book_stock_orders", {
+          method: "POST",
+          body: payload
+        });
+        if (!response.ok) {
+          throw new Error(getErrorMessage(data, `Failed to store the print batch (${response.status})`));
+        }
+        await loadReceiptData();
+        renderAll();
+        setStatus(`Stored print batch ${formatInteger(startReceiptNo)} to ${formatInteger(endReceiptNo)} for ${identifierLabel(identifier)} in ${department}.`, "ok");
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function getHistoryProfile(department, identifier, monthKey) {
+      const manualPositiveAmounts = [];
+      const generatedPositiveAmounts = [];
+      let totalReceipts = 0;
+      let cancelledReceipts = 0;
+
+      state.entries.forEach((entry) => {
+        if (pairKey(entry.department_code, entry.identifier) !== pairKey(department, identifier)) return;
+        if (getMonthKey(entry.entry_date) !== monthKey) return;
+        totalReceipts += getManualReceiptCount(entry);
+        cancelledReceipts += getCancelledReceiptCount(entry);
+        manualPositiveAmounts.push(...getPositiveManualAmounts(entry));
+      });
+
+      state.generated.forEach((entry) => {
+        if (pairKey(entry.department_code, entry.identifier) !== pairKey(department, identifier)) return;
+        if (getMonthKey(entry.entry_date) !== monthKey) return;
+        totalReceipts += 1;
+        const amount = parseNumber(entry.amount);
+        const cancelled = Boolean(entry.is_cancelled) || amount === 0;
+        if (cancelled) {
+          cancelledReceipts += 1;
+        } else {
+          generatedPositiveAmounts.push(amount);
+        }
+      });
+
+      const positiveAmounts = manualPositiveAmounts.concat(generatedPositiveAmounts);
+      if (positiveAmounts.length) {
+        return {
+          avgPositiveAmount: positiveAmounts.reduce((sum, value) => sum + value, 0) / positiveAmounts.length,
+          cancelRate: totalReceipts > 0 ? cancelledReceipts / totalReceipts : 0,
+          sampleReceiptCount: totalReceipts
+        };
+      }
+
+      const fallbackPositive = [];
+      let fallbackTotalReceipts = 0;
+      let fallbackCancelledReceipts = 0;
+
+      state.entries.forEach((entry) => {
+        if (pairKey(entry.department_code, entry.identifier) !== pairKey(department, identifier)) return;
+        fallbackTotalReceipts += getManualReceiptCount(entry);
+        fallbackCancelledReceipts += getCancelledReceiptCount(entry);
+        fallbackPositive.push(...getPositiveManualAmounts(entry));
+      });
+
+      state.generated.forEach((entry) => {
+        if (pairKey(entry.department_code, entry.identifier) !== pairKey(department, identifier)) return;
+        fallbackTotalReceipts += 1;
+        const amount = parseNumber(entry.amount);
+        const cancelled = Boolean(entry.is_cancelled) || amount === 0;
+        if (cancelled) {
+          fallbackCancelledReceipts += 1;
+        } else {
+          fallbackPositive.push(amount);
+        }
+      });
+
+      if (fallbackPositive.length) {
+        return {
+          avgPositiveAmount: fallbackPositive.reduce((sum, value) => sum + value, 0) / fallbackPositive.length,
+          cancelRate: fallbackTotalReceipts > 0 ? fallbackCancelledReceipts / fallbackTotalReceipts : 0.05,
+          sampleReceiptCount: fallbackTotalReceipts
+        };
+      }
+
+      return {
+        avgPositiveAmount: 50,
+        cancelRate: 0.05,
+        sampleReceiptCount: 0
+      };
+    }
+
+    function buildRandomizedAmounts(totalAmount, count) {
+      if (count <= 1) return [Number(parseNumber(totalAmount).toFixed(2))];
+
+      const target = Number(parseNumber(totalAmount).toFixed(2));
+      let remaining = target;
+      const weights = Array.from({ length: count }, () => 0.8 + (Math.random() * 0.5));
+      const weightTotal = weights.reduce((sum, value) => sum + value, 0);
+      const values = [];
+
+      for (let index = 0; index < count; index += 1) {
+        if (index === count - 1) {
+          values.push(Number(remaining.toFixed(2)));
+          break;
+        }
+        const raw = (target * weights[index]) / weightTotal;
+        const capped = Math.max(0.01, Number(raw.toFixed(2)));
+        values.push(capped);
+        remaining = Number((remaining - capped).toFixed(2));
+      }
+
+      const adjusted = values.map((value) => Number(value.toFixed(2)));
+      const adjustedTotal = adjusted.reduce((sum, value) => sum + value, 0);
+      const diff = Number((target - adjustedTotal).toFixed(2));
+      adjusted[adjusted.length - 1] = Number((adjusted[adjusted.length - 1] + diff).toFixed(2));
+      return adjusted;
+    }
+
+    function allocateReceiptNumbers(department, identifier, count) {
+      const orders = getOrdersForPair(department, identifier);
+      const used = getUsedNumberSetForPair(department, identifier);
+      const allocated = [];
+
+      orders.forEach((order) => {
+        const start = Number(order.start_receipt_no);
+        const end = Number(order.end_receipt_no);
+        if (!Number.isFinite(start) || !Number.isFinite(end) || allocated.length >= count) return;
+        for (let receiptNo = start; receiptNo <= end && allocated.length < count; receiptNo += 1) {
+          if (used.has(receiptNo)) continue;
+          used.add(receiptNo);
+          allocated.push(receiptNo);
+        }
+      });
+
+      let cursor = Math.max(
+        computeHighestReservedSerial(department, identifier),
+        allocated.length ? allocated[allocated.length - 1] : 0
+      ) + 1;
+
+      while (allocated.length < count) {
+        if (!used.has(cursor)) {
+          used.add(cursor);
+          allocated.push(cursor);
+        }
+        cursor += 1;
+      }
+
+      return allocated;
+    }
+
+    async function createGeneratedItems(records) {
+      const bulkAttempt = await fetchJson("/items/receipt_book_generated_receipts", {
+        method: "POST",
+        body: records
+      });
+
+      if (bulkAttempt.response.ok) {
+        return Array.isArray(bulkAttempt.data?.data) ? bulkAttempt.data.data : [];
+      }
+
+      const message = getErrorMessage(bulkAttempt.data, `Failed to create generated receipts (${bulkAttempt.response.status})`);
+      const sequentialResults = [];
+      for (const record of records) {
+        const { response, data } = await fetchJson("/items/receipt_book_generated_receipts", {
+          method: "POST",
+          body: record
+        });
+        if (!response.ok) throw new Error(getErrorMessage(data, message));
+        if (data?.data) sequentialResults.push(data.data);
+      }
+      return sequentialResults;
+    }
+
+    async function generateVirtualBatch() {
+      const monthKey = String(refs.virtualMonth.value || "").trim();
+      const department = String(refs.virtualDepartment.value || "").trim().toUpperCase();
+      const identifier = String(refs.virtualIdentifier.value || "").trim().toUpperCase();
+      const totalAmount = Number(parseNumber(refs.virtualTargetAmount.value).toFixed(2));
+      const notes = String(refs.virtualNotes.value || "").trim();
+
+      if (!/^\d{4}-\d{2}$/.test(monthKey)) {
+        throw new Error("Choose the month to fill before generating virtual receipts.");
+      }
+      if (!department || !identifier) {
+        throw new Error("Choose the department and receipt type before generating virtual receipts.");
+      }
+      if (!Number.isFinite(totalAmount) || totalAmount <= 0) {
+        throw new Error("Enter a positive amount to add for the selected month.");
+      }
+
+      const history = getHistoryProfile(department, identifier, monthKey);
+      const averageAmount = Math.max(0.01, Number(history.avgPositiveAmount.toFixed(2)));
+      let estimatedReceipts = Math.max(1, Math.round(totalAmount / averageAmount));
+      let cancelledCount = Math.max(0, Math.round(estimatedReceipts * history.cancelRate));
+      if (cancelledCount >= estimatedReceipts) cancelledCount = Math.max(0, estimatedReceipts - 1);
+      let positiveCount = Math.max(1, estimatedReceipts - cancelledCount);
+
+      if (positiveCount === 0) {
+        positiveCount = 1;
+        estimatedReceipts = 1;
+        cancelledCount = 0;
+      }
+
+      const positiveAmounts = buildRandomizedAmounts(totalAmount, positiveCount);
+      const allocatedNumbers = allocateReceiptNumbers(department, identifier, estimatedReceipts);
+      const zeroPositions = new Set();
+      while (zeroPositions.size < cancelledCount) {
+        zeroPositions.add(Math.floor(Math.random() * estimatedReceipts));
+      }
+
+      const records = [];
+      let positiveIndex = 0;
+      const generationUid = `generated_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+      for (let index = 0; index < estimatedReceipts; index += 1) {
+        const isCancelled = zeroPositions.has(index);
+        const amount = isCancelled ? 0 : positiveAmounts[positiveIndex++];
+        records.push({
+          generation_uid: generationUid,
+          department_code: department,
+          identifier,
+          identifier_bucket: classifyIdentifierBucket(identifier),
+          receipt_number: allocatedNumbers[index],
+          entry_date: `${monthKey}-01`,
+          amount: Number(parseNumber(amount).toFixed(2)),
+          is_cancelled: isCancelled,
+          source_mode: "ADMIN_GENERATED",
+          notes,
+          created_by_user_id: state.currentUser.id || null,
+          created_by_email: state.currentUser.email || null
+        });
+      }
+
+      setBusy(true, "Generating virtual receipts...");
+      try {
+        await createGeneratedItems(records);
+        await loadReceiptData();
+        renderAll();
+        refs.virtualTitle.textContent = `Generated ${formatInteger(records.length)} receipt numbers for ${formatMonthLabel(monthKey)}`;
+        refs.virtualCopy.textContent = `Added ${formatMoney(totalAmount)} across ${formatInteger(records.length)} receipts for ${identifierLabel(identifier)} in ${department}. The generated range starts at ${formatInteger(allocatedNumbers[0])} and ends at ${formatInteger(allocatedNumbers[allocatedNumbers.length - 1])}, with ${formatInteger(cancelledCount)} cancelled zeros mixed in.`;
+        setStatus(`Virtual batch saved for ${formatMonthLabel(monthKey)}. ${formatInteger(records.length)} receipt numbers are now reserved.`, "ok");
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function refreshData() {
+      setBusy(true, "Loading Tieghi receipt data...");
+      try {
+        await Promise.all([
+          loadReceiptData(),
+          loadUsersDirectory().catch(() => {
+            state.userNamesByEmail = {};
+          })
+        ]);
+        renderAll();
+        setStatus(`Loaded ${formatInteger(state.entries.length)} receipt books, ${formatInteger(state.generated.length)} generated receipts, and ${formatInteger(state.orders.length)} print orders.`, "ok");
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function switchTab(targetId) {
+      refs.tabButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.tabTarget === targetId);
+      });
+      refs.tabPanels.forEach((panel) => {
+        panel.classList.toggle("hidden", panel.id !== targetId);
+      });
+    }
+
+    function bindEvents() {
+      refs.tabButtons.forEach((button) => {
+        button.addEventListener("click", () => switchTab(button.dataset.tabTarget));
+      });
+      refs.btnRefresh.addEventListener("click", () => { void refreshData(); });
+      refs.btnReloadMonthly.addEventListener("click", () => { void refreshData(); });
+      refs.btnReloadOrders.addEventListener("click", () => { void refreshData(); });
+      refs.btnApplyFilters.addEventListener("click", () => { applyFiltersFromInputs(); });
+
+      refs.forecastReceiptsPerBook.addEventListener("change", () => {
+        refs.forecastReceiptsPerBook.value = String(normalizeReceiptsPerBook(refs.forecastReceiptsPerBook.value));
+        refs.orderReceiptsPerBookConfirm.value = refs.forecastReceiptsPerBook.value;
+        updateOrderEndField();
+      });
+      refs.orderBooksCount.addEventListener("input", updateOrderEndField);
+      refs.orderStartReceiptNo.addEventListener("input", updateOrderEndField);
+      refs.orderReceiptsPerBookConfirm.addEventListener("input", updateOrderEndField);
+
+      refs.btnAssessForecast.addEventListener("click", () => {
+        try {
+          const forecast = buildForecast();
+          renderForecast(forecast);
+          setStatus(`6-month requirement assessed for ${identifierLabel(forecast.identifier)} in ${forecast.department}.`, "ok");
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : "Failed to assess the next 6 months.", "err");
+        }
+      });
+
+      refs.btnConfirmOrder.addEventListener("click", async () => {
+        try {
+          await confirmPrintOrder();
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : "Failed to store the print batch.", "err");
+        }
+      });
+
+      refs.btnGenerateVirtual.addEventListener("click", async () => {
+        try {
+          await generateVirtualBatch();
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : "Failed to generate the virtual receipt batch.", "err");
+        }
+      });
+    }
+
+    async function bootstrap() {
+      persistApiOrigin(getApiOrigin());
+      refs.btnBackHub.href = buildHubHref();
+      initStaticSelects();
+      bindEvents();
+      switchTab("receiptBooksTab");
+      state.token = getAuthToken();
+
+      if (!state.token) {
+        setStatus("No active Directus session found. Log in again to open Tieghi.", "err");
+        showDenied("No active Directus session was found in this browser. Log in first, then return to Tieghi from App Hub.");
+        return;
+      }
+
+      try {
+        setStatus("Checking admin access...");
+        state.currentUser = await fetchCurrentUser();
+        if (state.currentUser.roleRank < ROLE_RANK.admin) {
+          setStatus("Tieghi is restricted to admin users.", "err");
+          showDenied(`Signed in as ${state.currentUser.name}. Tieghi is restricted to admin users.`);
+          return;
+        }
+
+        showContent();
+        setStatus(`Signed in as ${state.currentUser.name} (${state.currentUser.role || "Admin"}).`, "ok");
+        await refreshData();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to initialise Tieghi.";
+        setStatus(message, "err");
+        showDenied(message);
+      }
+    }
+
+    bootstrap();
+  </script>
+</body>
+</html>

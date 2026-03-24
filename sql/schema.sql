@@ -65,6 +65,8 @@ CREATE TABLE IF NOT EXISTS employees (
   social_security_no VARCHAR(32) NULL,
   tax_number VARCHAR(32) NULL,
   nationality VARCHAR(64) NULL,
+  nationality_country VARCHAR(64) NULL,
+  nationality_region VARCHAR(16) NULL,
   spouse_national_id VARCHAR(32) NULL,
   dob DATE NULL,
   email TEXT NULL,
@@ -145,6 +147,8 @@ SELECT
   e.city,
   e.postcode,
   e.nationality,
+  e.nationality_country,
+  e.nationality_region,
   e.is_active
 FROM employees e
 LEFT JOIN LATERAL (

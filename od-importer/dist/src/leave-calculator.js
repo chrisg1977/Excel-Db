@@ -3,6 +3,21 @@
  * Calculates annual leave and sick leave entitlements with pro-rata adjustments
  * Based on employment type, period, and public holidays
  */
+const toIsoDate = (value, fallback) => {
+    if (!value)
+        return fallback;
+    if (value instanceof Date) {
+        return value.toISOString().split('T')[0];
+    }
+    const raw = String(value).trim();
+    if (!raw)
+        return fallback;
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) {
+        return fallback;
+    }
+    return parsed.toISOString().split('T')[0];
+};
 /**
  * Determine if employee has leave entitlement based on payroll subscription type and employment type
  * ELIGIBLE (MAIN payroll only): PERMANENT, CONTRACT, SEASONAL
@@ -111,8 +126,8 @@ export const calculateLeaveEntitlements = async (pg, input) => {
         has_no_entitlement: !['PERMANENT', 'CASUAL_PT', 'CONTRACT'].includes(employmentType),
         vl_annual_entitlement_hours: entitlementData.vl_annual_entitlement_hours || 192,
         sl_annual_entitlement_hours: entitlementData.sl_annual_entitlement_hours || 80,
-        employment_start_date: prorataData.employment_start?.toISOString().split('T')[0] || `${payroll_year}-01-01`,
-        employment_end_date: prorataData.employment_end?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+        employment_start_date: toIsoDate(prorataData.employment_start, `${payroll_year}-01-01`),
+        employment_end_date: toIsoDate(prorataData.employment_end, new Date().toISOString().split('T')[0]),
         days_employed_in_year: prorataData.days_employed || 365,
         prorata_factor: Math.min(1.0, prorataData.prorata_factor || 1.0),
         vl_prorata_hours: Math.round(prorataData.vl_prorata_hours * 100) / 100,

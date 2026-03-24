@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EOS Management Reports</title>
+  <link rel="icon" type="image/png" href="/dashboard/assets/logos/database-logo.png" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #2e5090;
+      --blue-deep: #20375f;
+      --ink: #162033;
+      --muted: #5a6a80;
+      --surface: rgba(255, 255, 255, 0.97);
+      --surface-soft: #f4f7fb;
+      --line: rgba(46, 80, 144, 0.12);
+      --warning-bg: #fff7e7;
+      --warning-line: #efd9a6;
+      --warning-text: #7b5a12;
+      --error-bg: #fff1f3;
+      --error-line: #ffcad1;
+      --error-text: #8d2032;
+      --info-bg: #ecf8f1;
+      --info-line: #b9e4c9;
+      --info-text: #1e6a41;
+      --shadow: 0 18px 40px rgba(20, 33, 61, 0.10);
+      --radius: 18px;
+      --font: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    }
+    html, body {
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top left, rgba(46, 80, 144, 0.14), transparent 34%),
+        linear-gradient(180deg, #edf3fb 0%, #f8fafd 56%, #eff4fa 100%);
+      color: var(--ink);
+      font-family: var(--font);
+      font-size: 16px;
+    }
+    body { padding-bottom: 20px; }
+    .hidden { display: none !important; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(14px);
+      background: rgba(234, 243, 255, 0.94);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 10px 26px rgba(24, 40, 72, 0.08);
+    }
+    .topbar-shell {
+      max-width: 1440px;
+      margin: 0 auto;
+      min-height: 74px;
+      padding: 12px 20px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 16px;
+      align-items: center;
+    }
+    .topbar-center {
+      display: grid;
+      justify-items: center;
+      gap: 4px;
+      text-align: center;
+    }
+    .topbar-title {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--blue-deep);
+    }
+    .topbar-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .identity-box {
+      min-width: 220px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(46, 80, 144, 0.14);
+      box-shadow: 0 10px 26px rgba(24, 40, 72, 0.08);
+      display: grid;
+      gap: 4px;
+      justify-items: start;
+    }
+    .identity-name {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--blue-deep);
+    }
+    .identity-meta {
+      font-size: 12px;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+    .btn {
+      border: 1px solid transparent;
+      border-radius: 12px;
+      background: var(--blue);
+      color: #ffffff;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 800;
+      padding: 11px 16px;
+      font-size: 14px;
+      transition: transform 0.15s ease, filter 0.15s ease, background 0.15s ease;
+    }
+    .btn:hover { filter: brightness(0.98); transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn.alt {
+      background: #ffffff;
+      color: var(--blue);
+      border-color: rgba(46, 80, 144, 0.18);
+    }
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 18px 20px 0;
+      display: grid;
+      gap: 14px;
+    }
+    .message {
+      padding: 11px 13px;
+      line-height: 1.45;
+      font-size: 13px;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      box-shadow: var(--shadow);
+      background: var(--surface);
+    }
+    .message.error { background: var(--error-bg); border-color: var(--error-line); color: var(--error-text); }
+    .message.warning { background: var(--warning-bg); border-color: var(--warning-line); color: var(--warning-text); }
+    .message.info { background: var(--info-bg); border-color: var(--info-line); color: var(--info-text); }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .panel-title {
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .panel h1, .panel h2, .panel h3 {
+      color: var(--ink);
+      line-height: 1.05;
+    }
+    .panel h1 { font-size: 28px; }
+    .panel h2 { font-size: 22px; }
+    .panel h3 { font-size: 15px; }
+    .panel-copy {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      max-width: 72ch;
+    }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #eff4ff;
+      color: var(--blue-deep);
+      border: 1px solid rgba(46, 80, 144, 0.14);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .flag-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+      min-width: 150px;
+    }
+    .flag-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 7px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .flag-badge.discrepancy {
+      background: #fff2f4;
+      border-color: #ffc7d0;
+      color: #91263a;
+    }
+    .flag-badge.alert {
+      background: #fff6e6;
+      border-color: #efd5a0;
+      color: #7a5711;
+    }
+    .flag-badge.review {
+      background: #edf4ff;
+      border-color: #c9daff;
+      color: #274980;
+    }
+    .flag-badge.temporary {
+      background: #f5efff;
+      border-color: #d9c7ff;
+      color: #55318b;
+    }
+    .flag-badge.none {
+      background: #f5f7fb;
+      border-color: rgba(46, 80, 144, 0.10);
+      color: var(--muted);
+    }
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      gap: 10px;
+      align-items: end;
+    }
+    .field-label {
+      display: grid;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 900;
+      color: #34425c;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    input, select {
+      width: 100%;
+      border: 1px solid rgba(46, 80, 144, 0.18);
+      border-radius: 12px;
+      padding: 10px 11px;
+      font: inherit;
+      color: var(--ink);
+      background: #ffffff;
+    }
+    .field-help {
+      font-size: 11px;
+      line-height: 1.35;
+      color: var(--muted);
+      text-transform: none;
+      letter-spacing: normal;
+      font-weight: 700;
+    }
+    .filter-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(380px, 0.9fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .table-wrap, .scroll-block {
+      border: 1px solid rgba(46, 80, 144, 0.12);
+      border-radius: 14px;
+      background: #ffffff;
+      overflow: auto;
+    }
+    .table-wrap { max-height: calc(100vh - 290px); }
+    .detail-panel {
+      position: sticky;
+      top: 92px;
+      max-height: calc(100vh - 112px);
+      overflow: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+    }
+    th, td {
+      padding: 10px 10px;
+      text-align: left;
+      border-bottom: 1px solid rgba(46, 80, 144, 0.09);
+      font-size: 12px;
+      vertical-align: top;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #f6f9fe;
+      color: #3b4a63;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    tbody tr {
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    tbody tr:hover { background: #f8fbff; }
+    tbody tr.active { background: #edf4ff; }
+    .list-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .list-toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .pager-controls {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .compact-field {
+      min-width: 92px;
+    }
+    .compact-field select {
+      min-width: 86px;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    .stat-card {
+      border: 1px solid rgba(46, 80, 144, 0.12);
+      border-radius: 14px;
+      padding: 12px;
+      background: linear-gradient(180deg, #ffffff, #f7faff);
+      display: grid;
+      gap: 6px;
+    }
+    .stat-label {
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+    .stat-value {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--ink);
+      line-height: 1.2;
+      word-break: break-word;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+    }
+    .meta-card {
+      border: 1px solid rgba(46, 80, 144, 0.10);
+      border-radius: 14px;
+      padding: 12px;
+      background: #f8fbff;
+      display: grid;
+      gap: 5px;
+    }
+    .meta-label {
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+    .meta-value {
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--ink);
+      font-weight: 700;
+      word-break: break-word;
+    }
+    .section-divider {
+      height: 1px;
+      background: rgba(46, 80, 144, 0.10);
+      margin: 2px 0;
+    }
+    .section-stack {
+      display: grid;
+      gap: 12px;
+    }
+    .section-caption {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .subtle-count {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .scroll-block {
+      max-height: 220px;
+    }
+    .empty-state {
+      padding: 18px;
+      border: 1px dashed rgba(46, 80, 144, 0.20);
+      border-radius: 16px;
+      background: #f9fbff;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .audit-value {
+      max-width: 280px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #33425a;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    .money { font-variant-numeric: tabular-nums; }
+    @media (max-width: 1180px) {
+      .workspace-grid {
+        grid-template-columns: 1fr;
+      }
+      .detail-panel {
+        position: static;
+        max-height: none;
+      }
+      .table-wrap {
+        max-height: none;
+      }
+    }
+    @media (max-width: 760px) {
+      .topbar-shell {
+        grid-template-columns: 1fr;
+        justify-items: stretch;
+      }
+      .identity-box {
+        min-width: 0;
+      }
+      .container {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+      .panel {
+        padding: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-shell">
+      <button class="btn alt" id="btnAppHub" type="button">AppHub</button>
+      <div class="topbar-center">
+        <div class="topbar-title">EOS Management Reports</div>
+        <div class="topbar-subtitle">Saved report retrieval only. No operational extraction or editing.</div>
+      </div>
+      <div class="identity-box">
+        <div class="identity-name" id="currentUserLabel">Management User</div>
+        <div class="identity-meta" id="currentRoleLabel">Role: management</div>
+        <div class="identity-meta" id="currentApiOriginLabel">API origin</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="message error hidden" id="errorBanner"></div>
+    <div class="message info" id="infoBanner">
+      Management retrieval is read-only. Final role enforcement remains pending the shared auth/access layer.
+    </div>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Filters</div>
+          <h1>Retrieve saved EOS report snapshots</h1>
+        </div>
+        <div class="badge-row">
+          <span class="badge" id="reportCountBadge">0 reports</span>
+          <span class="badge">Read-only</span>
+        </div>
+      </div>
+      <p class="panel-copy">
+        Use the saved-report filters below to retrieve previously generated EOS report headers, then open one snapshot to review its rows, summary, and audit trail.
+      </p>
+      <form id="filterForm">
+        <div class="filters-grid">
+          <label class="field-label">
+            Accounting Period ID
+            <input id="filterAccountingPeriodId" type="text" placeholder="UUID for now" autocomplete="off" />
+            <span class="field-help">Temporary text filter until a period lookup endpoint is wired.</span>
+          </label>
+          <label class="field-label">
+            Clinic
+            <input id="filterClinicCode" type="text" placeholder="MDCZ" autocomplete="off" />
+          </label>
+          <label class="field-label">
+            Department
+            <select id="filterDepartmentCode">
+              <option value="">All departments</option>
+            </select>
+          </label>
+          <label class="field-label">
+            Location
+            <select id="filterLocationCode">
+              <option value="">All locations</option>
+            </select>
+          </label>
+          <label class="field-label">
+            Generated by
+            <input id="filterGeneratedBy" type="text" placeholder="drchrisgauci" autocomplete="off" />
+          </label>
+          <label class="field-label">
+            Report type
+            <select id="filterReportType">
+              <option value="">All types</option>
+              <option value="standard">standard</option>
+              <option value="management_exception">management_exception</option>
+            </select>
+          </label>
+          <label class="field-label">
+            Status
+            <select id="filterStatus">
+              <option value="">All statuses</option>
+              <option value="draft">draft</option>
+              <option value="submitted">submitted</option>
+              <option value="locked">locked</option>
+            </select>
+          </label>
+          <label class="field-label">
+            Report start from
+            <input id="filterDateFrom" type="datetime-local" />
+          </label>
+          <label class="field-label">
+            Report start to
+            <input id="filterDateTo" type="datetime-local" />
+          </label>
+        </div>
+        <div class="filter-actions">
+          <button class="btn alt" id="btnResetFilters" type="button">Clear</button>
+          <button class="btn" id="btnApplyFilters" type="submit">Load Reports</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="workspace-grid">
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Saved Reports</div>
+            <h2>Management list</h2>
+          </div>
+          <div class="badge-row">
+            <span class="badge" id="activeFilterBadge">No filters</span>
+          </div>
+        </div>
+        <div class="list-toolbar">
+          <p class="list-note" id="listStateNote">
+            Click a saved report row to open its full snapshot detail.
+          </p>
+          <div class="pager-controls">
+            <label class="field-label compact-field">
+              Rows
+              <select id="pageLimitSelect">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+              </select>
+            </label>
+            <button class="btn alt" id="btnPrevPage" type="button">Previous</button>
+            <button class="btn alt" id="btnNextPage" type="button">Next</button>
+            <span class="badge" id="pageRangeBadge">0-0 of 0</span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Generated At</th>
+                <th>Clinic</th>
+                <th>Department</th>
+                <th>Location</th>
+                <th>Generated By</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Flags</th>
+                <th>Report Start</th>
+                <th>Report End</th>
+              </tr>
+            </thead>
+            <tbody id="reportTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="panel detail-panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Snapshot Detail</div>
+            <h2 id="detailTitle">Select a saved report</h2>
+          </div>
+          <div class="badge-row">
+            <span class="badge hidden" id="detailHeaderIdBadge"></span>
+          </div>
+        </div>
+
+        <div class="empty-state" id="detailEmpty">
+          No saved report selected yet. Load the list on the left and choose one row to retrieve its saved header, rows, summary, and audit entries.
+        </div>
+
+        <div class="section-stack hidden" id="detailContent">
+          <div>
+            <p class="panel-copy" id="detailSubtitle"></p>
+          </div>
+
+          <div class="meta-grid" id="headerGrid"></div>
+
+          <div class="section-divider"></div>
+
+          <div class="section-stack">
+            <div class="section-caption">
+              <h3>Summary</h3>
+            </div>
+            <div class="stat-grid" id="summaryGrid"></div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <div class="section-stack">
+            <div class="section-caption">
+              <h3>Audit</h3>
+              <span class="subtle-count" id="auditCountLabel">0 entries</span>
+            </div>
+            <div class="scroll-block">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Acted At</th>
+                    <th>Acted By</th>
+                    <th>Action</th>
+                    <th>Field</th>
+                    <th>Old Value</th>
+                    <th>New Value</th>
+                  </tr>
+                </thead>
+                <tbody id="auditTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <div class="section-stack">
+            <div class="section-caption">
+              <h3>Rows</h3>
+              <span class="subtle-count" id="rowCountLabel">0 rows</span>
+            </div>
+            <div class="scroll-block">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order</th>
+                    <th>Patient #</th>
+                    <th>Patient</th>
+                    <th>Provider</th>
+                    <th>Treatments</th>
+                    <th>Fee</th>
+                    <th>Appointment</th>
+                    <th>Walkout</th>
+                    <th>Included</th>
+                    <th>Carry Forward</th>
+                  </tr>
+                </thead>
+                <tbody id="rowTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script src="./management-reports.js"></script>
+</body>
+</html>

@@ -106,6 +106,74 @@ export const calculateTax = (grossIncome, taxRate, taxSubtract) => {
     const tax = taxable * taxRate;
     return Math.round(tax * 100) / 100;
 };
+const ageOnYearEnd = (dob, year) => {
+    if (!dob)
+        return null;
+    const birth = new Date(`${dob}T00:00:00Z`);
+    if (Number.isNaN(birth.getTime()))
+        return null;
+    const yearEnd = new Date(Date.UTC(year, 11, 31));
+    let age = yearEnd.getUTCFullYear() - birth.getUTCFullYear();
+    const birthdayThisYear = new Date(Date.UTC(year, birth.getUTCMonth(), birth.getUTCDate()));
+    if (birthdayThisYear.getTime() > yearEnd.getTime()) {
+        age -= 1;
+    }
+    return age;
+};
+const roundMoney = (value) => Math.round(value * 100) / 100;
+const computeContributionAmount = (wage, fixed, percentage, max) => {
+    let amount = 0;
+    if (fixed !== null && Number.isFinite(fixed)) {
+        amount = fixed;
+    }
+    else if (percentage !== null && Number.isFinite(percentage)) {
+        amount = wage * (percentage / 100);
+    }
+    if (max !== null && Number.isFinite(max)) {
+        amount = Math.min(amount, max);
+    }
+    return roundMoney(amount);
+};
+export const lookupSocialSecurityContribution = async (pg, year, weeklyWage, dateOfBirth) => {
+    if (weeklyWage <= 0)
+        return null;
+    const age = ageOnYearEnd(dateOfBirth, year);
+    const result = await pg.query(`SELECT
+       class_code,
+       employee_fixed,
+       employee_percentage,
+       employer_fixed,
+       employer_percentage,
+       mlf_fixed,
+       mlf_percentage,
+       mlf_max
+     FROM social_security_classes
+     WHERE year = $1
+       AND (wage_from IS NULL OR wage_from <= $2)
+       AND (wage_to IS NULL OR wage_to >= $2)
+       AND ($3::date IS NULL OR dob_from IS NULL OR dob_from::date <= $3::date)
+       AND ($3::date IS NULL OR dob_to IS NULL OR dob_to::date >= $3::date)
+       AND ($4::int IS NULL OR min_age IS NULL OR min_age <= $4::int)
+       AND ($4::int IS NULL OR max_age IS NULL OR max_age >= $4::int)
+     ORDER BY
+       CASE WHEN dob_from IS NOT NULL OR dob_to IS NOT NULL THEN 0 ELSE 1 END,
+       CASE WHEN min_age IS NOT NULL OR max_age IS NOT NULL THEN 0 ELSE 1 END,
+       CASE WHEN wage_to IS NULL THEN 1 ELSE 0 END,
+       wage_from DESC NULLS LAST
+     LIMIT 1`, [year, weeklyWage, dateOfBirth, age]);
+    const row = result.rows[0];
+    if (!row)
+        return null;
+    const employeeContribution = computeContributionAmount(weeklyWage, row.employee_fixed === null ? null : Number(row.employee_fixed), row.employee_percentage === null ? null : Number(row.employee_percentage), null);
+    const employerContribution = computeContributionAmount(weeklyWage, row.employer_fixed === null ? null : Number(row.employer_fixed), row.employer_percentage === null ? null : Number(row.employer_percentage), null);
+    const mlfContribution = computeContributionAmount(weeklyWage, row.mlf_fixed === null ? null : Number(row.mlf_fixed), row.mlf_percentage === null ? null : Number(row.mlf_percentage), row.mlf_max === null ? null : Number(row.mlf_max));
+    return {
+        class_code: String(row.class_code || '').trim(),
+        employee_contribution: employeeContribution,
+        employer_contribution: employerContribution,
+        mlf_contribution: mlfContribution
+    };
+};
 /**
  * Calculate MEDIATRIX bonus deduction based on leave hours
  * Formula: AV - (AV / (Q*P) * ST)

@@ -70,6 +70,11 @@
       },
       {
         "type": "endpoint",
+        "name": "od-launch-auth",
+        "source": "src/endpoints/od-launch-auth.ts"
+      },
+      {
+        "type": "endpoint",
         "name": "wage-calculator",
         "source": "src/endpoints/wage-calculator.ts"
       },
@@ -77,6 +82,21 @@
         "type": "endpoint",
         "name": "payslip",
         "source": "src/endpoints/payslip.ts"
+      },
+      {
+        "type": "endpoint",
+        "name": "ecotax-settings",
+        "source": "src/endpoints/ecotax-settings.ts"
+      },
+      {
+        "type": "endpoint",
+        "name": "employee-form",
+        "source": "src/endpoints/employee-form.ts"
+      },
+      {
+        "type": "endpoint",
+        "name": "handover",
+        "source": "src/endpoints/handover.ts"
       }
     ]
   },

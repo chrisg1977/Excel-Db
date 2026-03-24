@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M-CodeZ - Admin Item Library</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f3f7ff;
+      color: #1a1d23;
+    }
+    .wrap {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #d2def1;
+      background: #eaf3ff;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+    }
+    .head h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #2e5090;
+    }
+    .btn {
+      border: 1px solid #c4d2ea;
+      background: #fff;
+      color: #2f3d53;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn.primary {
+      background: #2e5090;
+      color: #fff;
+      border-color: #2e5090;
+    }
+    .btn.danger {
+      border-color: #f0c5cb;
+      background: #fff4f5;
+      color: #8e1e31;
+    }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .status {
+      border: 1px solid #d8e1f0;
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #607089;
+      margin-bottom: 10px;
+    }
+    .status.ok { color: #146c43; border-color: #bfe3cd; background: #f0fbf5; }
+    .status.err { color: #b42318; border-color: #f0c8c5; background: #fff6f5; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 12px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #dbe4f2;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(24, 43, 78, 0.08);
+      overflow: hidden;
+    }
+    .card h2 {
+      margin: 0;
+      padding: 12px;
+      border-bottom: 1px solid #e2ebf8;
+      background: #f5f8ff;
+      color: #2e5090;
+      font-size: 20px;
+    }
+    .body { padding: 12px; }
+    .field { margin-bottom: 10px; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: #445976;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      border: 1px solid #ccd8ec;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+    textarea { min-height: 70px; resize: vertical; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #d2dff3;
+      border-radius: 999px;
+      background: #f2f7ff;
+      padding: 4px 9px;
+      font-size: 12px;
+    }
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid #dfe7f6;
+      border-radius: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+      font-size: 12px;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px;
+      border-bottom: 1px solid #eef2f9;
+      vertical-align: top;
+    }
+    th {
+      background: #f4f8ff;
+      color: #2d4b6d;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.02em;
+    }
+    tr.active-row { background: #eaf3ff; }
+    .muted { color: #6a778f; font-size: 12px; }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      table { min-width: 620px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <h1>Admin Item Library</h1>
+      <div class="row">
+        <a class="btn" id="btnBackSetup" href="./setup.html">Back to Setup</a>
+        <button class="btn" id="btnReload" type="button">Reload</button>
+      </div>
+    </div>
+
+    <div class="status" id="statusLine">Loading item library...</div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Add / Update Item</h2>
+        <div class="body">
+          <div class="field">
+            <label for="itemTitle">Item Title</label>
+            <input id="itemTitle" type="text" placeholder="Item title" />
+          </div>
+          <div class="field">
+            <label for="itemKey">Item Key (optional)</label>
+            <input id="itemKey" type="text" placeholder="Auto-generated from title" />
+            <div class="muted" id="keyHint" style="margin-top:6px;">Key will be suggested from title.</div>
+          </div>
+          <div class="field">
+            <label for="itemDescription">Description</label>
+            <textarea id="itemDescription" placeholder="What this item is used for"></textarea>
+          </div>
+          <div class="field">
+            <label>Allowed Roles</label>
+            <div class="chips" id="roleChecks"></div>
+          </div>
+          <div class="field">
+            <label>Allowed Apps</label>
+            <div class="chips" id="appChecks"></div>
+          </div>
+          <div class="field">
+            <label for="itemFileInput">File (any type)</label>
+            <input id="itemFileInput" type="file" />
+            <div class="muted" id="fileState" style="margin-top:6px;">No new file selected.</div>
+          </div>
+          <div class="field">
+            <label>Current File</label>
+            <div class="row">
+              <div class="muted" id="currentFileName">No file selected.</div>
+              <button class="btn" id="btnViewCurrent" type="button" disabled>View Current</button>
+            </div>
+          </div>
+          <div class="row" style="margin-top:12px;">
+            <button class="btn primary" id="btnSaveItem" type="button">Save Item</button>
+            <button class="btn" id="btnClear" type="button">Clear</button>
+            <button class="btn danger" id="btnDelete" type="button" disabled>Delete Selected</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Available Items</h2>
+        <div class="body">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>File</th>
+                  <th>Roles</th>
+                  <th>Apps</th>
+                  <th>Updated</th>
+                  <th>View</th>
+                </tr>
+              </thead>
+              <tbody id="itemsBody">
+                <tr><td colspan="6" class="muted">No items yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const AUTH_STORAGE_KEY = 'empinfo.auth.v1';
+
+    function normalizeApiOrigin(rawValue) {
+      let value = String(rawValue || '').trim();
+      for (let i = 0; i < 3; i += 1) {
+        try {
+          const decoded = decodeURIComponent(value);
+          if (decoded === value) break;
+          value = decoded;
+        } catch {
+          break;
+        }
+      }
+      value = value.replace(/^(https?:\/\/)2F+/i, '$1');
+      value = value.replace(/\/$/, '');
+      if (!/^https?:\/\//i.test(value)) return 'http://localhost:8055';
+      return value;
+    }
+
+    const API_ORIGIN = normalizeApiOrigin(new URLSearchParams(window.location.search).get('api_origin') || 'http://localhost:8055');
+    const ROLE_OPTIONS = ['general user', 'management', 'hr', 'full', 'admin'];
+    const APP_OPTIONS = ['payroll', 'employee-form', 'setup', 'handover', 'all'];
+
+    const state = {
+      token: '',
+      items: [],
+      selectedId: null,
+      selectedFileDataUrl: '',
+      selectedFileName: '',
+      selectedFileMime: '',
+      itemKeyTouched: false
+    };
+
+    const el = {
+      status: document.getElementById('statusLine'),
+      btnBackSetup: document.getElementById('btnBackSetup'),
+      btnReload: document.getElementById('btnReload'),
+      roleChecks: document.getElementById('roleChecks'),
+      appChecks: document.getElementById('appChecks'),
+      itemTitle: document.getElementById('itemTitle'),
+      itemKey: document.getElementById('itemKey'),
+      keyHint: document.getElementById('keyHint'),
+      itemDescription: document.getElementById('itemDescription'),
+      itemFileInput: document.getElementById('itemFileInput'),
+      fileState: document.getElementById('fileState'),
+      currentFileName: document.getElementById('currentFileName'),
+      btnViewCurrent: document.getElementById('btnViewCurrent'),
+      btnSaveItem: document.getElementById('btnSaveItem'),
+      btnClear: document.getElementById('btnClear'),
+      btnDelete: document.getElementById('btnDelete'),
+      itemsBody: document.getElementById('itemsBody')
+    };
+
+    function setStatus(message, tone) {
+      el.status.className = 'status';
+      if (tone === 'ok') el.status.classList.add('ok');
+      if (tone === 'err') el.status.classList.add('err');
+      el.status.textContent = message;
+    }
+
+    function getToken() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || '{}');
+        return String(raw?.access_token || '').trim();
+      } catch {
+        return '';
+      }
+    }
+
+    function esc(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderChecks(container, name, options, selected) {
+      const selectedSet = new Set(Array.isArray(selected) ? selected.map((v) => String(v).toLowerCase()) : []);
+      container.innerHTML = options.map((opt) => {
+        const checked = selectedSet.has(String(opt).toLowerCase()) ? 'checked' : '';
+        return `<label class="chip"><input type="checkbox" name="${name}" value="${esc(opt)}" ${checked}> ${esc(opt)}</label>`;
+      }).join('');
+    }
+
+    function selectedValues(name) {
+      return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map((node) => String(node.value || '').trim());
+    }
+
+    function slugifyItemKey(value) {
+      return String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 120);
+    }
+
+    function isDuplicateKey(candidateKey) {
+      const key = String(candidateKey || '').trim().toLowerCase();
+      if (!key) return false;
+      return state.items.some((item) =>
+        String(item.item_key || '').trim().toLowerCase() === key && Number(item.id) !== Number(state.selectedId || 0)
+      );
+    }
+
+    function updateKeyHint() {
+      const key = String(el.itemKey.value || '').trim();
+      if (!key) {
+        el.keyHint.textContent = 'Key will be suggested from title.';
+        return;
+      }
+      if (isDuplicateKey(key)) {
+        el.keyHint.textContent = `Key "${key}" already exists. Use another key.`;
+        return;
+      }
+      el.keyHint.textContent = `Key "${key}" is available.`;
+    }
+
+    function updateItemKeySuggestion() {
+      if (state.itemKeyTouched) {
+        updateKeyHint();
+        return;
+      }
+      const suggested = slugifyItemKey(el.itemTitle.value);
+      el.itemKey.value = suggested;
+      updateKeyHint();
+    }
+
+    function clearForm() {
+      state.selectedId = null;
+      state.selectedFileDataUrl = '';
+      state.selectedFileName = '';
+      state.selectedFileMime = '';
+      state.itemKeyTouched = false;
+      el.itemTitle.value = '';
+      el.itemKey.value = '';
+      el.itemDescription.value = '';
+      el.itemFileInput.value = '';
+      el.fileState.textContent = 'No new file selected.';
+      el.currentFileName.textContent = 'No file selected.';
+      el.btnViewCurrent.disabled = true;
+      el.btnDelete.disabled = true;
+      renderChecks(el.roleChecks, 'roles', ROLE_OPTIONS, []);
+      renderChecks(el.appChecks, 'apps', APP_OPTIONS, []);
+      updateKeyHint();
+      renderItems();
+    }
+
+    function pickItem(id) {
+      const item = state.items.find((row) => Number(row.id) === Number(id));
+      if (!item) return;
+      state.selectedId = Number(item.id);
+      state.selectedFileDataUrl = '';
+      state.selectedFileName = '';
+      state.selectedFileMime = '';
+      state.itemKeyTouched = true;
+      el.itemTitle.value = String(item.title || '');
+      el.itemKey.value = String(item.item_key || '');
+      el.itemDescription.value = String(item.description || '');
+      el.itemFileInput.value = '';
+      el.fileState.textContent = 'No new file selected.';
+      el.currentFileName.textContent = `${String(item.file_name || 'Unknown')} (${String(item.mime_type || 'n/a')})`;
+      el.btnViewCurrent.disabled = false;
+      el.btnDelete.disabled = false;
+      renderChecks(el.roleChecks, 'roles', ROLE_OPTIONS, item.allowed_roles || []);
+      renderChecks(el.appChecks, 'apps', APP_OPTIONS, item.allowed_apps || []);
+      updateKeyHint();
+      renderItems();
+    }
+
+    function renderItems() {
+      if (!state.items.length) {
+        el.itemsBody.innerHTML = '<tr><td colspan="6" class="muted">No items yet.</td></tr>';
+        return;
+      }
+      el.itemsBody.innerHTML = state.items.map((item) => {
+        const isActive = Number(item.id) === Number(state.selectedId);
+        return `
+          <tr class="${isActive ? 'active-row' : ''}" data-item-id="${esc(item.id)}">
+            <td>${esc(item.title || '')}</td>
+            <td>${esc(item.file_name || '')}</td>
+            <td>${esc((item.allowed_roles || []).join(', '))}</td>
+            <td>${esc((item.allowed_apps || []).join(', '))}</td>
+            <td>${esc(item.updated_at || '')}</td>
+            <td><button class="btn" type="button" data-view-id="${esc(item.id)}">View</button></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function api(path, init = {}) {
+      const response = await fetch(`${API_ORIGIN}/admin-dashboard${path}`, {
+        ...init,
+        headers: {
+          Authorization: `Bearer ${state.token}`,
+          Accept: 'application/json',
+          ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+          ...(init.headers || {})
+        }
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload?.status === 'error') {
+        throw new Error(payload?.message || payload?.error || `Request failed (${response.status})`);
+      }
+      return payload;
+    }
+
+    async function loadItems() {
+      setStatus('Loading items...', '');
+      const payload = await api('/item-library/list');
+      state.items = Array.isArray(payload?.data) ? payload.data : [];
+      renderItems();
+      setStatus(`Loaded ${state.items.length} item(s).`, 'ok');
+    }
+
+    async function readAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function saveItem() {
+      const title = String(el.itemTitle.value || '').trim();
+      if (!title) {
+        setStatus('Item Title is required.', 'err');
+        return;
+      }
+
+      const keyCandidate = String(el.itemKey.value || '').trim() || slugifyItemKey(title);
+      if (!keyCandidate) {
+        setStatus('Item Key could not be generated. Update title or key.', 'err');
+        return;
+      }
+      if (isDuplicateKey(keyCandidate)) {
+        setStatus(`Item Key "${keyCandidate}" already exists. Use a different key.`, 'err');
+        return;
+      }
+
+      const payload = {
+        id: state.selectedId,
+        item_key: keyCandidate,
+        title,
+        description: String(el.itemDescription.value || '').trim() || null,
+        allowed_roles: selectedValues('roles'),
+        allowed_apps: selectedValues('apps'),
+        file_name: state.selectedFileName || null,
+        mime_type: state.selectedFileMime || null,
+        file_data_url: state.selectedFileDataUrl || null
+      };
+
+      if (!state.selectedId && !payload.file_data_url) {
+        setStatus('Choose a file when creating a new item.', 'err');
+        return;
+      }
+
+      el.btnSaveItem.disabled = true;
+      const original = el.btnSaveItem.textContent;
+      el.btnSaveItem.textContent = 'Saving...';
+      try {
+        setStatus('Saving item...', '');
+        const response = await api('/item-library/upsert', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        state.items = Array.isArray(response?.data?.items) ? response.data.items : state.items;
+        const savedId = Number(response?.data?.item?.id || 0);
+        if (savedId > 0) {
+          pickItem(savedId);
+        } else {
+          renderItems();
+        }
+        setStatus('Item saved.', 'ok');
+      } finally {
+        el.btnSaveItem.disabled = false;
+        el.btnSaveItem.textContent = original;
+      }
+    }
+
+    async function deleteSelected() {
+      if (!state.selectedId) return;
+      if (!window.confirm('Delete selected item?')) return;
+      setStatus('Deleting item...', '');
+      await api(`/item-library/${encodeURIComponent(state.selectedId)}`, { method: 'DELETE' });
+      clearForm();
+      await loadItems();
+      setStatus('Item deleted.', 'ok');
+    }
+
+    async function viewItemFile(id) {
+      setStatus('Opening file...', '');
+      const payload = await api(`/item-library/${encodeURIComponent(id)}/file`);
+      const fileName = String(payload?.data?.file_name || 'item');
+      const mimeType = String(payload?.data?.mime_type || 'application/octet-stream');
+      const base64 = String(payload?.data?.file_base64 || '');
+      if (!base64) throw new Error('File data missing');
+
+      const bytes = Uint8Array.from(atob(base64), (ch) => ch.charCodeAt(0));
+      const blob = new Blob([bytes], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener');
+      setTimeout(() => URL.revokeObjectURL(url), 120000);
+      setStatus(`Opened ${fileName}.`, 'ok');
+    }
+
+    function bind() {
+      el.btnReload.addEventListener('click', () => {
+        loadItems().catch((error) => setStatus(error?.message || 'Load failed', 'err'));
+      });
+      el.itemTitle.addEventListener('input', updateItemKeySuggestion);
+      el.itemKey.addEventListener('input', () => {
+        const normalized = slugifyItemKey(el.itemKey.value);
+        state.itemKeyTouched = normalized.length > 0;
+        el.itemKey.value = normalized;
+        updateKeyHint();
+      });
+      el.btnClear.addEventListener('click', clearForm);
+      el.btnSaveItem.addEventListener('click', () => {
+        saveItem().catch((error) => setStatus(error?.message || 'Save failed', 'err'));
+      });
+      el.btnDelete.addEventListener('click', () => {
+        deleteSelected().catch((error) => setStatus(error?.message || 'Delete failed', 'err'));
+      });
+      el.btnViewCurrent.addEventListener('click', () => {
+        if (!state.selectedId) return;
+        viewItemFile(state.selectedId).catch((error) => setStatus(error?.message || 'View failed', 'err'));
+      });
+      el.itemsBody.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        const viewId = Number(target.getAttribute('data-view-id') || 0);
+        if (viewId > 0) {
+          viewItemFile(viewId).catch((error) => setStatus(error?.message || 'View failed', 'err'));
+          return;
+        }
+        const row = target.closest('[data-item-id]');
+        if (!row) return;
+        const itemId = Number(row.getAttribute('data-item-id') || 0);
+        if (itemId > 0) pickItem(itemId);
+      });
+      el.itemFileInput.addEventListener('change', async (event) => {
+        const file = event?.target?.files?.[0];
+        if (!file) {
+          state.selectedFileDataUrl = '';
+          state.selectedFileName = '';
+          state.selectedFileMime = '';
+          el.fileState.textContent = 'No new file selected.';
+          return;
+        }
+        state.selectedFileName = String(file.name || '').trim();
+        state.selectedFileMime = String(file.type || '').trim() || 'application/octet-stream';
+        state.selectedFileDataUrl = await readAsDataUrl(file);
+        el.fileState.textContent = `Selected: ${state.selectedFileName}`;
+      });
+    }
+
+    async function init() {
+      state.token = getToken();
+      if (!state.token) {
+        window.location.href = `./login.html?api_origin=${encodeURIComponent(API_ORIGIN)}`;
+        return;
+      }
+      el.btnBackSetup.href = `./setup.html?api_origin=${encodeURIComponent(API_ORIGIN)}`;
+      renderChecks(el.roleChecks, 'roles', ROLE_OPTIONS, ['admin', 'hr']);
+      renderChecks(el.appChecks, 'apps', APP_OPTIONS, ['payroll']);
+      bind();
+      updateItemKeySuggestion();
+      await loadItems();
+    }
+
+    init().catch((error) => setStatus(error?.message || 'Failed to initialize item library.', 'err'));
+  </script>
+  <script src="assets/js/idle-logout.js"></script>
+  <script>if (typeof window.initIdleLogout === 'function') window.initIdleLogout('');</script>
+</body>
+</html>

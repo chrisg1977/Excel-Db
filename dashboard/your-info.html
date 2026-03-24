@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YOUR INFO</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --ink: #1c2533;
+      --muted: #5f6b7a;
+      --line: #d7dfea;
+      --accent: #0059b3;
+      --accent-2: #0a7d48;
+      --warn: #b86000;
+      --danger: #b42318;
+      --radius: 12px;
+      --shadow: 0 12px 28px rgba(16, 24, 40, 0.08);
+      --font: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: radial-gradient(circle at 20% -10%, #dbeafe 0%, #f4f7fb 36%, #f4f7fb 100%);
+      color: var(--ink);
+    }
+
+    .wrap {
+      max-width: 1120px;
+      margin: 24px auto;
+      padding: 0 16px 40px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .title {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      margin: 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-top: 6px;
+      font-size: 14px;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 14px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .btn.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .btn.green {
+      background: var(--accent-2);
+      color: #fff;
+      border-color: var(--accent-2);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .kpi {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .chip {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .chip strong {
+      display: block;
+      font-size: 16px;
+      color: var(--ink);
+      margin-top: 4px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 8px 10px;
+      font: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .row {
+      margin-bottom: 12px;
+    }
+
+    .status {
+      margin: 10px 0;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      padding: 9px 11px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .status.show { display: block; }
+    .status.ok { color: #065f46; border-color: #a7f3d0; background: #ecfdf5; }
+    .status.warn { color: #7c2d12; border-color: #fed7aa; background: #fff7ed; }
+    .status.err { color: #7f1d1d; border-color: #fecaca; background: #fef2f2; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 8px;
+      border-bottom: 1px solid #eef2f7;
+      vertical-align: top;
+    }
+
+    th { color: #445168; font-size: 12px; }
+
+    .muted { color: var(--muted); }
+
+    .hr-note {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--warn);
+      font-weight: 600;
+    }
+
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .kpi { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <h1 class="title">YOUR INFO</h1>
+        <div class="subtitle" id="subtitle">Personal profile, leave and pending communications.</div>
+      </div>
+      <div>
+        <button class="btn" id="btnHome" type="button">Home</button>
+        <button class="btn primary" id="btnReload" type="button">Reload</button>
+      </div>
+    </div>
+
+    <div id="statusOk" class="status ok"></div>
+    <div id="statusWarn" class="status warn"></div>
+    <div id="statusErr" class="status err"></div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Personal Details</h2>
+        <div class="kpi">
+          <div class="chip">Employee ID<strong id="kEmp">-</strong></div>
+          <div class="chip">Role<strong id="kRole">-</strong></div>
+          <div class="chip">Department<strong id="kDept">-</strong></div>
+        </div>
+
+        <div class="form-grid">
+          <div class="row"><label>Name</label><input id="fName" disabled /></div>
+          <div class="row"><label>Designation</label><input id="fDesignation" disabled /></div>
+          <div class="row"><label>Email</label><input id="fEmail" /></div>
+          <div class="row"><label>Phone 1</label><input id="fPhone1" /></div>
+          <div class="row"><label>Phone 2</label><input id="fPhone2" /></div>
+          <div class="row"><label>WhatsApp</label><input id="fWhatsapp" /></div>
+          <div class="row"><label>Address House</label><input id="fHouse" /></div>
+          <div class="row"><label>Address Street</label><input id="fStreet" /></div>
+          <div class="row"><label>City</label><input id="fCity" /></div>
+          <div class="row"><label>Postcode</label><input id="fPostcode" /></div>
+          <div class="row"><label>IBAN (Bank)</label><input id="fIban" /></div>
+          <div class="row"><label>Role (HR+ only)</label><input id="fRole" /></div>
+          <div class="row"><label>Marital Status</label><select id="fMarital"><option>Single</option><option>Married</option><option>Separated</option><option>Widowed</option></select></div>
+          <div class="row"><label>Tax Status</label><input id="fTax" /></div>
+        </div>
+
+        <div class="hr-note">Marital status and tax status changes from non-HR users are routed as HR requests.</div>
+        <div style="margin-top:12px; display:flex; gap:8px;">
+          <button class="btn green" id="btnSave" type="button">Save Changes</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Leave Pending</h2>
+        <div class="muted" style="margin-bottom:8px;">Vacation pending</div>
+        <table><tbody id="vlPending"></tbody></table>
+        <div class="muted" style="margin:12px 0 8px;">Sick pending</div>
+        <table><tbody id="slPending"></tbody></table>
+
+        <h2 style="margin-top:14px;">Communication Pending</h2>
+        <table><tbody id="commPending"></tbody></table>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px;">
+      <h2>Audit History (HR and above)</h2>
+      <table>
+        <thead>
+          <tr><th>When</th><th>Field</th><th>Old</th><th>New</th><th>By</th><th>Reason</th></tr>
+        </thead>
+        <tbody id="auditRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const AUTH_STORAGE_KEY = 'empinfo.auth.v1';
+    const API_ORIGIN_STORAGE_KEY = 'empinfo.api_origin.v1';
+    const DEFAULT_AUTH_ORIGIN = `http://${window.location.hostname}:8055`;
+
+    const qs = new URLSearchParams(window.location.search);
+    const API_ORIGIN = (function() {
+      const fromQuery = (qs.get('api_origin') || '').trim();
+      if (fromQuery) {
+        localStorage.setItem(API_ORIGIN_STORAGE_KEY, fromQuery);
+        return fromQuery.replace(/\/$/, '');
+      }
+      const stored = (localStorage.getItem(API_ORIGIN_STORAGE_KEY) || '').trim();
+      if (stored) return stored.replace(/\/$/, '');
+      return DEFAULT_AUTH_ORIGIN;
+    })();
+
+    const refs = {
+      statusOk: document.getElementById('statusOk'),
+      statusWarn: document.getElementById('statusWarn'),
+      statusErr: document.getElementById('statusErr'),
+      subtitle: document.getElementById('subtitle'),
+      kEmp: document.getElementById('kEmp'),
+      kRole: document.getElementById('kRole'),
+      kDept: document.getElementById('kDept'),
+      fName: document.getElementById('fName'),
+      fDesignation: document.getElementById('fDesignation'),
+      fEmail: document.getElementById('fEmail'),
+      fPhone1: document.getElementById('fPhone1'),
+      fPhone2: document.getElementById('fPhone2'),
+      fWhatsapp: document.getElementById('fWhatsapp'),
+      fHouse: document.getElementById('fHouse'),
+      fStreet: document.getElementById('fStreet'),
+      fCity: document.getElementById('fCity'),
+      fPostcode: document.getElementById('fPostcode'),
+      fIban: document.getElementById('fIban'),
+      fRole: document.getElementById('fRole'),
+      fMarital: document.getElementById('fMarital'),
+      fTax: document.getElementById('fTax'),
+      vlPending: document.getElementById('vlPending'),
+      slPending: document.getElementById('slPending'),
+      commPending: document.getElementById('commPending'),
+      auditRows: document.getElementById('auditRows'),
+      btnHome: document.getElementById('btnHome'),
+      btnReload: document.getElementById('btnReload'),
+      btnSave: document.getElementById('btnSave')
+    };
+
+    const state = { actor: null, permissions: null, details: null };
+
+    const showStatus = (type, msg) => {
+      refs.statusOk.classList.remove('show');
+      refs.statusWarn.classList.remove('show');
+      refs.statusErr.classList.remove('show');
+      const target = type === 'ok' ? refs.statusOk : (type === 'warn' ? refs.statusWarn : refs.statusErr);
+      target.textContent = String(msg || '');
+      target.classList.add('show');
+    };
+
+    const getToken = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || '{}');
+        const expiresAt = stored?.expires_at ? new Date(stored.expires_at).getTime() : null;
+        if (expiresAt && Date.now() > expiresAt) return null;
+        return stored?.access_token || null;
+      } catch {
+        return null;
+      }
+    };
+
+    const api = async (path, options = {}) => {
+      const token = getToken();
+      if (!token) {
+        window.location.href = `./login.html?api_origin=${encodeURIComponent(DEFAULT_AUTH_ORIGIN)}`;
+        throw new Error('No auth token');
+      }
+      const response = await fetch(`${API_ORIGIN}${path}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          ...(options.headers || {})
+        }
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || data.message || `HTTP ${response.status}`);
+      return data;
+    };
+
+    const asDate = (value) => {
+      const raw = String(value || '').slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return '-';
+      return raw;
+    };
+
+    const esc = (value) => String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+
+    const renderRows = (target, rows, formatter) => {
+      if (!Array.isArray(rows) || rows.length === 0) {
+        target.innerHTML = '<tr><td class="muted">None</td></tr>';
+        return;
+      }
+      target.innerHTML = rows.map(formatter).join('');
+    };
+
+    const fillForm = (payload) => {
+      const d = payload.details || {};
+      const contact = d.contact || {};
+      const address = d.address || {};
+      const status = d.status || {};
+
+      refs.kEmp.textContent = String(d.emp_id || '-');
+      refs.kRole.textContent = String(d.role || '-');
+      refs.kDept.textContent = String(d.department || '-');
+      refs.fName.value = String(d.full_name || '');
+      refs.fDesignation.value = String(d.designation || '');
+      refs.fEmail.value = String(contact.email || '');
+      refs.fPhone1.value = String(contact.phone_1 || '');
+      refs.fPhone2.value = String(contact.phone_2 || '');
+      refs.fWhatsapp.value = String(contact.phone_whatsapp || '');
+      refs.fHouse.value = String(address.address_house || '');
+      refs.fStreet.value = String(address.address_street || '');
+      refs.fCity.value = String(address.address_city || '');
+      refs.fPostcode.value = String(address.address_postcode || '');
+      refs.fIban.value = String(contact.iban || '');
+      refs.fRole.value = String(d.role || '');
+      refs.fMarital.value = String(status.marital_update || 'Single');
+      refs.fTax.value = String(status.tax_update || '');
+
+      const canEditRole = !!payload?.permissions?.can_edit_role;
+      refs.fRole.disabled = !canEditRole;
+
+      renderRows(refs.vlPending, payload?.leave?.vl_pending, (row) => `<tr><td>${esc(asDate(row.work_date))}</td><td>${esc(row.hours || 0)}h</td></tr>`);
+      renderRows(refs.slPending, payload?.leave?.sl_pending, (row) => `<tr><td>${esc(asDate(row.work_date))}</td><td>${esc(row.hours || 0)}h</td></tr>`);
+      renderRows(refs.commPending, payload?.communication_pending, (row) => `<tr><td><strong>${esc(row.title || row.source || 'Item')}</strong><div class="muted">${esc(row.details || '')}</div></td><td>${esc(asDate(row.due_at || row.created_at))}</td></tr>`);
+
+      if (payload?.permissions?.can_view_history) {
+        renderRows(refs.auditRows, payload?.history, (row) => `<tr><td>${esc(asDate(row.created_at))}</td><td>${esc(row.field_name || '')}</td><td>${esc(row.old_value || '')}</td><td>${esc(row.new_value || '')}</td><td>${esc(row.changed_by_email || '')}</td><td>${esc(row.change_reason || '')}</td></tr>`);
+      } else {
+        refs.auditRows.innerHTML = '<tr><td colspan="6" class="muted">Visible to HR and above only.</td></tr>';
+      }
+    };
+
+    const load = async () => {
+      try {
+        const payload = await api('/employee-form/payroll/your-info');
+        state.actor = payload.actor;
+        state.permissions = payload.permissions;
+        state.details = payload.details;
+        refs.subtitle.textContent = payload?.permissions?.can_edit_role
+          ? 'You can review and manage personal data, role visibility and audit trail.'
+          : 'You can update your own contact/address/bank details. HR approvals are required for marital/tax updates.';
+        fillForm(payload);
+        showStatus('ok', 'YOUR INFO loaded.');
+      } catch (error) {
+        showStatus('err', error instanceof Error ? error.message : String(error));
+      }
+    };
+
+    const save = async () => {
+      if (!state?.details?.emp_id) {
+        showStatus('err', 'No employee loaded.');
+        return;
+      }
+      refs.btnSave.disabled = true;
+      try {
+        const payload = {
+          email: refs.fEmail.value,
+          phone_1: refs.fPhone1.value,
+          phone_2: refs.fPhone2.value,
+          phone_whatsapp: refs.fWhatsapp.value,
+          address_house: refs.fHouse.value,
+          address_street: refs.fStreet.value,
+          address_city: refs.fCity.value,
+          address_postcode: refs.fPostcode.value,
+          iban: refs.fIban.value,
+          marital_update: refs.fMarital.value,
+          tax_update: refs.fTax.value,
+          role: refs.fRole.value
+        };
+        const result = await api(`/employee-form/payroll/your-info/${encodeURIComponent(state.details.emp_id)}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload)
+        });
+
+        const reqCount = Array.isArray(result?.submitted_requests) ? result.submitted_requests.length : 0;
+        if (reqCount > 0) {
+          showStatus('warn', `Saved. ${reqCount} change request(s) were sent to HR for intervention.`);
+        } else {
+          showStatus('ok', 'Changes saved and audited. HR handover notification sent.');
+        }
+        await load();
+      } catch (error) {
+        showStatus('err', error instanceof Error ? error.message : String(error));
+      } finally {
+        refs.btnSave.disabled = false;
+      }
+    };
+
+    refs.btnReload.addEventListener('click', load);
+    refs.btnSave.addEventListener('click', save);
+    refs.btnHome.addEventListener('click', () => {
+      window.location.href = `./app-hub.html?api_origin=${encodeURIComponent(API_ORIGIN)}`;
+    });
+
+    load();
+  </script>
+</body>
+</html>

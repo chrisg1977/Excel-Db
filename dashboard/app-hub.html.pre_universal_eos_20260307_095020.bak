@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EMPINFO – App Hub</title>
+  <link rel="icon" type="image/png" href="/dashboard/assets/logos/database-logo.png" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #2E5090;
+      --green: #2D8659;
+      --employer-titlebar-bg: #eaf3ff;
+      --gray-100: #f4f5f7;
+      --gray-200: #e8eaed;
+      --gray-400: #9aa0aa;
+      --gray-700: #3d4350;
+      --gray-900: #1a1d23;
+      --white: #ffffff;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --radius: 8px;
+      --font: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: linear-gradient(135deg, var(--employer-titlebar-bg) 0%, #f6f7fb 60%, #f7f5ff 100%);
+      font-family: var(--font);
+      font-size: 16px;
+      color: var(--gray-900);
+    }
+
+    .app-header {
+      background: var(--employer-titlebar-bg);
+      border-bottom: 1px solid #cbd5f5;
+      padding: 8px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow);
+      min-height: 150px;
+      position: relative;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      min-width: 120px;
+    }
+
+    .logo-small {
+      max-width: 225px;
+      height: auto;
+    }
+
+    .mcorez-logo {
+      max-height: 36px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+    }
+    .save-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid #d8dfeb;
+      background: #ffffff;
+      color: #2f3d53;
+      font-size: 12px;
+      font-weight: 600;
+      min-height: 34px;
+    }
+    .save-status-logo-btn {
+      border: 1px solid #d8dfeb;
+      background: #fff;
+      border-radius: 999px;
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 2px;
+    }
+    .save-status-logo-btn:hover { border-color: var(--blue); }
+    .save-status-logo {
+      max-width: 22px;
+      max-height: 22px;
+      object-fit: contain;
+      pointer-events: none;
+    }
+    .save-status-text { white-space: nowrap; }
+
+    .header-center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .mcorez-logo--center {
+      max-height: 180px;
+    }
+
+    .header-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--blue);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-nav {
+      padding: 12px 20px;
+      background: var(--gray-200);
+      color: var(--gray-700);
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 1;
+      transition: background 0.2s;
+    }
+
+    .btn-nav:hover {
+      background: var(--gray-300);
+    }
+
+    /* EOS quick access button in top-row nav (position 1). */
+    #btnEOS {
+      background: var(--green);
+      color: #ffffff;
+      border-color: var(--green);
+      font-size: 14px;
+      padding: 12px 16px;
+      min-width: 72px;
+    }
+
+    #btnEOS:hover {
+      filter: brightness(0.95);
+    }
+
+    #btnReceiptBooks {
+      background: var(--blue);
+      color: #ffffff;
+      border-color: var(--blue);
+      font-size: 13px;
+      padding: 12px 16px;
+      min-width: 128px;
+    }
+
+    #btnReceiptBooks:hover {
+      filter: brightness(0.95);
+    }
+
+    .user-info {
+      text-align: right;
+      font-size: 13px;
+    }
+
+    .user-name {
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .user-role {
+      color: var(--gray-400);
+      font-size: 12px;
+    }
+
+    .btn-logout {
+      padding: 12px 24px;
+      background: var(--gray-200);
+      color: var(--gray-700);
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 24px;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .btn-logout:hover {
+      background: var(--gray-300);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .welcome {
+      margin-bottom: 40px;
+    }
+
+    .welcome-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .app-search-wrap {
+      margin: 0 0 18px;
+      max-width: 520px;
+    }
+
+    .app-search-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 14px;
+      color: var(--gray-900);
+      background: var(--white);
+    }
+
+    .app-search-input:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 2px rgba(46, 80, 144, 0.15);
+    }
+
+    .welcome-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 0;
+    }
+
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .app-card {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 170px;
+      border: 2px solid transparent;
+    }
+
+    .app-card.image-fill-card {
+      padding: 0;
+      overflow: hidden;
+      align-items: stretch;
+      justify-content: stretch;
+    }
+
+    .app-card.image-fill-card .app-icon {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+
+    .app-card.image-fill-card .app-icon-image {
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      max-height: none;
+      object-fit: cover;
+      display: block;
+    }
+
+    .app-card.image-fill-card .app-name,
+    .app-card.image-fill-card .app-description,
+    .app-card.image-fill-card .app-arrow {
+      display: none;
+    }
+    .app-card.split-tile-card {
+      padding: 0;
+      overflow: hidden;
+      min-height: 170px;
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 0;
+    }
+    .split-tile-half {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: inherit;
+      border: none;
+      background: #fff;
+      cursor: pointer;
+      position: relative;
+    }
+    .split-tile-half.top {
+      border-bottom: 1px solid #dbe4f0;
+      background: linear-gradient(180deg, #f8fbff, #eef4ff);
+    }
+    .split-tile-half.bottom {
+      background: #fff;
+      cursor: default;
+    }
+    .split-tile-half.top:hover {
+      background: linear-gradient(180deg, #eef4ff, #e4edff);
+    }
+    .split-cog {
+      width: 54px;
+      height: 54px;
+      border-radius: 999px;
+      border: 2px solid #2e5090;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #2e5090;
+      font-size: 30px;
+      font-weight: 700;
+      background: #fff;
+    }
+    .split-caption {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      font-weight: 700;
+      color: #2e5090;
+      white-space: nowrap;
+    }
+    .split-bottom-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .app-card.is-empty {
+      background: transparent;
+      border: 2px dashed var(--gray-200);
+      box-shadow: none;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .app-card:hover {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      border-color: var(--blue);
+      transform: translateY(-2px);
+    }
+
+    .app-icon {
+      font-size: 42px;
+      margin-bottom: 12px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 72px;
+      height: 72px;
+    }
+
+    .app-icon-image {
+      max-width: 72px;
+      max-height: 72px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .app-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 6px;
+    }
+
+    .app-description {
+      font-size: 13px;
+      color: var(--gray-400);
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .app-arrow {
+      color: var(--blue);
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    @media (max-width: 920px) {
+      .app-header {
+        min-height: 72px;
+      }
+
+      .apps-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app-header {
+        min-height: 68px;
+      }
+
+      .apps-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .no-apps {
+      text-align: center;
+      padding: 40px;
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .no-apps-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: 8px;
+    }
+
+    .no-apps-text {
+      font-size: 13px;
+      color: var(--gray-400);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--gray-200);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .error-message {
+      background: #ffebee;
+      border: 1px solid #ffcdd2;
+      color: #c62828;
+      padding: 16px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: var(--gray-400);
+      border-top: 1px solid var(--gray-200);
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body data-app-id="app-hub">
+  <div class="app-header">
+    <div class="header-left">
+      <img class="logo-small" src="assets/logos/group-logo.png" alt="Mediatrix Group" />
+    </div>
+
+    <div class="header-center">
+      <img class="mcorez-logo mcorez-logo--center" src="assets/logos/database-logo.png" alt="MCoreZ Logo" />
+    </div>
+
+    <div class="header-right">
+      <div class="save-status" id="saveStatus">
+        <button class="save-status-logo-btn" id="btnSaveStatusLogo" type="button" title="M-codeZ Home">
+          <img class="save-status-logo" src="assets/logos/database-logo.png" alt="M-codeZ" />
+        </button>
+        <span class="save-status-text" id="saveStatusText">No DB save on this page</span>
+      </div>
+      <div class="header-nav">
+        <button class="btn-nav" id="btnEOS" title="EOS" type="button">EOS</button>
+        <button class="btn-nav" id="btnReceiptBooks" title="Receipt Books" type="button">Receipt Books</button>
+        <button class="btn-nav" id="btnNavBack" title="Back" type="button">←</button>
+        <button class="btn-nav" id="btnNavForward" title="Forward" type="button">→</button>
+      </div>
+      <div class="user-info">
+        <div class="user-name" id="userName"></div>
+        <div class="user-role" id="userRole"></div>
+      </div>
+      <button class="btn-logout" id="btnLogout">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="error-message" id="errorMessage"></div>
+
+    <div class="welcome">
+      <div class="welcome-row">
+        <h1 class="welcome-title" id="welcomeTitle">Welcome back USER Fname</h1>
+        <h1 class="welcome-title" id="welcomeDateTime">—</h1>
+      </div>
+    </div>
+
+    <div class="app-search-wrap">
+      <input
+        type="search"
+        id="appSearchInput"
+        class="app-search-input"
+        placeholder="Search apps (e.g. EOS)"
+        aria-label="Search apps"
+      />
+    </div>
+
+    <div class="apps-grid" id="appsGrid" style="display: none;"></div>
+
+    <div class="no-apps" id="noApps" style="display: none;">
+      <div class="no-apps-title">No Apps Available</div>
+      <div class="no-apps-text">You don't have access to any apps. Contact your administrator.</div>
+    </div>
+  </div>
+
+  <footer>
+    © 2026 M-CoreZ Systems. All rights reserved.
+  </footer>
+
+  <script src="assets/js/usage-tracker.js"></script>
+  <script>
+    const API_ORIGIN_STORAGE_KEY = 'empinfo.api_origin.v1';
+    const DEFAULT_API_ORIGIN = window.location.port === '8055'
+      ? window.location.origin
+      : `${window.location.protocol}//${window.location.hostname}:8055`;
+    function normalizeApiOrigin(origin) {
+      const raw = String(origin || '').trim();
+      if (!raw) return '';
+      return raw.replace(/\/$/, '');
+    }
+    function readStoredApiOrigin() {
+      try {
+        return normalizeApiOrigin(localStorage.getItem(API_ORIGIN_STORAGE_KEY));
+      } catch {
+        return '';
+      }
+    }
+    const API_ORIGIN_QUERY = normalizeApiOrigin(new URLSearchParams(window.location.search).get('api_origin'));
+    const API_ORIGIN_STORED = readStoredApiOrigin();
+    const API_ORIGIN =
+      API_ORIGIN_QUERY
+      || API_ORIGIN_STORED
+      || normalizeApiOrigin(DEFAULT_API_ORIGIN);
+    let ACTIVE_API_ORIGIN = API_ORIGIN;
+    function persistApiOrigin(origin) {
+      const normalized = normalizeApiOrigin(origin);
+      if (!normalized) return;
+      ACTIVE_API_ORIGIN = normalized;
+      try {
+        localStorage.setItem(API_ORIGIN_STORAGE_KEY, normalized);
+      } catch {}
+    }
+    function buildApiOriginCandidates(preferredOrigin = '') {
+      const set = new Set();
+      const add = (value) => {
+        const normalized = normalizeApiOrigin(value);
+        if (normalized) set.add(normalized);
+      };
+      add(preferredOrigin);
+      add(API_ORIGIN_QUERY);
+      add(API_ORIGIN_STORED);
+      add(DEFAULT_API_ORIGIN);
+      add('http://localhost:8055');
+      add('http://127.0.0.1:8055');
+      if (window.location.hostname) {
+        add(`http://${window.location.hostname}:8055`);
+        add(`https://${window.location.hostname}:8055`);
+      }
+      return Array.from(set);
+    }
+    function isNetworkFetchError(error) {
+      const message = String(error instanceof Error ? error.message : error || '').toLowerCase();
+      return (
+        message.includes('failed to fetch') ||
+        message.includes('networkerror') ||
+        message.includes('network request failed') ||
+        message.includes('load failed')
+      );
+    }
+    persistApiOrigin(API_ORIGIN);
+    const AUTH_STORAGE_KEY = 'empinfo.auth.v1';
+    const OD_DEBUG = new URLSearchParams(window.location.search).get('od_debug') === '1';
+
+    const userNameEl = document.getElementById('userName');
+    const userRoleEl = document.getElementById('userRole');
+    const btnLogout = document.getElementById('btnLogout');
+    const appsGrid = document.getElementById('appsGrid');
+    const noApps = document.getElementById('noApps');
+    const errorMessage = document.getElementById('errorMessage');
+    const welcomeTitleEl = document.getElementById('welcomeTitle');
+    const welcomeDateTimeEl = document.getElementById('welcomeDateTime');
+    const appSearchInput = document.getElementById('appSearchInput');
+    const btnNavBack = document.getElementById('btnNavBack');
+    const btnNavForward = document.getElementById('btnNavForward');
+    const btnEOS = document.getElementById('btnEOS');
+    const btnReceiptBooks = document.getElementById('btnReceiptBooks');
+    const btnSaveStatusLogo = document.getElementById('btnSaveStatusLogo');
+    let timeTicker = null;
+    let accessibleApps = [];
+    let currentUserRole = '';
+    let currentUserRoleRank = 0;
+    function getOdLaunchEndpoints(apiOrigin) {
+      const origin = normalizeApiOrigin(apiOrigin);
+      return [
+        `${origin}/od-launch-auth/auth/od/launch`,
+        `${origin}/auth/od/launch`
+      ];
+    }
+    const EMPINFO_ALLOWED_EMAILS = new Set(['drchrisgauci@gmail.com', 'chrisgauci@mediatrixmalta.com']);
+    const ROLE_RANK = {
+      'general user': 1,
+      management: 2,
+      hr: 3,
+      full: 4,
+      admin: 5,
+      administrator: 5,
+      superadmin: 5
+    };
+    const FULL_IMAGE_TILE_KEYS = new Set(['payroll', 'mythings', 'empinfo']);
+
+    function getRoleRank(roleName) {
+      const normalized = String(roleName || '').trim().toLowerCase();
+      if (!normalized) return 0;
+      if (ROLE_RANK[normalized]) return ROLE_RANK[normalized];
+      if (normalized.includes('super') || normalized.includes('admin')) return ROLE_RANK.admin;
+      if (normalized.includes('full')) return ROLE_RANK.full;
+      if (normalized.includes('hr')) return ROLE_RANK.hr;
+      if (normalized.includes('manag')) return ROLE_RANK.management;
+      if (normalized.includes('general') || normalized.includes('user')) return ROLE_RANK['general user'];
+      return 0;
+    }
+
+    const APP_CATALOG = {
+      hr: { id: 'hr', name: 'HR Dashboard', icon: 'HR', icon_image: '1.png', path: '/dashboard/empinfo-dashboard.html', description: 'Employee management dashboard' },
+      payroll: { id: 'payroll', name: 'Payroll', icon: 'PAY', icon_image: 'payroll main.png', path: '/payroll/payroll.html', description: 'Payroll processing' },
+      eos: { id: 'eos', name: 'End of Service', icon: 'EOS', icon_image: '2.png', path: '/dashboard/eos.html', description: 'EOS management' },
+      'receipt-books': { id: 'receipt-books', name: 'Receipt Books', icon: 'RB', path: '/dashboard/eos.html?view=receipt-books', description: 'Receipt books entry and reporting' },
+      timesheets: { id: 'timesheets', name: 'Timesheets', icon: 'TS', icon_image: '22.png', path: '/timesheets/timesheets.html', description: 'Timesheet tracking' },
+      products: { id: 'products', name: 'Products', icon: 'PRD', icon_image: 'providers.png', path: '/products/products.html', description: 'Product catalog' },
+      mythings: { id: 'mythings', name: 'My Things', icon: 'ME', icon_image: 'corez22.png', path: '/mythings/mythings.html', description: 'Personal workspace' },
+      reports: { id: 'reports', name: 'Reports', icon: 'RPT', icon_image: 'o3p.png', path: '/dashboard/app-hub.html', description: 'Reports and analytics' },
+      'admin-tools': { id: 'admin-tools', name: 'Admin Tools', icon: 'ADM', icon_image: 'landing.png', path: '/directus/admin', description: 'System administration' },
+      empinfo: { id: 'empinfo', name: 'EMPINFO', icon: 'EMP', icon_image: 'empinfo.png', path: '/dashboard/empinfo-dashboard.html', description: 'Employee information' }
+    };
+
+    function getLaunchParams() {
+      const params = new URLSearchParams(window.location.search);
+      const firstNonEmptyParam = (keys) => {
+        for (const key of keys) {
+          const value = (params.get(key) || '').trim();
+          if (value) return value;
+        }
+        return '';
+      };
+      return {
+        od_user: firstNonEmptyParam([
+          'od_user', 'od_username', 'odusername',
+          'user', 'username', 'UserName', 'ODUserName'
+        ]),
+        od_user_num: firstNonEmptyParam([
+          'od_user_num', 'odusernum', 'od_num',
+          'user_num', 'usernum', 'UserNum'
+        ]),
+        od_ts: firstNonEmptyParam(['od_ts', 'ts']),
+        od_sig: firstNonEmptyParam(['od_sig', 'sig', 'signature']),
+        directus_email: firstNonEmptyParam(['directus_email', 'email', 'Email'])
+      };
+    }
+
+    function hasAnyLaunchPayload() {
+      const params = new URLSearchParams(window.location.search);
+      const localOnlyKeys = new Set([
+        'api_origin',
+        'od_debug',
+        'payroll_scope'
+      ]);
+      for (const [key, value] of params.entries()) {
+        if (localOnlyKeys.has(String(key || '').toLowerCase())) continue;
+        if (String(value || '').trim()) return true;
+      }
+      return false;
+    }
+
+    function hasLaunchParams() {
+      const p = getLaunchParams();
+      return Boolean(p.od_user || p.od_user_num || p.directus_email || hasAnyLaunchPayload());
+    }
+
+    function getAuthToken() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || '{}');
+        const expiresAt = stored?.expires_at ? new Date(stored.expires_at).getTime() : null;
+        if (expiresAt && Date.now() > expiresAt) return null;
+        return stored?.access_token || null;
+      } catch {
+        return null;
+      }
+    }
+
+    function setStoredAuth(data) {
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data || {}));
+    }
+
+    function getOdDebugPanel() {
+      let panel = document.getElementById('odDebugPanel');
+      if (panel) return panel;
+      panel = document.createElement('div');
+      panel.id = 'odDebugPanel';
+      panel.style.display = 'none';
+      panel.style.marginTop = '10px';
+      panel.style.padding = '10px';
+      panel.style.border = '1px solid #f2c94c';
+      panel.style.borderRadius = '8px';
+      panel.style.background = '#fff8db';
+      panel.style.color = '#7a5d00';
+      panel.style.fontSize = '12px';
+      panel.style.whiteSpace = 'pre-wrap';
+      panel.style.wordBreak = 'break-word';
+      panel.style.lineHeight = '1.45';
+      const container = document.querySelector('.main-content') || document.body;
+      container.insertBefore(panel, container.firstChild);
+      return panel;
+    }
+
+    function maskValue(value, keep = 8) {
+      const raw = String(value || '');
+      if (!raw) return '';
+      if (raw.length <= keep) return raw;
+      return `${raw.slice(0, keep)}...(${raw.length})`;
+    }
+
+    function debugLaunchSnapshot(launch) {
+      return {
+        od_user: launch?.od_user || '',
+        od_user_num: launch?.od_user_num || '',
+        directus_email: launch?.directus_email || '',
+        od_ts: launch?.od_ts || '',
+        od_sig: maskValue(launch?.od_sig || '', 10)
+      };
+    }
+
+    function writeOdDebug(message, data) {
+      if (!OD_DEBUG) return;
+      const panel = getOdDebugPanel();
+      const line = data === undefined
+        ? String(message || '')
+        : `${String(message || '')} ${JSON.stringify(data, null, 2)}`;
+      panel.textContent += `${line}\n`;
+      panel.style.display = 'block';
+    }
+
+    function clearLaunchParamsFromUrl() {
+      const url = new URL(window.location.href);
+      const keepKeys = new Set(['api_origin', 'od_debug', 'payroll_scope']);
+      const deleteKeys = [];
+      for (const [key] of url.searchParams.entries()) {
+        if (!keepKeys.has(String(key || '').toLowerCase())) {
+          deleteKeys.push(key);
+        }
+      }
+      for (const key of deleteKeys) {
+        url.searchParams.delete(key);
+      }
+      window.history.replaceState({}, '', url.toString());
+    }
+
+    function redirectToLogin(reason = '') {
+      const loginApiOrigin = normalizeApiOrigin(ACTIVE_API_ORIGIN) || normalizeApiOrigin(API_ORIGIN);
+      if (OD_DEBUG && hasLaunchParams()) {
+        writeOdDebug('Redirect to login blocked by debug mode.', { reason: String(reason || '') });
+        const panel = getOdDebugPanel();
+        if (!document.getElementById('odDebugLoginBtn')) {
+          const btn = document.createElement('button');
+          btn.id = 'odDebugLoginBtn';
+          btn.type = 'button';
+          btn.textContent = 'Go To Login';
+          btn.style.marginTop = '8px';
+          btn.style.padding = '6px 10px';
+          btn.style.borderRadius = '6px';
+          btn.style.border = '1px solid #d4b341';
+          btn.style.background = '#fff';
+          btn.style.cursor = 'pointer';
+          btn.addEventListener('click', () => {
+            const loginUrl = './login.html?api_origin=' + encodeURIComponent(loginApiOrigin);
+            window.location.href = loginUrl;
+          });
+          panel.appendChild(btn);
+        }
+        return;
+      }
+      const loginUrl = './login.html?api_origin=' + encodeURIComponent(loginApiOrigin);
+      window.location.href = loginUrl;
+    }
+
+    async function authenticateFromOdLaunch() {
+      const launch = getLaunchParams();
+      writeOdDebug('OD launch params received:', debugLaunchSnapshot(launch));
+      if (!launch.od_user && !launch.od_user_num && !launch.directus_email && !hasAnyLaunchPayload()) {
+        writeOdDebug('No OD launch params present.');
+        return false;
+      }
+
+      let response = null;
+      let payload = {};
+      let selectedOrigin = '';
+      const triedOrigins = [];
+      for (const origin of buildApiOriginCandidates(ACTIVE_API_ORIGIN)) {
+        triedOrigins.push(origin);
+        const endpoints = getOdLaunchEndpoints(origin);
+        for (const endpoint of endpoints) {
+          writeOdDebug('Trying endpoint:', endpoint);
+          let candidate = null;
+          try {
+            candidate = await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(launch)
+            });
+          } catch (error) {
+            writeOdDebug('Endpoint fetch failed:', {
+              endpoint,
+              message: String(error instanceof Error ? error.message : error || '')
+            });
+            continue;
+          }
+          const candidatePayload = await candidate.json().catch(() => ({}));
+          writeOdDebug('Endpoint response:', {
+            endpoint,
+            status: candidate.status,
+            ok: candidate.ok,
+            error: String(candidatePayload?.error || ''),
+            has_data: Boolean(candidatePayload?.data)
+          });
+          const payloadError = String(candidatePayload?.error || '').trim().toLowerCase();
+          const hasApplicationError = Boolean(payloadError);
+          if (candidate.ok || candidate.status !== 404 || hasApplicationError) {
+            response = candidate;
+            payload = candidatePayload;
+            selectedOrigin = origin;
+            break;
+          }
+        }
+        if (response) break;
+      }
+      if (!response) {
+        writeOdDebug('No launch endpoint found (all 404).');
+        throw new Error(`OpenDental launch endpoint not reachable. Tried: ${triedOrigins.join(', ')}`);
+      }
+
+      if (!response.ok) {
+        const message = String(payload?.error || 'OpenDental launch failed');
+        const normalized = message.toLowerCase();
+        if (
+          normalized.includes('no directus mapping found') ||
+          normalized.includes('mapped directus user not found') ||
+          normalized.includes('od_user, od_user_num, or directus_email is required') ||
+          normalized.includes('missing or invalid od_ts') ||
+          normalized.includes('admin')
+        ) {
+          writeOdDebug('OD launch rejected and would redirect to login.', { message });
+          redirectToLogin(message);
+          return false;
+        }
+        writeOdDebug('OD launch returned non-redirectable error.', { message });
+        throw new Error(message);
+      }
+
+      if (selectedOrigin) {
+        persistApiOrigin(selectedOrigin);
+      }
+      const data = payload?.data || {};
+      setStoredAuth({
+        access_token: data?.access_token || null,
+        refresh_token: data?.refresh_token || null,
+        expires_at: null,
+        auth_mode: data?.auth_mode || 'od_launch'
+      });
+
+      clearLaunchParamsFromUrl();
+      writeOdDebug('OD launch succeeded. Token stored.');
+      return true;
+    }
+
+    async function loadApps() {
+      const token = getAuthToken();
+      if (!token) {
+        writeOdDebug('No auth token while loading apps.');
+        redirectToLogin('No auth token while loading apps');
+        return;
+      }
+
+      const origins = buildApiOriginCandidates(ACTIVE_API_ORIGIN);
+      const triedOrigins = [];
+      let lastError = null;
+
+      for (const origin of origins) {
+        triedOrigins.push(origin);
+        try {
+          const data = await loadAppsViaCoreApi(token, origin);
+          persistApiOrigin(origin);
+          renderUserInfo(data.user);
+          accessibleApps = Array.isArray(data.apps) ? data.apps : [];
+          applyAppSearch();
+          return;
+        } catch (error) {
+          if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+            writeOdDebug('Token unauthorized while loading apps.', { origin });
+            redirectToLogin('Unauthorized while loading apps');
+            return;
+          }
+          if (!isNetworkFetchError(error)) {
+            console.error('Error loading apps:', error);
+            const message = error instanceof Error ? error.message : 'Failed to load apps';
+            showError(message);
+            return;
+          }
+          lastError = error;
+        }
+      }
+
+      console.error('Error loading apps:', lastError);
+      showError(`Failed to fetch API. Tried: ${triedOrigins.join(', ')}. Open app-hub with ?api_origin=http://YOUR_DIRECTUS_HOST:8055`);
+    }
+
+    async function loadAppsViaCoreApi(token, apiOrigin) {
+      function toUserModel(user, roleName) {
+        return {
+          id: user.id,
+          email: user.email,
+          first_name: user.first_name || '',
+          name: user.first_name || user.email || 'User',
+          role: roleName || 'limited'
+        };
+      }
+
+      function buildRoleFallbackApps(roleRank, isEmpinfoAllowed, isPayrollAllowed) {
+        const apps = [];
+        const addApp = (id) => {
+          const app = APP_CATALOG[id];
+          if (!app) return;
+          if (apps.some((entry) => entry.id === app.id)) return;
+          apps.push(app);
+        };
+
+        if (isPayrollAllowed) addApp('payroll');
+        if (isEmpinfoAllowed) addApp('empinfo');
+        if (roleRank >= ROLE_RANK.full) addApp('admin-tools');
+        if (apps.length === 0) addApp('mythings');
+        return apps;
+      }
+
+      async function loadViaUserAppsEndpoint() {
+        const response = await fetch(`${apiOrigin}/user-apps/user/apps`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (response.status === 401) {
+          throw new Error('UNAUTHORIZED');
+        }
+        if (!response.ok) {
+          const message = payload?.error || payload?.errors?.[0]?.message || 'Failed to load user apps';
+          const normalized = String(message || '').toLowerCase();
+          if (
+            response.status === 404 ||
+            normalized.includes('/user-apps/user/apps') ||
+            normalized.includes("route") && normalized.includes("doesn't exist")
+          ) {
+            return null;
+          }
+          throw new Error(message);
+        }
+        return {
+          user: payload?.user || {},
+          apps: Array.isArray(payload?.apps) ? payload.apps : []
+        };
+      }
+
+      const userResponse = await fetch(`${apiOrigin}/users/me?fields=id,email,first_name,role.name`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const userPayload = await userResponse.json().catch(() => ({}));
+      if (userResponse.status === 401) {
+        throw new Error('UNAUTHORIZED');
+      }
+      if (!userResponse.ok) {
+        throw new Error(userPayload?.errors?.[0]?.message || 'Failed to load current user');
+      }
+
+      const user = userPayload?.data || {};
+      const roleName = String(user?.role?.name || '').trim();
+      const normalizedRole = roleName.toLowerCase();
+      const email = String(user?.email || '').trim().toLowerCase();
+      const roleRank = getRoleRank(roleName);
+      const isManagerOrAbove = roleRank >= ROLE_RANK.management;
+      const isHr = roleRank >= ROLE_RANK.hr;
+      const isEmpinfoAllowed = isManagerOrAbove || EMPINFO_ALLOWED_EMAILS.has(email);
+      const isPayrollAllowed = roleRank >= ROLE_RANK.hr;
+
+      const params = new URLSearchParams();
+      params.set('fields', 'app_id,is_active,directus_user_id,directus_user_email');
+      params.set('filter[_and][0][is_active][_eq]', 'true');
+      params.set('filter[_and][1][_or][0][directus_user_id][_eq]', String(user?.id || ''));
+      params.set('filter[_and][1][_or][1][directus_user_email][_eq]', email);
+      params.set('limit', '200');
+
+      const subsResponse = await fetch(`${apiOrigin}/items/app_hub_subscriptions?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const subsPayload = await subsResponse.json().catch(() => ({}));
+      if (subsResponse.status === 401) {
+        throw new Error('UNAUTHORIZED');
+      }
+      if (!subsResponse.ok) {
+        const subsStatus = Number(subsResponse.status || 0);
+        const subsError = String(subsPayload?.errors?.[0]?.message || subsPayload?.error || '').toLowerCase();
+        if (
+          subsStatus === 403 ||
+          subsStatus === 404 ||
+          (
+            subsError.includes('app_hub_subscriptions') &&
+            (
+              subsError.includes('permission') ||
+              subsError.includes('forbidden') ||
+              subsError.includes('does not exist')
+            )
+          )
+        ) {
+          const legacyApps = await loadViaUserAppsEndpoint();
+          if (legacyApps && Array.isArray(legacyApps.apps) && legacyApps.apps.length > 0) {
+            return legacyApps;
+          }
+          return {
+            user: toUserModel(user, roleName),
+            apps: buildRoleFallbackApps(roleRank, isEmpinfoAllowed, isPayrollAllowed)
+          };
+        }
+        throw new Error(subsPayload?.errors?.[0]?.message || subsPayload?.error || 'Failed to load app subscriptions');
+      }
+
+      const subs = Array.isArray(subsPayload?.data) ? subsPayload.data : [];
+      const appIds = [...new Set(subs.map((s) => String(s.app_id || '').toLowerCase()).filter(Boolean))];
+      let apps = appIds.map((id) => APP_CATALOG[id]).filter(Boolean);
+
+      if (appIds.includes('eos') && !apps.some((app) => app.id === 'receipt-books')) {
+        apps.push(APP_CATALOG['receipt-books']);
+      }
+
+      if (!isEmpinfoAllowed) {
+        apps = apps.filter((app) => app.id !== 'empinfo');
+      }
+      if (!isPayrollAllowed) {
+        apps = apps.filter((app) => app.id !== 'payroll');
+      } else if (!apps.some((app) => app.id === 'payroll')) {
+        apps.push(APP_CATALOG.payroll);
+      }
+
+      return {
+        user: toUserModel(user, roleName),
+        apps
+      };
+    }
+
+    function renderUserInfo(user) {
+      userNameEl.textContent = user.name || user.email;
+      userRoleEl.textContent = user.role || 'User';
+      currentUserRole = String(user.role || '').trim().toLowerCase();
+      currentUserRoleRank = getRoleRank(user.role || '');
+      const firstName = String(user?.first_name || '').trim() || getFirstName(user);
+      welcomeTitleEl.textContent = `Welcome back ${firstName}`;
+      startTimeTicker();
+    }
+
+    function getFirstName(user) {
+      const explicitFirstName = String(user?.first_name || '').trim();
+      const explicitLastName = String(user?.last_name || '').trim();
+      const emailLocal = String(user?.email || '')
+        .split('@')[0]
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+
+      if (explicitFirstName && explicitLastName && emailLocal) {
+        const firstToken = explicitFirstName.split(/\s+/)[0];
+        const lastToken = explicitLastName.split(/\s+/)[0];
+        const firstNeedle = firstToken.toLowerCase();
+        const lastNeedle = lastToken.toLowerCase();
+        const firstShort = firstNeedle.slice(0, 4);
+        const lastShort = lastNeedle.slice(0, 4);
+
+        const firstIndex = emailLocal.indexOf(firstNeedle);
+        const lastIndex = emailLocal.indexOf(lastNeedle);
+        const firstShortIndex = firstNeedle.length >= 4 ? emailLocal.indexOf(firstShort) : -1;
+        const lastShortIndex = lastNeedle.length >= 4 ? emailLocal.indexOf(lastShort) : -1;
+
+        const firstMatchIndex = firstIndex >= 0 ? firstIndex : firstShortIndex;
+        const lastMatchIndex = lastIndex >= 0 ? lastIndex : lastShortIndex;
+
+        if (firstMatchIndex >= 0 && lastMatchIndex >= 0) {
+          return lastMatchIndex < firstMatchIndex ? lastToken : firstToken;
+        }
+        if (lastMatchIndex >= 0) return lastToken;
+        if (firstMatchIndex >= 0) return firstToken;
+      }
+
+      if (explicitFirstName) return explicitFirstName.split(/\s+/)[0];
+      if (explicitLastName) return explicitLastName.split(/\s+/)[0];
+
+      const fromName = String(user?.name || '').trim();
+      if (fromName) {
+        const parts = fromName.split(/\s+/).filter(Boolean);
+        if (parts.length === 1) return parts[0];
+
+        const emailLocalPart = String(user?.email || '')
+          .split('@')[0]
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '');
+
+        if (emailLocalPart) {
+          const matched = parts.find((part) => emailLocalPart.includes(part.toLowerCase()));
+          if (matched) return matched;
+        }
+
+        return parts[0];
+      }
+
+      const fromEmail = String(user?.email || '').trim();
+      if (fromEmail.includes('@')) {
+        const localPart = fromEmail.split('@')[0].replace(/[._-]+/g, ' ').trim();
+        if (localPart) return localPart.split(/\s+/)[0];
+      }
+      return 'User';
+    }
+
+    function getFirstNameFromEmail(email) {
+      const value = String(email || '').trim();
+      if (!value.includes('@')) return '';
+      const localPart = value.split('@')[0].replace(/[._-]+/g, ' ').trim();
+      if (!localPart) return '';
+      return localPart.split(/\s+/)[0];
+    }
+
+    function parseJwtPayload(token) {
+      try {
+        const payloadPart = String(token || '').split('.')[1];
+        if (!payloadPart) return null;
+        const base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+        return JSON.parse(atob(padded));
+      } catch {
+        return null;
+      }
+    }
+
+    function getFirstNameFromStoredAuth() {
+      let stored = null;
+      try {
+        stored = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || '{}');
+      } catch {
+        stored = null;
+      }
+
+      const storedEmail = String(stored?.email || '').trim();
+      if (storedEmail) {
+        const fromStoredEmail = getFirstNameFromEmail(storedEmail);
+        if (fromStoredEmail) return fromStoredEmail;
+      }
+
+      const token = stored?.access_token || getAuthToken();
+      if (!token) return '';
+      const payload = parseJwtPayload(token);
+      if (!payload) return '';
+      const firstName = String(payload?.first_name || payload?.firstname || '').trim();
+      if (firstName) return firstName;
+      const fromEmail = getFirstNameFromEmail(payload?.email || payload?.mail || '');
+      return fromEmail;
+    }
+
+    async function hydrateFirstNameFromProfile() {
+      const token = getAuthToken();
+      if (!token) return;
+      try {
+        const response = await fetch(`${ACTIVE_API_ORIGIN}/users/me?fields=first_name,last_name,email`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!response.ok) return;
+        const payload = await response.json().catch(() => ({}));
+        const user = payload?.data || {};
+        const candidate = String(user?.first_name || user?.name || '').trim() || getFirstNameFromEmail(user?.email || '');
+        if (!candidate) return;
+        welcomeTitleEl.textContent = `Welcome back ${candidate}`;
+      } catch {
+      }
+    }
+
+    function initializeWelcomeBar() {
+      const fromToken = getFirstNameFromStoredAuth();
+      const launch = getLaunchParams();
+      const fromLaunchEmail = getFirstNameFromEmail(launch?.directus_email || '');
+      const firstName = fromToken || fromLaunchEmail || '';
+      welcomeTitleEl.textContent = `Welcome back ${firstName}`;
+      startTimeTicker();
+      hydrateFirstNameFromProfile();
+    }
+
+    function formatDateTime(now = new Date()) {
+      const weekday = now.toLocaleDateString('en-GB', { weekday: 'long' }).toUpperCase();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = String(now.getFullYear()).slice(-2);
+      const time = now.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      return `${weekday} ${day}/${month}/${year} - ${time}`;
+    }
+
+    function startTimeTicker() {
+      if (timeTicker) {
+        clearInterval(timeTicker);
+      }
+      welcomeDateTimeEl.textContent = formatDateTime();
+      timeTicker = setInterval(() => {
+        welcomeDateTimeEl.textContent = formatDateTime();
+      }, 1000);
+    }
+
+    function getAppKey(app) {
+      const id = String(app?.id || '').toLowerCase();
+      if (id) return id;
+      const source = `${app?.name || ''} ${app?.path || ''} ${app?.description || ''}`.toLowerCase();
+      if (source.includes('payroll')) return 'payroll';
+      if (source.includes('empinfo') || source.includes('employee')) return 'empinfo';
+      return 'other';
+    }
+
+    function resolveAppPath(path) {
+      const rawPath = String(path || '').trim();
+      if (!rawPath) return '#';
+      if (/^https?:\/\//i.test(rawPath)) return rawPath;
+
+      const currentDir = window.location.pathname.replace(/\/[^/]*$/, '/');
+      if (rawPath.startsWith('/dashboard/')) {
+        return `${currentDir}${rawPath.replace(/^\/dashboard\//, '')}`.replace(/\/{2,}/g, '/');
+      }
+      if (rawPath.startsWith('/')) return rawPath;
+      return `${currentDir}${rawPath}`.replace(/\/{2,}/g, '/');
+    }
+
+    function buildAppHref(app) {
+      const sourcePath = typeof app === 'string' ? app : app?.path;
+      let resolvedPath = resolveAppPath(sourcePath);
+      const appContext = typeof app === 'string' ? { path: app } : app;
+      const appKey = getAppKey(appContext);
+      if (appKey === 'empinfo' || /employee-form\.html/i.test(String(sourcePath || ''))) {
+        resolvedPath = resolveAppPath('/dashboard/empinfo-dashboard.html');
+      }
+      const extraParams = new URLSearchParams();
+      extraParams.set('api_origin', ACTIVE_API_ORIGIN);
+      if (appKey === 'payroll' && currentUserRole === 'hr') {
+        extraParams.set('payroll_scope', 'o3p');
+      }
+      const separator = resolvedPath.includes('?') ? '&' : '?';
+      return `${resolvedPath}${separator}${extraParams.toString()}`;
+    }
+
+    function buildSetupHref() {
+      const resolvedPath = resolveAppPath('/dashboard/setup.html');
+      const separator = resolvedPath.includes('?') ? '&' : '?';
+      return `${resolvedPath}${separator}api_origin=${encodeURIComponent(ACTIVE_API_ORIGIN)}`;
+    }
+
+    function getAppIconMarkup(app) {
+      if (app?.icon_image) {
+        const iconPath = String(app.icon_image).replace(/ /g, '%20');
+        return `
+          <img class="app-icon-image" src="assets/logos/${iconPath}" alt="${app.name || 'App'}" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';" />
+          <span class="app-icon-fallback" style="display:none;">${app.icon || '[]'}</span>
+        `;
+      }
+
+      const key = getAppKey(app);
+      if (key === 'empinfo') {
+        return `
+          <img class="app-icon-image" src="assets/logos/empinfo.png" alt="EMPINFO" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';" />
+          <span class="app-icon-fallback" style="display:none;">${app.icon || '👤'}</span>
+        `;
+      }
+      if (key === 'payroll') {
+        return `
+          <img class="app-icon-image" src="assets/logos/payroll%20main.png" alt="Payroll" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';" />
+          <span class="app-icon-fallback" style="display:none;">${app.icon || '💰'}</span>
+        `;
+      }
+      return `<span class="app-icon-fallback">${app.icon || '📦'}</span>`;
+    }
+
+    function buildThreeByThreeLayout(apps) {
+      const gridSize = 9;
+      const slots = Array(gridSize).fill(null);
+      const reservedByKey = {
+        empinfo: 7,
+        payroll: 6,
+        mythings: 8
+      };
+
+      const remainingApps = [];
+
+      for (const app of apps) {
+        const key = getAppKey(app);
+        if (reservedByKey[key] !== undefined && !slots[reservedByKey[key]]) {
+          slots[reservedByKey[key]] = app;
+        } else {
+          remainingApps.push(app);
+        }
+      }
+
+      let cursor = 0;
+      for (const app of remainingApps) {
+        while (cursor < gridSize && slots[cursor]) cursor += 1;
+        if (cursor >= gridSize) break;
+        slots[cursor] = app;
+      }
+
+      return slots;
+    }
+
+    function renderApps(apps) {
+      if (!apps || apps.length === 0) {
+        appsGrid.style.display = 'none';
+        noApps.style.display = 'block';
+        return;
+      }
+
+      noApps.style.display = 'none';
+
+      const slots = buildThreeByThreeLayout(apps);
+      appsGrid.innerHTML = slots.map((app) => {
+        if (!app) {
+          return `<div class="app-card is-empty" aria-hidden="true"></div>`;
+        }
+
+        const appKey = getAppKey(app);
+        const canSeeSetup = currentUserRoleRank >= ROLE_RANK.hr;
+        if (appKey === 'mythings' && canSeeSetup) {
+          const iconPath = String(app?.icon_image || 'corez22.png').replace(/ /g, '%20');
+          return `
+            <div class="app-card split-tile-card">
+              <a class="split-tile-half top" href="${buildSetupHref()}">
+                <span class="split-cog">⚙</span>
+                <span class="split-caption">Setup</span>
+              </a>
+              <button class="split-tile-half bottom" type="button" title="Lower-half link will be added later">
+                <img class="split-bottom-image" src="assets/logos/${iconPath}" alt="${app.name || 'Tile'}" />
+              </button>
+            </div>
+          `;
+        }
+        const cardClass = FULL_IMAGE_TILE_KEYS.has(appKey) ? 'app-card image-fill-card' : 'app-card';
+        return `
+          <a class="${cardClass}" href="${buildAppHref(app)}">
+            <div class="app-icon">${getAppIconMarkup(app)}</div>
+            <div class="app-name">${app.name}</div>
+            <div class="app-description">${app.description || ''}</div>
+            <div class="app-arrow">Open →</div>
+          </a>
+        `;
+      }).join('');
+
+      appsGrid.style.display = 'grid';
+    }
+
+    function normalizeSearchValue(value) {
+      return String(value || '').trim().toLowerCase();
+    }
+
+    function normalizeSearchLoose(value) {
+      return normalizeSearchValue(value).replace(/[^a-z0-9]+/g, '');
+    }
+
+    function buildSearchVariants(value) {
+      const base = normalizeSearchValue(value);
+      const compact = normalizeSearchLoose(value);
+      const variants = new Set([base, compact].filter(Boolean));
+
+      if (base.endsWith('s')) variants.add(base.slice(0, -1));
+      if (compact.endsWith('s')) variants.add(compact.slice(0, -1));
+
+      return Array.from(variants).filter(Boolean);
+    }
+
+    function filterAccessibleApps(query) {
+      const normalized = normalizeSearchValue(query);
+      if (!normalized) return [...accessibleApps];
+      const variants = buildSearchVariants(query);
+
+      return accessibleApps.filter((app) => {
+        const haystack = [app?.name, app?.description, app?.id]
+          .map((v) => normalizeSearchValue(v))
+          .join(' ');
+        const haystackLoose = normalizeSearchLoose(haystack);
+
+        return variants.some((candidate) => {
+          const candidateLoose = normalizeSearchLoose(candidate);
+          return haystack.includes(candidate) || (candidateLoose && haystackLoose.includes(candidateLoose));
+        });
+      });
+    }
+
+    function applyAppSearch() {
+      const query = appSearchInput ? appSearchInput.value : '';
+      const filteredApps = filterAccessibleApps(query);
+      renderApps(filteredApps);
+
+      if (!filteredApps.length) {
+        const hasQuery = Boolean(normalizeSearchValue(query));
+        const titleEl = noApps.querySelector('.no-apps-title');
+        const textEl = noApps.querySelector('.no-apps-text');
+        if (titleEl) titleEl.textContent = hasQuery ? 'No Matching Apps' : 'No Apps Available';
+        if (textEl) {
+          textEl.textContent = hasQuery
+            ? 'No permitted apps match your search.'
+            : "You don't have access to any apps. Contact your administrator.";
+        }
+      }
+    }
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.classList.add('show');
+    }
+
+    btnLogout.addEventListener('click', () => {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      redirectToLogin();
+    });
+
+    if (btnNavBack) {
+      btnNavBack.addEventListener('click', () => window.history.back());
+    }
+
+    if (btnNavForward) {
+      btnNavForward.addEventListener('click', () => window.history.forward());
+    }
+    if (btnEOS) {
+      btnEOS.addEventListener('click', () => {
+        window.location.href = buildAppHref(APP_CATALOG.eos);
+      });
+    }
+    if (btnReceiptBooks) {
+      btnReceiptBooks.addEventListener('click', () => {
+        window.location.href = buildAppHref(APP_CATALOG['receipt-books']);
+      });
+    }
+    if (btnSaveStatusLogo) {
+      btnSaveStatusLogo.addEventListener('click', () => {
+        window.location.href = `./app-hub.html?api_origin=${encodeURIComponent(ACTIVE_API_ORIGIN)}`;
+      });
+    }
+
+    if (appSearchInput) {
+      appSearchInput.addEventListener('input', applyAppSearch);
+    }
+
+    initializeWelcomeBar();
+
+    (async () => {
+      try {
+        if (OD_DEBUG) {
+          writeOdDebug('OD debug mode enabled via ?od_debug=1');
+        }
+        if (!getAuthToken() && hasLaunchParams()) {
+          const authenticated = await authenticateFromOdLaunch();
+          if (!authenticated && !getAuthToken()) {
+            writeOdDebug('Authentication from OD launch did not complete.');
+            return;
+          }
+        }
+        await loadApps();
+      } catch (error) {
+        console.error('OD launch auth failed:', error);
+        showError(error instanceof Error ? error.message : 'OD launch authentication failed');
+      }
+    })();
+  </script>
+</body>
+</html>

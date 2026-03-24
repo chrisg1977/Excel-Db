@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M-CodeZ - Payroll Employee Profile</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: #f2f4f7; color: #1a1d23; }
+    .topbar, .profilebar { border-bottom: 1px solid #cfd8d2; background: #dceadf; }
+    .topbar { padding: 10px 14px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
+    .top-left { display: flex; align-items: center; gap: 10px; }
+    .title { margin: 0; font-size: 24px; color: #274b36; }
+    .btn { border: 1px solid #b7c9bc; background: #fff; color: #294235; border-radius: 8px; padding: 7px 11px; font-weight: 700; cursor: pointer; }
+    .logo-center { justify-self: center; }
+    .logo-center img { max-height: 46px; width: auto; }
+    .top-right { justify-self: end; display: flex; align-items: center; gap: 8px; }
+    .arrow-btn { width: 34px; height: 34px; border-radius: 999px; padding: 0; font-size: 18px; }
+    .user-pic { width: 32px; height: 32px; border-radius: 999px; border: 1px solid #b8c9c8; background: #fff; object-fit: cover; }
+    .profilebar { background: #cfe2d4; padding: 12px 14px; display: grid; grid-template-columns: 80px 1fr 300px; gap: 12px; align-items: start; }
+    .emp-photo { width: 78px; height: 92px; border-radius: 10px; border: 1px solid #b9cbc0; object-fit: cover; background: #fff; }
+    .emp-name { margin: 0; font-size: 30px; letter-spacing: 0.02em; color: #1f2d27; }
+    .emp-meta { margin-top: 4px; color: #395146; font-weight: 600; }
+    .emp-sub-meta { margin-top: 4px; color: #50665b; font-size: 13px; }
+    .emp-info-grid { margin-top: 10px; display: grid; grid-template-columns: repeat(2, minmax(220px, 1fr)); gap: 8px 14px; }
+    .emp-info-item { font-size: 13px; color: #31463d; }
+    .emp-info-item strong { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: #60766a; margin-bottom: 2px; }
+    .subs { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .sub-pill { border: 1px solid #3f7f54; background: #4b9b66; color: #fff; border-radius: 999px; padding: 5px 11px; font-weight: 800; cursor: pointer; }
+    .payday-box { justify-self: end; text-align: right; }
+    .payday-days { font-size: 28px; font-weight: 800; color: #1f4c34; }
+    .payday-last { margin-top: 8px; color: #2a4036; font-weight: 700; }
+    .warnings { margin-top: 10px; display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
+    .warn { border: 1px solid #ef9aa2; background: #fff2f4; color: #b4232d; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; }
+    .main { padding: 14px; }
+    .content-split { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 14px; align-items: start; }
+    .panel { background: #fff; border: 1px solid #d9dee6; border-radius: 12px; padding: 12px; }
+    .timesheet-pane { min-height: 730px; display: flex; flex-direction: column; }
+    .timesheet-list-shell { margin-top: 8px; border: 1px dashed #cbd5e1; border-radius: 10px; min-height: 470px; background: #f8fafc; overflow: auto; }
+    .section-title { margin: 0 0 8px; color: #264537; font-size: 20px; }
+    .year-nav { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; }
+    .year-input { width: 96px; text-align: center; font-weight: 700; }
+    .line-list { border: 1px solid #e3e8ee; border-radius: 8px; overflow: hidden; }
+    .line-item { padding: 8px 10px; border-bottom: 1px solid #edf1f6; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; cursor: pointer; }
+    .line-item:last-child { border-bottom: none; }
+    .line-item-main { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; min-width: 0; flex: 1 1 320px; }
+    .line-item-actions { display: flex; gap: 6px; align-items: center; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+    .line-item-trail { max-width: 340px; border: 1px solid #d7e2ef; background: #f4f8fc; color: #44576b; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .line-item-action { padding: 5px 9px; font-size: 12px; }
+    .tag { border-radius: 999px; padding: 2px 8px; font-size: 11px; font-weight: 800; }
+    .tag.pending { background: #fff2d9; color: #8a5a00; border: 1px solid #f1cc83; }
+    .leave-stack { display: grid; gap: 10px; }
+    .leave-block { border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; min-height: 120px; }
+    .leave-block h4 { margin: 0 0 6px; color: #305246; }
+    .leave-item { font-size: 13px; padding: 6px 0; border-bottom: 1px dashed #e6ebf2; cursor: pointer; }
+    .leave-item:last-child { border-bottom: none; }
+    .leave-vl { color: #224f8f; }
+    .leave-vl-unpaid { color: #b4232d; font-weight: 700; }
+    .leave-sl { color: #9f1d2f; }
+    .leave-ul { color: #6f2ca4; }
+    .actions-fixed { margin-top: auto; padding-top: 12px; border-top: 1px solid #e2e8f0; position: sticky; bottom: 0; background: #fff; display: flex; gap: 8px; justify-content: flex-start; flex-wrap: wrap; }
+    .other-leave-title { color: #5d3d9a; font-size: 12px; font-weight: 700; margin-top: 6px; margin-bottom: 4px; text-transform: uppercase; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(9, 14, 24, 0.42); display: none; z-index: 60; align-items: center; justify-content: center; padding: 12px; }
+    .modal-backdrop.open { display: flex; }
+    .modal { width: min(1100px, 96vw); max-height: 94vh; overflow: auto; background: #f7fbf8; border: 1px solid #5c85c1; border-radius: 6px; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.32); }
+    .modal .head { background: linear-gradient(180deg, #5f81ba, #3e5f98); color: #fff; padding: 8px 10px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+    .modal .body { padding: 10px; }
+    .tc-top { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; margin-bottom: 8px; }
+    .tc-grid { width: 100%; border-collapse: collapse; font-size: 12px; background: #fff; }
+    .tc-grid th, .tc-grid td { border: 1px solid #d7dce4; padding: 4px 5px; text-align: center; }
+    .tc-grid thead th { background: #dfe7f6; color: #1d3557; font-weight: 800; }
+    .tc-actions { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
+    .tc-action-btn { padding: 3px 7px; font-size: 11px; border-radius: 6px; }
+    .tc-action-btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+    .tc-input { width: 100%; min-width: 72px; border: 1px solid #cfd7e3; border-radius: 4px; padding: 3px 4px; font-size: 12px; }
+    .tc-input.time { min-width: 62px; }
+    .tc-input.small { min-width: 50px; max-width: 72px; }
+    .tc-draft-row td { background: #f8fffb; }
+    .summary { margin-top: 8px; display: grid; grid-template-columns: 1fr 240px; gap: 10px; }
+    .summary-box { border: 1px solid #ccd9ea; border-radius: 8px; background: #fff; padding: 8px; }
+    .summary-box table { width: 100%; border-collapse: collapse; }
+    .summary-box td { border-bottom: 1px dashed #e4e9f1; padding: 4px 2px; font-size: 12px; }
+    .audit-box { margin-top: 10px; }
+    .audit-title { color: #294235; font-size: 13px; font-weight: 800; margin-bottom: 8px; }
+    .audit-list { display: grid; gap: 6px; max-height: 240px; overflow: auto; }
+    .audit-item { border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; background: #fbfdff; }
+    .audit-meta { color: #466076; font-size: 12px; font-weight: 700; }
+    .audit-note { margin-top: 4px; color: #637487; font-size: 12px; }
+    .audit-empty { color: #637487; font-size: 12px; }
+    .audit-restricted { font-style: italic; }
+    .modal-actions { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .box { border: 1px solid #d6dce7; border-radius: 6px; padding: 8px; background: #fff; }
+    .field { margin-bottom: 6px; }
+    .field label { display: block; font-size: 12px; color: #3a4f68; margin-bottom: 2px; }
+    .period-quick { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    @media (max-width: 1080px) { .content-split { grid-template-columns: 1fr; } .profilebar { grid-template-columns: 80px 1fr; } .payday-box { grid-column: 1 / span 2; justify-self: start; text-align: left; } .timesheet-pane { min-height: 560px; } .timesheet-list-shell { min-height: 320px; } }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="top-left">
+      <h1 class="title">Payroll Employee Profile</h1>
+      <button class="btn" id="btnBackHub" type="button">&larr; Back to Hub</button>
+    </div>
+    <div class="logo-center"><img src="../assets/logos/group-logo.png" alt="Mediatrix Group"></div>
+    <div class="top-right">
+      <button class="btn arrow-btn" id="btnPrevEmp" type="button">&larr;</button>
+      <button class="btn arrow-btn" id="btnNextEmp" type="button">&rarr;</button>
+      <img class="user-pic" id="userPic" src="../assets/logos/empinfo.png" alt="User">
+      <button class="btn" id="btnSignOut" type="button">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="profilebar" id="profileBar">
+    <img class="emp-photo" id="empPhoto" src="../assets/logos/empinfo.png" alt="Employee">
+    <div>
+      <h2 class="emp-name" id="empName">-</h2>
+      <div class="emp-meta" id="empRole">-</div>
+      <div class="emp-sub-meta" id="empIdMeta">Employee ID: -</div>
+      <div class="emp-sub-meta" id="empBeginMeta">Begin Employment: -</div>
+      <div class="emp-sub-meta" id="empDobMeta">Date of Birth: -</div>
+      <div class="emp-sub-meta" id="empIdCardMeta">ID / Residency: -</div>
+      <div class="emp-info-grid" id="empInfoGrid"></div>
+      <div class="subs" id="subPills"></div>
+    </div>
+    <div class="payday-box">
+      <div class="payday-days" id="daysToPayday">- Days to payday</div>
+      <div class="payday-last" id="lastPayday">Last Payday: -</div>
+      <div class="warnings" id="warningBadges"></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="content-split">
+      <section class="panel timesheet-pane">
+        <h3 class="section-title">Timesheets Year
+          <span class="year-nav">
+            <button class="btn" id="btnPrevYear" type="button">&larr;</button>
+            <input class="year-input" id="yearInput" type="text" value="" />
+            <button class="btn" id="btnNextYear" type="button">&rarr;</button>
+          </span>
+        </h3>
+        <div class="timesheet-list-shell">
+          <div class="line-list" id="timesheetPeriods"></div>
+        </div>
+        <div class="actions-fixed">
+          <button class="btn" id="btnImportOD">IMPORT From Open Dental</button>
+          <button class="btn" id="btnImportCSV">Import From CSV</button>
+          <button class="btn" id="btnManualInput">Manual Input</button>
+          <button class="btn" id="btnLeavePanel">Leave Panel</button>
+        </div>
+        <input id="csvFileInput" type="file" accept=".csv,text/csv" style="display:none;" />
+      </section>
+      <section class="panel leave-pane">
+        <div class="leave-stack">
+          <div class="leave-block"><h4>VL Requested</h4><div id="vlRequested"></div></div>
+          <div class="leave-block"><h4>VL Taken</h4><div id="vlTaken"></div></div>
+          <div class="leave-block" id="otherLeavesBlock" style="display:none;"><h4>Other Leaves Taken</h4><div id="otherLeaves"></div></div>
+          <div class="leave-block"><h4>SL Taken</h4><div id="slTaken"></div></div>
+          <div class="leave-block"><h4>Balances</h4><div id="leaveBalances"></div></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="timeCardModalWrap">
+    <div class="modal">
+      <div class="head"><span id="timeCardTitle">Time Card</span><button class="btn" id="btnCloseTimeCard">Close</button></div>
+      <div class="body">
+        <div class="tc-top">
+          <div id="timeCardPeriod"></div>
+          <div><button class="btn arrow-btn" id="btnTcPrevEmp">&larr;</button><button class="btn arrow-btn" id="btnTcNextEmp">&rarr;</button></div>
+        </div>
+        <table class="tc-grid">
+          <thead><tr><th>Date</th><th>Day</th><th>In</th><th>Out</th><th>Total</th><th>Adjust</th><th>Rate2</th><th>Rate3</th><th>OT</th><th>PH</th><th>VL</th><th>SL</th><th>Day</th><th>Week</th><th>Clinic</th><th>Note</th><th>Actions</th></tr></thead>
+          <tbody id="timeCardRows"></tbody>
+        </table>
+        <div class="summary">
+          <div class="summary-box">
+            <table><tbody id="timeCardSummary"></tbody></table>
+          </div>
+          <div class="summary-box">
+            <div class="modal-actions">
+              <button class="btn" id="btnTcAddFromTo">Add by From/To</button><button class="btn" id="btnTcAddHour">Add by Hour</button><button class="btn" id="btnTcLeavePanel">Leave Panel</button>
+              <button class="btn" id="btnTcAdjust">Add Adjustment</button><button class="btn" id="btnTcCalcDay">Calc Daily</button><button class="btn" id="btnTcCalcWeek">Calc Week OT</button>
+              <button class="btn" id="btnTcPrint">Print</button><button class="btn" id="btnTcClose">Close</button>
+            </div>
+          </div>
+        </div>
+        <div class="summary-box audit-box" id="timeCardAuditBox" style="display:none;">
+          <div class="audit-title">Timesheet Audit</div>
+          <div class="audit-list" id="timeCardAudit"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="clockEventModalWrap">
+    <div class="modal" style="width:min(700px,95vw);">
+      <div class="head"><span>Timesheet: Edit Clock Event</span><button class="btn" id="btnCloseClockEdit">Close</button></div>
+      <div class="body">
+        <div class="edit-grid">
+          <div class="box">
+            <div class="field"><label>Clock In Date and Time (Entered)</label><input id="clockInEntered" type="text" readonly></div>
+            <div class="field"><label>Displayed</label><input id="clockInDisplayed" type="text"></div>
+            <button class="btn" id="btnClockInNow">Now</button>
+          </div>
+          <div class="box">
+            <div class="field"><label>Clock Out Date and Time (Entered)</label><input id="clockOutEntered" type="text" readonly></div>
+            <div class="field"><label>Displayed</label><input id="clockOutDisplayed" type="text"></div>
+            <button class="btn" id="btnClockOutNow">Now</button><button class="btn" id="btnClockOutClear">Clear</button>
+          </div>
+          <div class="box">
+            <div class="field"><label>Time Spans (Calculated)</label><input id="clockSpanCalc" type="text"></div>
+            <div class="field"><label>Override</label><input id="clockSpanOverride" type="text"></div>
+          </div>
+          <div class="box">
+            <div class="field"><label>Rate 2 / Rate 3</label><input id="clockRate23" type="text"></div>
+            <div class="field"><label>Rate 1 Time</label><input id="clockRate1" type="text"></div>
+          </div>
+        </div>
+        <div class="box" style="margin-top:8px;"><label>Notes</label><textarea id="clockNotes" style="width:100%;min-height:80px;"></textarea></div>
+        <div class="modal-actions"><button class="btn" id="btnClockDelete">Delete</button><button class="btn" id="btnClockOk">OK</button><button class="btn" id="btnClockCancel">Cancel</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="leaveModalWrap">
+    <div class="modal" style="width:min(760px,95vw);">
+      <div class="head"><span>Leave Panel</span><button class="btn" id="btnCloseLeave">Close</button></div>
+      <div class="body">
+        <div id="leaveRows"></div>
+        <div class="modal-actions"><button class="btn" id="btnLeaveNext">Next</button><button class="btn" id="btnLeaveAddTimesheet">Add to timesheet</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="periodPickerModalWrap">
+    <div class="modal" style="width:min(520px,95vw);">
+      <div class="head"><span>Select Timesheet Period</span><button class="btn" id="btnClosePeriodPicker">Close</button></div>
+      <div class="body">
+        <div class="period-quick">
+          <button class="btn" id="btnPeriodCurrentMonth" type="button">Current Month</button>
+          <button class="btn" id="btnPeriodPreviousMonth" type="button">Previous Month</button>
+        </div>
+        <div class="edit-grid">
+          <div class="field">
+            <label for="periodFromInput">From</label>
+            <input id="periodFromInput" type="date" />
+          </div>
+          <div class="field">
+            <label for="periodToInput">To</label>
+            <input id="periodToInput" type="date" />
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn primary" id="btnApplyPeriodPicker" type="button">Apply</button>
+          <button class="btn" id="btnCancelPeriodPicker" type="button">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="odApiModalWrap">
+    <div class="modal" style="width:min(560px,95vw);">
+      <div class="head"><span>OpenDental API Setup</span><button class="btn" id="btnCloseOdApi">Close</button></div>
+      <div class="body">
+        <div class="field">
+          <label for="odApiUrlInput">API URL</label>
+          <input id="odApiUrlInput" class="tc-input" type="text" placeholder="https://...">
+        </div>
+        <div class="field">
+          <label for="odApiKeyInput">API Key</label>
+          <input id="odApiKeyInput" class="tc-input" type="password" placeholder="OpenDental API key">
+        </div>
+        <div class="modal-actions">
+          <button class="btn primary" id="btnSaveOdApi" type="button">Save API Settings</button>
+          <button class="btn" id="btnCancelOdApi" type="button">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const AUTH_STORAGE_KEY = 'empinfo.auth.v1';
+    const q = new URLSearchParams(window.location.search);
+    const API_ORIGIN = (q.get('api_origin') || 'http://localhost:8055').replace(/\/$/, '');
+    const empId = String(q.get('id') || '').trim();
+    const state = { profile: null, year: new Date().getFullYear(), empList: [], empIndex: -1, selectedPeriod: null, leaveTypes: [], clockEditRow: null, periodPickerAction: null };
+    const CURRENT_YEAR = new Date().getFullYear();
+    const el = (id) => document.getElementById(id);
+    const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    const normalizeDesignationKey = (value) => String(value || '').trim().toLowerCase().replace(/[.]/g, '').replace(/\s+/g, ' ');
+    const designationColor = (designation) => {
+      const key = normalizeDesignationKey(designation);
+      if (!key) return '#d9dee8';
+      if (key.includes('dental surgeon')) return '#CDB4DB';
+      if (key.includes('dental hygenist') || key.includes('dental hygienist') || key.includes('dental hygeinist')) return '#722F37';
+      if (key.includes('sup') && key.includes('dental assistant')) return '#00838F';
+      if (key.includes('dental assistant trainee')) return '#F6BD60';
+      if (key.includes('dental assistant')) return '#95D5B2';
+      if (key.includes('receptionist trainee')) return '#FF9AA2';
+      if (key.includes('receptionist')) return '#7CB342';
+      if (key.includes('housekeeping')) return '#2E5090';
+      if (key.includes('maintenance')) return '#283593';
+      if (key.includes('office manager')) return '#7B5A33';
+      if (key.includes('clinical manager')) return '#A38A64';
+      if (key.includes('principal')) return '#6D4C41';
+      return '#c6d2e3';
+    };
+    const hexToRgba = (hex, alpha) => {
+      if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return '';
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    };
+    const token = () => { try { return JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || '{}')?.access_token || ''; } catch { return ''; } };
+    const api = async (path, options = {}) => {
+      const t = token(); if (!t) { window.location.href = `../login.html?api_origin=${encodeURIComponent(API_ORIGIN)}`; throw new Error('No auth'); }
+      const r = await fetch(`${API_ORIGIN}${path}`, { ...options, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${t}`, ...(options.headers || {}) } });
+      const p = await r.json().catch(() => ({})); if (!r.ok) throw new Error(p.error || p.message || `HTTP ${r.status}`); return p;
+    };
+    const fmtDate = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || '')); return m ? `${m[3]}/${m[2]}/${String(m[1]).slice(-2)}` : ''; };
+    const fmtDateTime = (value) => {
+      const raw = String(value || '').trim();
+      if (!raw) return '';
+      const d = new Date(raw);
+      if (Number.isNaN(d.getTime())) return raw;
+      return d.toLocaleString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).replace(',', '');
+    };
+    const dayName = (iso) => { const d = new Date(String(iso || '') + 'T00:00:00'); return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB', { weekday: 'short' }); };
+    const fmtTime = (value) => { const raw = String(value || '').trim(); return raw ? raw.slice(0, 8) : ''; };
+    const hourNumber = (value) => { const num = Number(value); return Number.isFinite(num) ? num : 0; };
+    const fmtHours = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '';
+    const auditSourceFromRow = (row) => String(row?.imported_values?.source || row?.amended_values?.source || row?.old_values?.source || '').trim();
+    const auditActionLabel = (actionRaw, sourceRaw) => {
+      const action = String(actionRaw || '').trim().toUpperCase();
+      const source = String(sourceRaw || '').trim();
+      if (!action) return source ? `Imported ${source}` : 'Updated';
+      if (action.includes('DELETE')) return 'Deleted';
+      if (action === 'MANUAL_EDIT' || action.includes('EDIT')) return 'Edited';
+      if (action.includes('IMPORT') || action.includes('REIMPORT')) return source ? `Imported ${source}` : 'Imported';
+      if (action.includes('DISCREPANCY') || action.includes('CONFLICT') || action.includes('RESOLVE')) return 'Reviewed';
+      return action
+        .toLowerCase()
+        .split('_')
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ') || 'Updated';
+    };
+    const buildCurrentImportAuditEntries = (rows) => {
+      const seen = new Map();
+      (Array.isArray(rows) ? rows : []).forEach((row) => {
+        const timestamp = String(row?.import_date || row?.created_at || '').trim();
+        const actor = String(row?.imported_by_display || row?.imported_by || '').trim();
+        if (!timestamp || !actor) return;
+        const source = String(row?.source || '').trim();
+        const actionLabel = auditActionLabel('CURRENT_IMPORT', source);
+        const key = [timestamp, actor.toLowerCase(), actionLabel.toLowerCase(), source.toLowerCase()].join('|');
+        if (seen.has(key)) return;
+        seen.set(key, {
+          key,
+          timestamp,
+          actor,
+          actor_role: String(row?.imported_by_role || '').trim() || null,
+          action_label: actionLabel,
+          source: source || null,
+          note: null,
+        });
+      });
+      return Array.from(seen.values());
+    };
+    const buildMergedTimeCardAudit = (rows, auditRows) => {
+      const merged = new Map();
+      buildCurrentImportAuditEntries(rows).forEach((entry) => merged.set(entry.key, entry));
+      (Array.isArray(auditRows) ? auditRows : []).forEach((row) => {
+        const timestamp = String(row?.created_at || '').trim();
+        const actor = String(row?.actor || '').trim();
+        if (!timestamp || !actor) return;
+        const source = auditSourceFromRow(row);
+        const actionLabel = auditActionLabel(row?.action, source);
+        const key = [timestamp, actor.toLowerCase(), actionLabel.toLowerCase(), source.toLowerCase()].join('|');
+        merged.set(key, {
+          key,
+          timestamp,
+          actor,
+          actor_role: String(row?.actor_role || '').trim() || null,
+          action_label: actionLabel,
+          source: source || null,
+          note: String(row?.note || '').trim() || null,
+        });
+      });
+      return Array.from(merged.values()).sort((a, b) => String(b.timestamp || '').localeCompare(String(a.timestamp || '')));
+    };
+    function renderTimeCardAudit(rows, auditRows, options = {}) {
+      const auditBox = el('timeCardAuditBox');
+      const auditList = el('timeCardAudit');
+      if (!auditBox || !auditList) return;
+      const restricted = options.restricted === true;
+      const entries = buildMergedTimeCardAudit(rows, auditRows);
+      if (!entries.length && !restricted) {
+        auditBox.style.display = 'none';
+        auditList.innerHTML = '';
+        return;
+      }
+      auditBox.style.display = '';
+      const restrictedHtml = restricted
+        ? '<div class="audit-empty audit-restricted">Detailed audit is viewable by Admin. Current import owner(s) are shown below.</div>'
+        : '';
+      const bodyHtml = entries.length
+        ? entries.map((entry) => {
+          const meta = [entry.actor, entry.action_label, fmtDateTime(entry.timestamp)].filter(Boolean).join(' | ');
+          const detail = [
+            entry.source ? `Source ${entry.source}` : '',
+            entry.actor_role ? `Role ${entry.actor_role}` : '',
+          ].filter(Boolean).join(' | ');
+          const noteHtml = [detail, entry.note].filter(Boolean).map((value) => `<div class="audit-note">${esc(value)}</div>`).join('');
+          return `<div class="audit-item"><div class="audit-meta">${esc(meta)}</div>${noteHtml}</div>`;
+        }).join('')
+        : '<div class="audit-empty">No audit entries for this period.</div>';
+      auditList.innerHTML = `${restrictedHtml}${bodyHtml}`;
+    }
+    function buildLeaveRow(index = 0) {
+      const row = document.createElement('div');
+      row.className = 'box'; row.style.marginBottom = '8px';
+      row.innerHTML = `<div class="edit-grid"><div class="field"><label>Leave type</label><select class="lv-type">${state.leaveTypes.map((t) => `<option value="${esc(t.code)}">${esc(t.display_name)}</option>`).join('')}</select></div><div class="field"><label>Date requested</label><input class="lv-requested" type="date"></div><div class="field"><label>From</label><input class="lv-from" type="datetime-local"></div><div class="field"><label>To</label><input class="lv-to" type="datetime-local"></div><div class="field"><label>Authorised by</label><input class="lv-auth" type="text"></div><div class="field"><label>Hours</label><input class="lv-hours" type="number" step="0.25" value="8"></div><div class="field"><label>Status</label><input class="lv-status" type="text" value="Pending Approval"></div><div class="field"><label>Notes</label><input class="lv-notes" type="text"></div></div>`;
+      return row;
+    }
+    function openModal(id, open) { const m = el(id); if (!m) return; m.classList.toggle('open', !!open); }
+    function openOdApiSetup() {
+      if (el('odApiUrlInput')) el('odApiUrlInput').value = String(localStorage.getItem('payroll.opendental.api_url') || '');
+      if (el('odApiKeyInput')) el('odApiKeyInput').value = String(localStorage.getItem('payroll.opendental.api_key') || '');
+      openModal('odApiModalWrap', true);
+    }
+    function monthBoundaries(offsetMonths = 0) {
+      const now = new Date();
+      const first = new Date(now.getFullYear(), now.getMonth() + offsetMonths, 1);
+      const last = new Date(now.getFullYear(), now.getMonth() + offsetMonths + 1, 0);
+      const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      return { from: fmt(first), to: fmt(last) };
+    }
+    function currentMonthToToday() {
+      const now = new Date();
+      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      return { from: fmt(first), to: fmt(now) };
+    }
+    function normalizePeriodForDisplay(fromIso, toIso) {
+      const from = String(fromIso || '').trim();
+      const to = String(toIso || '').trim();
+      const fromMonth = from.slice(0, 7);
+      const toMonth = to.slice(0, 7);
+      if (!from || !to || fromMonth === toMonth) return { periodFrom: from, periodTo: to };
+      const [fy, fm] = fromMonth.split('-').map(Number);
+      const [ty, tm] = toMonth.split('-').map(Number);
+      const start = `${fy}-${String(fm).padStart(2, '0')}-01`;
+      const endDate = new Date(ty, tm, 0);
+      const end = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
+      return { periodFrom: start, periodTo: end };
+    }
+    function openPeriodPicker(action) {
+      state.periodPickerAction = action || null;
+      const today = new Date();
+      const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const seed = state.selectedPeriod || monthBoundaries(0);
+      if (el('periodFromInput')) el('periodFromInput').value = String(seed.periodFrom || seed.from || '');
+      if (el('periodToInput')) {
+        const seedTo = String(seed.periodTo || seed.to || '');
+        el('periodToInput').value = seedTo && seedTo > todayIso ? todayIso : seedTo;
+        el('periodToInput').max = todayIso;
+      }
+      if (el('periodFromInput')) el('periodFromInput').max = todayIso;
+      openModal('periodPickerModalWrap', true);
+    }
+    async function applyPeriodPicker() {
+      const from = String(el('periodFromInput')?.value || '').trim();
+      const to = String(el('periodToInput')?.value || '').trim();
+      if (!from || !to) { alert('Please select both From and To dates.'); return; }
+      if (from > to) { alert('From date must be before To date.'); return; }
+      const today = new Date();
+      const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      if (to > todayIso) { alert('Future dates are not allowed.'); return; }
+      state.selectedPeriod = normalizePeriodForDisplay(from, to);
+      openModal('periodPickerModalWrap', false);
+      if (typeof state.periodPickerAction === 'function') {
+        const fn = state.periodPickerAction;
+        state.periodPickerAction = null;
+        await fn(state.selectedPeriod);
+      }
+    }
+    async function withSelectedPeriod(action) {
+      const period = ensureSelectedPeriod();
+      if (period) return action(period);
+      openPeriodPicker(action);
+    }
+    function clampYear(y) {
+      const n = Number(y);
+      if (!Number.isFinite(n) || n < 1900) return CURRENT_YEAR;
+      return Math.min(CURRENT_YEAR, Math.floor(n));
+    }
+    function refreshYearControls() {
+      state.year = clampYear(state.year);
+      if (el('yearInput')) el('yearInput').value = String(state.year);
+      if (el('btnNextYear')) el('btnNextYear').disabled = state.year >= CURRENT_YEAR;
+    }
+    function ensureSelectedPeriod() {
+      if (state.selectedPeriod?.periodFrom && state.selectedPeriod?.periodTo) return state.selectedPeriod;
+      const first = (state.profile?.timesheet_periods || [])[0];
+      if (first?.period_from && first?.period_to) {
+        state.selectedPeriod = { periodFrom: first.period_from, periodTo: first.period_to };
+        return state.selectedPeriod;
+      }
+      return null;
+    }
+    async function importCsvText(rawCsv) {
+      const period = ensureSelectedPeriod();
+      if (!period) {
+        alert('No timesheet period available for import.');
+        return;
+      }
+      let csvText = String(rawCsv || '').trim();
+      if (!csvText) {
+        alert('CSV is empty.');
+        return;
+      }
+      const firstLine = csvText.split(/\r?\n/, 1)[0] || '';
+      const hasEmpId = /(^|,)\s*emp_id\s*(,|$)/i.test(firstLine);
+      if (!hasEmpId) {
+        const lines = csvText.split(/\r?\n/).filter((l) => String(l || '').trim().length > 0);
+        if (lines.length >= 1) {
+          lines[0] = `emp_id,${lines[0]}`;
+          for (let i = 1; i < lines.length; i += 1) lines[i] = `${empId},${lines[i]}`;
+          csvText = lines.join('\n');
+        }
+      }
+      await api('/timesheets/payroll/timesheets/import-csv', {
+        method: 'POST',
+        body: JSON.stringify({ csv_data: csvText, import_source: 'CSV_MANAGER_PROFILE' }),
+      });
+      await Promise.all([
+        loadProfile(),
+        openTimeCard(period.periodFrom, period.periodTo),
+      ]);
+      alert('CSV import completed.');
+    }
+    async function loadEmpList() {
+      try {
+        const pay = String(q.get('payroll') || 'MAIN');
+        const period = String(q.get('period') || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`);
+        const d = await api(`/payroll-dashboard/payroll/dashboard/overview?payroll=${encodeURIComponent(pay)}&period=${encodeURIComponent(period)}`);
+        state.empList = (Array.isArray(d.rows) ? d.rows : []).map((r) => String(r.emp_id)).filter(Boolean);
+        state.empIndex = Math.max(0, state.empList.indexOf(empId));
+      } catch { state.empList = []; state.empIndex = -1; }
+    }
+    function navigateEmp(delta) {
+      if (!state.empList.length || state.empIndex < 0) return;
+      let i = state.empIndex + delta; if (i < 0) i = state.empList.length - 1; if (i >= state.empList.length) i = 0;
+      const nextId = state.empList[i];
+      const u = new URL(window.location.href); u.searchParams.set('id', nextId); window.location.href = u.toString();
+    }
+    function renderProfile() {
+      const p = state.profile || {}; const e = p.employee || {};
+      const profileHex = designationColor(e.designation);
+      const profileBg = hexToRgba(profileHex, 0.22);
+      if (el('profileBar')) {
+        el('profileBar').style.background = profileBg || '#cfe2d4';
+      }
+      el('empName').textContent = (e.full_name || '-').toUpperCase();
+      el('empRole').textContent = `${e.designation || '-'}${e.department ? ` | ${e.department}` : ''}`;
+      el('empIdMeta').textContent = `Employee ID: ${e.emp_id || '-'}`;
+      el('empBeginMeta').textContent = `Begin Employment: ${fmtDate(e.begin_employment) || '-'}`;
+      el('empDobMeta').textContent = `Date of Birth: ${fmtDate(e.dob) || '-'}`;
+      el('empIdCardMeta').textContent = `ID / Residency: ${e.national_id || e.eu_residency_no || e.passport_no || '-'}`;
+      const infoItems = [
+        ['Date of Birth', fmtDate(e.dob) || '-'],
+        ['ID Card', e.national_id || '-'],
+        ['Residency No.', e.eu_residency_no || '-'],
+        ['Passport', e.passport_no || '-'],
+        ['Social Security No.', e.social_security_no || '-'],
+        ['Tax Number', e.tax_number || '-'],
+        ['Nationality', e.nationality || '-'],
+        ['Spouse ID', e.spouse_national_id || '-'],
+        ['Email', e.email || '-'],
+        ['Phone', e.phone_primary || '-'],
+        ['Other Phone', e.phone_secondary || '-'],
+        ['IBAN', e.iban || '-'],
+        ['P.E. Number', e.pe_number || '-'],
+        ['Address', [e.address1, e.address2, e.city, e.postcode].filter(Boolean).join(', ') || '-'],
+      ];
+      el('empInfoGrid').innerHTML = infoItems.map(([label, value]) => `<div class="emp-info-item"><strong>${esc(label)}</strong><span>${esc(value || '-')}</span></div>`).join('');
+      el('daysToPayday').textContent = `${p.payday?.days_to_payday ?? '-'} Days to payday`;
+      el('lastPayday').textContent = `Last Payday: ${fmtDate(p.payday?.last_payday) || '-'}`;
+      const subs = Array.isArray(e.subscriptions) ? e.subscriptions : [];
+      el('subPills').innerHTML = subs.map((s) => `<button class="sub-pill" type="button">${esc(s)}</button>`).join('');
+      const warnings = Array.isArray(e.warnings) ? e.warnings : [];
+      el('warningBadges').innerHTML = warnings.map((w) => {
+        const link = String(w.link || '').trim();
+        if (link) return `<a class="warn" href="${esc(link)}">${esc(w.text || '')}</a>`;
+        return `<span class="warn">${esc(w.text || '')}</span>`;
+      }).join('');
+      const periods = Array.isArray(p.timesheet_periods) ? p.timesheet_periods : [];
+      el('timesheetPeriods').innerHTML = periods.map((r) => {
+        const status = String(r.status || '').trim().toUpperCase();
+        const canDelete = status === 'PENDING' || (!status && !String(r.transaction_id || '').trim());
+        const latestLabel = String(r.latest_activity_label || '').trim();
+        const latestTrail = latestLabel ? `<span class="line-item-trail" title="${esc(`Last activity: ${latestLabel}`)}">Last: ${esc(latestLabel)}</span>` : '';
+        return `<div class="line-item" data-pf="${esc(r.period_from)}" data-pt="${esc(r.period_to)}" data-status="${esc(status)}" data-can-delete="${canDelete ? '1' : '0'}"><div class="line-item-main"><strong>Timesheet ${fmtDate(r.period_from)} ${fmtDate(r.period_to)}</strong> <span>PAYCHECK ${fmtDate(r.paycheck_date)}</span> <span>Transaction ID: ${esc(r.transaction_id || 'PENDING')}</span> ${status === 'PENDING' ? '<span class="tag pending">PENDING</span>' : ''}</div><div class="line-item-actions">${latestTrail}<button class="btn line-item-action js-period-edit" type="button">Edit</button>${canDelete ? '<button class="btn line-item-action js-period-delete" type="button">Delete</button>' : ''}</div></div>`;
+      }).join('');
+      const lv = p.leave || {};
+      const leaveLine = (row, cls) => `<div class="leave-item ${cls}">${fmtDate(row.work_date)} | ${Number(row.hours || 0).toFixed(2)} hrs | ${esc(row.leave_status || 'Pending')} ${row.notes ? `| ${esc(row.notes)}` : ''}</div>`;
+      el('vlTaken').innerHTML = (lv.vl_taken || []).slice(0, 8).map((r) => {
+        const status = String(r.leave_status || '').toUpperCase();
+        const cls = status.includes('UNPAID') ? 'leave-vl-unpaid' : 'leave-vl';
+        return leaveLine(r, cls);
+      }).join('') || '<div class="muted">None</div>';
+      el('vlRequested').innerHTML = (lv.vl_requested || []).slice(0, 8).map((r) => leaveLine(r, 'leave-vl')).join('') || '<div class="muted">None</div>';
+      el('slTaken').innerHTML = (lv.sl_taken || []).slice(0, 8).map((r) => leaveLine(r, 'leave-sl')).join('') || '<div class="muted">None</div>';
+      const other = Array.isArray(lv.other_by_type) ? lv.other_by_type : [];
+      const otherHtml = other.map((group) => {
+        const title = String(group.leave_type || '').replace(/_/g, ' ');
+        const rows = (Array.isArray(group.rows) ? group.rows : []).slice(0, 8);
+        return `<div class="other-leave-title">${esc(title)}</div>${rows.map((r) => leaveLine(r, 'leave-ul')).join('')}`;
+      }).join('');
+      const otherBlock = el('otherLeavesBlock');
+      if (otherBlock) otherBlock.style.display = otherHtml ? '' : 'none';
+      el('otherLeaves').innerHTML = otherHtml;
+      const b = p.leave_balances || {};
+      el('leaveBalances').innerHTML = `<div>VL: ${Number(b.vl_total || 0).toFixed(2)} total / ${Number(b.vl_used || 0).toFixed(2)} used</div><div>SL: ${Number(b.sl_total || 0).toFixed(2)} total / ${Number(b.sl_used || 0).toFixed(2)} used</div><div>Banked: ${Number(b.banked_hours || 0).toFixed(2)}</div>`;
+      refreshYearControls();
+    }
+    async function loadProfile() { state.profile = await api(`/employee-form/payroll/employee-profile/${encodeURIComponent(empId)}?year=${encodeURIComponent(state.year)}`); renderProfile(); }
+    async function loadLeaveTypes() { const r = await api('/employee-form/payroll/employee-profile/settings/leave-types'); state.leaveTypes = Array.isArray(r.leave_types) ? r.leave_types : []; }
+    async function openTimeCard(periodFrom, periodTo) {
+      state.selectedPeriod = { periodFrom, periodTo };
+      const [rowsPayload, auditResult] = await Promise.all([
+        api(`/timesheets/payroll/timesheets?emp_id=${encodeURIComponent(empId)}&start_date=${encodeURIComponent(periodFrom)}&end_date=${encodeURIComponent(periodTo)}`),
+        api(`/timesheets/payroll/timesheets/audit?emp_id=${encodeURIComponent(empId)}&start_date=${encodeURIComponent(periodFrom)}&end_date=${encodeURIComponent(periodTo)}&limit=200`)
+          .then((payload) => ({ payload, restricted: false }))
+          .catch((err) => ({ payload: null, restricted: /admin access required/i.test(String(err?.message || '')) })),
+      ]);
+      const rows = Array.isArray(rowsPayload.timesheets) ? rowsPayload.timesheets.slice().sort((a, b) => {
+        const workDateCompare = String(a.work_date || '').localeCompare(String(b.work_date || ''));
+        if (workDateCompare !== 0) return workDateCompare;
+        const clockCompare = String(a.clock_in || '99:99:99').localeCompare(String(b.clock_in || '99:99:99'));
+        if (clockCompare !== 0) return clockCompare;
+        const rowTypeCompare = String(a.row_type || '').localeCompare(String(b.row_type || ''));
+        if (rowTypeCompare !== 0) return rowTypeCompare;
+        return String(a.source_row_id || a.id || '').localeCompare(String(b.source_row_id || b.id || ''));
+      }) : [];
+      el('timeCardTitle').textContent = `Time Card for ${(state.profile?.employee?.full_name || '')}`;
+      el('timeCardPeriod').textContent = `Pay Period: ${fmtDate(periodFrom)} - ${fmtDate(periodTo)}`;
+      el('timeCardRows').innerHTML = rows.map((r) => {
+        const totalHours = hourNumber(r.total_hours ?? r.hours);
+        const noteValue = String(r.note || r.notes || '');
+        const noteText = [String(r.row_type || '').toUpperCase() === 'ADJUSTMENT' ? 'ADJUSTMENT' : '', noteValue].filter(Boolean).join(' | ');
+        const canEdit = r.editable !== false;
+        const canDelete = r.deletable !== false;
+        const actions = (canEdit || canDelete)
+          ? `<div class="tc-actions">${canEdit ? '<button type="button" class="btn tc-action-btn js-row-edit">Edit</button>' : ''}${canDelete ? '<button type="button" class="btn tc-action-btn js-row-delete">Delete</button>' : ''}</div>`
+          : '';
+        return `<tr data-ts-id="${esc(r.id)}" data-editable="${canEdit ? '1' : '0'}" data-deletable="${canDelete ? '1' : '0'}" data-note="${esc(noteValue)}" data-clock-in="${esc(fmtTime(r.clock_in))}" data-clock-out="${esc(fmtTime(r.clock_out))}"><td>${fmtDate(r.work_date)}</td><td>${dayName(r.work_date)}</td><td>${esc(fmtTime(r.clock_in))}</td><td>${esc(fmtTime(r.clock_out))}</td><td>${totalHours.toFixed(2)}</td><td>${fmtHours(r.adjust_hours)}</td><td>${fmtHours(r.rate2_hours)}</td><td>${fmtHours(r.rate3_hours)}</td><td>${fmtHours(r.overtime_hours)}</td><td></td><td>${String(r.hour_type || '').toUpperCase() === 'VACATION_LEAVE' ? totalHours.toFixed(2) : ''}</td><td>${String(r.hour_type || '').toUpperCase() === 'SICK_LEAVE' ? totalHours.toFixed(2) : ''}</td><td>${totalHours.toFixed(2)}</td><td></td><td>${esc(r.clinic || state.profile?.employee?.department || '')}</td><td>${esc(noteText)}</td><td>${actions}</td></tr>`;
+      }).join('') || '<tr><td colspan="17">No rows</td></tr>';
+      const total = rows.reduce((sum, row) => sum + hourNumber(row.total_hours ?? row.hours), 0);
+      const adjust = rows.reduce((sum, row) => sum + hourNumber(row.adjust_hours), 0);
+      const overtime = rows.reduce((sum, row) => sum + hourNumber(row.overtime_hours), 0);
+      const rate2 = rows.reduce((sum, row) => sum + hourNumber(row.rate2_hours), 0);
+      const rate3 = rows.reduce((sum, row) => sum + hourNumber(row.rate3_hours), 0);
+      const vl = rows.filter((row) => String(row.hour_type || '').toUpperCase() === 'VACATION_LEAVE').reduce((sum, row) => sum + hourNumber(row.total_hours ?? row.hours), 0);
+      const sl = rows.filter((row) => String(row.hour_type || '').toUpperCase() === 'SICK_LEAVE').reduce((sum, row) => sum + hourNumber(row.total_hours ?? row.hours), 0);
+      el('timeCardSummary').innerHTML = `<tr><td>Regular Time</td><td>${total.toFixed(2)}</td></tr><tr><td>Adjust</td><td>${adjust.toFixed(2)}</td></tr><tr><td>Overtime</td><td>${overtime.toFixed(2)}</td></tr><tr><td>Rate2</td><td>${rate2.toFixed(2)}</td></tr><tr><td>Rate3</td><td>${rate3.toFixed(2)}</td></tr><tr><td>VL</td><td>${vl.toFixed(2)}</td></tr><tr><td>SL</td><td>${sl.toFixed(2)}</td></tr><tr><td><strong>TOTAL Hrs</strong></td><td><strong>${total.toFixed(2)}</strong></td></tr>`;
+      renderTimeCardAudit(rows, auditResult?.payload?.audit, { restricted: auditResult?.restricted === true });
+      openModal('timeCardModalWrap', true);
+    }
+    async function deleteTimesheetPeriod(periodFrom, periodTo) {
+      const from = String(periodFrom || '').trim();
+      const to = String(periodTo || '').trim();
+      if (!from || !to) return;
+      if (!confirm(`Delete the pending timesheet for ${fmtDate(from)} - ${fmtDate(to)}?`)) return;
+      await api(`/timesheets/payroll/timesheets/period?emp_id=${encodeURIComponent(empId)}&start_date=${encodeURIComponent(from)}&end_date=${encodeURIComponent(to)}`, { method: 'DELETE' });
+      if (String(state.selectedPeriod?.periodFrom || '') === from && String(state.selectedPeriod?.periodTo || '') === to) {
+        state.selectedPeriod = null;
+        state.clockEditRow = null;
+        openModal('clockEventModalWrap', false);
+        openModal('timeCardModalWrap', false);
+      }
+      await loadProfile();
+    }
+    async function deleteTimeCardRow(tr) {
+      const id = Number(tr?.dataset?.tsId || 0);
+      if (!id || tr?.dataset?.deletable !== '1') return;
+      if (!confirm('Delete this pending or unpaid timesheet row?')) return;
+      await api(`/timesheets/payroll/timesheets/${id}`, { method: 'DELETE' });
+      if (state.clockEditRow === tr) {
+        state.clockEditRow = null;
+        openModal('clockEventModalWrap', false);
+      }
+      if (state.selectedPeriod) await openTimeCard(state.selectedPeriod.periodFrom, state.selectedPeriod.periodTo);
+      await loadProfile();
+    }
+    function openClockEditorFromRow(tr) {
+      state.clockEditRow = tr;
+      const clockIn = String(tr?.dataset?.clockIn || '');
+      const clockOut = String(tr?.dataset?.clockOut || '');
+      const note = String(tr?.dataset?.note || '');
+      const canEdit = tr?.dataset?.editable === '1';
+      const canDelete = tr?.dataset?.deletable === '1';
+      el('clockInEntered').value = clockIn;
+      el('clockInDisplayed').value = clockIn;
+      el('clockOutEntered').value = clockOut;
+      el('clockOutDisplayed').value = clockOut;
+      el('clockSpanCalc').value = '';
+      el('clockSpanOverride').value = '';
+      el('clockRate23').value = '';
+      el('clockRate1').value = '';
+      el('clockNotes').value = note;
+      el('clockNotes').readOnly = !canEdit;
+      el('btnClockOk').disabled = !canEdit;
+      el('btnClockDelete').disabled = !canDelete;
+      openModal('clockEventModalWrap', true);
+    }
+    function addLeaveRow() { el('leaveRows').appendChild(buildLeaveRow()); }
+    const toDayKey = (iso) => {
+      const d = new Date(`${String(iso || '').slice(0, 10)}T00:00:00`);
+      return Number.isNaN(d.getTime()) ? 0 : d.getDay();
+    };
+    const dayShort = (iso) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][toDayKey(iso)] || '';
+    const timeToMinutes = (v) => {
+      const m = /^(\d{2}):(\d{2})$/.exec(String(v || '').trim());
+      if (!m) return NaN;
+      const hh = Number(m[1]); const mm = Number(m[2]);
+      if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return NaN;
+      return hh * 60 + mm;
+    };
+    const calcFromToHours = (inTime, outTime, breakHrs) => {
+      const minsIn = timeToMinutes(inTime);
+      const minsOut = timeToMinutes(outTime);
+      const b = Number(breakHrs || 0);
+      if (!Number.isFinite(minsIn) || !Number.isFinite(minsOut)) return NaN;
+      let diff = minsOut - minsIn;
+      if (diff < 0) diff += 24 * 60;
+      const hrs = (diff / 60) - (Number.isFinite(b) ? b : 0);
+      return Math.max(0, hrs);
+    };
+    function appendManualDraftRow(mode) {
+      const tbody = el('timeCardRows');
+      if (!tbody) return;
+      if (tbody.children.length === 1 && !tbody.querySelector('tr[data-ts-id]') && !tbody.querySelector('tr[data-manual-draft]')) {
+        tbody.innerHTML = '';
+      }
+      const selected = state.selectedPeriod || {};
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const minDate = String(selected.periodFrom || todayIso);
+      const maxDate = String(selected.periodTo || todayIso) > todayIso ? todayIso : String(selected.periodTo || todayIso);
+      const seedDate = maxDate || todayIso;
+      const tr = document.createElement('tr');
+      tr.className = 'tc-draft-row';
+      tr.dataset.manualDraft = mode;
+      if (mode === 'fromto') {
+        tr.innerHTML = `
+          <td><input class="tc-input js-d-date" type="date" min="${esc(minDate)}" max="${esc(maxDate)}" value="${esc(seedDate)}"></td>
+          <td class="js-d-day">${esc(dayShort(seedDate))}</td>
+          <td><input class="tc-input time js-d-in" type="time" value="08:00"></td>
+          <td><input class="tc-input time js-d-out" type="time" value="16:00"></td>
+          <td class="js-d-total">8.00</td>
+          <td><input class="tc-input small js-d-break" type="number" step="0.25" value="0"></td>
+          <td>
+            <select class="tc-input js-d-rate">
+              <option value="NORMAL" selected>Normal</option>
+              <option value="RATE2">Rate2</option>
+              <option value="RATE3">Rate3</option>
+              <option value="OT">OT</option>
+            </select>
+          </td>
+          <td></td><td></td><td></td><td></td><td></td>
+          <td class="js-d-dayhours">8.00</td>
+          <td></td>
+          <td><input class="tc-input js-d-clinic" type="text" value="${esc(state.profile?.employee?.department || '')}"></td>
+          <td><input class="tc-input js-d-note" type="text" placeholder="Note"></td><td><button class="btn tc-action-btn js-d-save" type="button">Save</button></td>
+        `;
+      } else {
+        tr.innerHTML = `
+          <td><input class="tc-input js-d-date" type="date" min="${esc(minDate)}" max="${esc(maxDate)}" value="${esc(seedDate)}"></td>
+          <td class="js-d-day">${esc(dayShort(seedDate))}</td>
+          <td></td><td></td>
+          <td class="js-d-total">0.00</td>
+          <td></td>
+          <td>
+            <select class="tc-input js-d-rate">
+              <option value="NORMAL" selected>Normal</option>
+              <option value="RATE2">Rate2</option>
+              <option value="RATE3">Rate3</option>
+              <option value="OT">OT</option>
+            </select>
+          </td>
+          <td></td><td></td><td></td><td></td>
+          <td><input class="tc-input small js-d-hours" type="number" step="0.25" value="8"></td>
+          <td></td>
+          <td><input class="tc-input js-d-clinic" type="text" value="${esc(state.profile?.employee?.department || '')}"></td>
+          <td><input class="tc-input js-d-note" type="text" placeholder="Note"></td><td><button class="btn tc-action-btn js-d-save" type="button">Save</button></td>
+        `;
+      }
+      tbody.appendChild(tr);
+      const recalc = () => {
+        const d = tr.querySelector('.js-d-date')?.value || '';
+        const dayCell = tr.querySelector('.js-d-day');
+        if (dayCell) dayCell.textContent = dayShort(d);
+        if (mode === 'fromto') {
+          const h = calcFromToHours(
+            tr.querySelector('.js-d-in')?.value,
+            tr.querySelector('.js-d-out')?.value,
+            tr.querySelector('.js-d-break')?.value
+          );
+          const shown = Number.isFinite(h) ? h.toFixed(2) : '0.00';
+          const t1 = tr.querySelector('.js-d-total');
+          const t2 = tr.querySelector('.js-d-dayhours');
+          if (t1) t1.textContent = shown;
+          if (t2) t2.textContent = shown;
+        } else {
+          const h = Number(tr.querySelector('.js-d-hours')?.value || 0);
+          const shown = Number.isFinite(h) ? Math.max(0, h).toFixed(2) : '0.00';
+          const t1 = tr.querySelector('.js-d-total');
+          if (t1) t1.textContent = shown;
+        }
+      };
+      tr.addEventListener('input', recalc);
+      recalc();
+    }
+        async function saveDraftRow(tr, options = {}) {
+      const mode = String(tr?.dataset?.manualDraft || '');
+      if (!mode) return false;
+      const workDate = String(tr.querySelector('.js-d-date')?.value || '').trim();
+      if (!workDate) throw new Error('Date is required.');
+      let hours = 0;
+      let detail = '';
+      if (mode === 'fromto') {
+        const inTime = String(tr.querySelector('.js-d-in')?.value || '').trim();
+        const outTime = String(tr.querySelector('.js-d-out')?.value || '').trim();
+        const breakHrs = String(tr.querySelector('.js-d-break')?.value || '0').trim();
+        hours = calcFromToHours(inTime, outTime, breakHrs);
+        if (!Number.isFinite(hours) || hours <= 0) throw new Error('Invalid in/out/break values.');
+        detail = `IN ${inTime} OUT ${outTime} BREAK ${breakHrs}h`;
+      } else {
+        hours = Number(tr.querySelector('.js-d-hours')?.value || 0);
+        if (!Number.isFinite(hours) || hours <= 0) throw new Error('Hours must be greater than zero.');
+      }
+      const clinic = String(tr.querySelector('.js-d-clinic')?.value || '').trim();
+      const rateBand = String(tr.querySelector('.js-d-rate')?.value || 'NORMAL').trim().toUpperCase() || 'NORMAL';
+      const note = String(tr.querySelector('.js-d-note')?.value || '').trim();
+      const fullNote = [`Rate ${rateBand}`, detail, clinic ? `Clinic ${clinic}` : '', note].filter(Boolean).join(' | ');
+      const csvData = `emp_id,work_date,hours,hour_type,notes\n${empId},${workDate},${hours.toFixed(2)},WORK,"${fullNote.replace(/\"/g, '""')}"`;
+      const importRes = await api('/timesheets/payroll/timesheets/import-csv', {
+        method: 'POST',
+        body: JSON.stringify({ csv_data: csvData, import_source: 'MANUAL_TIMECARD' }),
+      });
+      const overlapCount = Number(importRes?.overlap_conflicts || 0);
+      if (overlapCount > 0) {
+        await resolvePendingOverlapConflicts();
+      } else {
+        try { tr.remove(); } catch {}
+      }
+      if (options.reload !== false) {
+        if (state.selectedPeriod) {
+          await openTimeCard(state.selectedPeriod.periodFrom, state.selectedPeriod.periodTo);
+        }
+        await loadProfile();
+      }
+      return true;
+    }
+    async function saveAllDraftRows(options = {}) {
+      const drafts = Array.from(document.querySelectorAll('#timeCardRows tr[data-manual-draft]'));
+      if (!drafts.length) return true;
+      for (const row of drafts) {
+        await saveDraftRow(row, { reload: false });
+      }
+      if (options.reload !== false) {
+        if (state.selectedPeriod) {
+          await openTimeCard(state.selectedPeriod.periodFrom, state.selectedPeriod.periodTo);
+        }
+        await loadProfile();
+      }
+      return true;
+    }
+    async function resolvePendingOverlapConflicts() {
+      const resp = await api('/timesheets/payroll/timesheets/overlap-conflicts?emp_id=' + encodeURIComponent(empId) + '&status=PENDING');
+      const conflicts = Array.isArray(resp?.conflicts) ? resp.conflicts : [];
+      for (const c of conflicts) {
+        const existing = ['Source: ' + (c.existing_source || '-'), 'Hours: ' + Number(c.existing_hours || 0).toFixed(2), 'Time: ' + ((c.existing_time_start && c.existing_time_end) ? (c.existing_time_start + ' - ' + c.existing_time_end) : 'n/a'), 'By: ' + (c.existing_imported_by || '-')].join(' | ');
+        const incoming = ['Source: ' + (c.incoming_source || '-'), 'Hours: ' + Number(c.incoming_hours || 0).toFixed(2), 'Time: ' + ((c.incoming_time_start && c.incoming_time_end) ? (c.incoming_time_start + ' - ' + c.incoming_time_end) : 'n/a'), 'By: ' + (c.incoming_imported_by || '-')].join(' | ');
+        const msg = 'Overlap conflict #' + c.id + ' on ' + fmtDate(c.work_date) + '\n' + 'Existing: ' + existing + '\n' + 'Incoming: ' + incoming + '\n' + 'Type: ' + (c.overlap_type || 'POTENTIAL') + '\n\n' + 'Choose action:\nE = Keep Existing\nI = Keep Incoming\nA = Add Hours\nM = Manual Hours';
+        let choice = String(prompt(msg, 'E') || '').trim().toUpperCase();
+        if (!choice) choice = 'E';
+        let action = 'KEEP_EXISTING';
+        const payload = {};
+        if (choice === 'I') action = 'KEEP_INCOMING';
+        if (choice === 'A') action = 'ADD_HOURS';
+        if (choice === 'M') {
+          action = 'EDIT';
+          const editVal = prompt('Enter final hours for this day:', String(Number(c.incoming_hours || c.existing_hours || 0)));
+          const hrs = Number(editVal);
+          if (!Number.isFinite(hrs) || hrs < 0) {
+            alert('Invalid hours. Keeping existing.');
+            action = 'KEEP_EXISTING';
+          } else {
+            payload.edited_hours = Number(hrs.toFixed(2));
+          }
+        }
+        payload.action = action;
+        payload.decision_note = 'Resolved from employee profile import flow';
+        await api('/timesheets/payroll/timesheets/overlap-conflicts/' + encodeURIComponent(c.id) + '/resolve', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+      }
+      if (conflicts.length && state.selectedPeriod) {
+        await openTimeCard(state.selectedPeriod.periodFrom, state.selectedPeriod.periodTo);
+        await loadProfile();
+      }
+      return conflicts.length;
+    }
+    function closeAllModals() { ['timeCardModalWrap','clockEventModalWrap','leaveModalWrap'].forEach((id)=>openModal(id,false)); }
+    async function init() {
+      if (!empId) { alert('Missing employee id'); return; }
+      await Promise.all([loadEmpList(), loadLeaveTypes()]);
+      await loadProfile();
+      el('timesheetPeriods').addEventListener('click', (e) => {
+        const deleteBtn = e.target.closest('.js-period-delete');
+        if (deleteBtn) {
+          const row = deleteBtn.closest('[data-pf][data-pt]');
+          if (row && row.dataset.canDelete === '1') {
+            deleteTimesheetPeriod(row.dataset.pf, row.dataset.pt).catch((err) => alert(err?.message || 'Failed to delete timesheet'));
+          }
+          return;
+        }
+        const editBtn = e.target.closest('.js-period-edit');
+        if (editBtn) {
+          const row = editBtn.closest('[data-pf][data-pt]');
+          if (row) openTimeCard(row.dataset.pf, row.dataset.pt).catch((err) => alert(err.message || 'Failed'));
+          return;
+        }
+        const row = e.target.closest('[data-pf][data-pt]');
+        if (!row) return;
+        openTimeCard(row.dataset.pf, row.dataset.pt).catch((err)=>alert(err.message||'Failed'));
+      });
+      el('timeCardRows').addEventListener('click', (e) => {
+        const saveBtn = e.target.closest('.js-d-save');
+        if (saveBtn) {
+          const row = saveBtn.closest('tr[data-manual-draft]');
+          if (row) saveDraftRow(row).catch((err) => alert(err?.message || 'Failed to save manual row'));
+          return;
+        }
+        const deleteBtn = e.target.closest('.js-row-delete');
+        if (deleteBtn) {
+          const tr = deleteBtn.closest('tr[data-ts-id]');
+          if (tr) deleteTimeCardRow(tr).catch((err) => alert(err?.message || 'Failed to delete timesheet row'));
+          return;
+        }
+        const editBtn = e.target.closest('.js-row-edit');
+        if (editBtn) {
+          const tr = editBtn.closest('tr[data-ts-id]');
+          if (tr && tr.dataset.editable === '1') openClockEditorFromRow(tr);
+          return;
+        }
+        const tr = e.target.closest('tr[data-ts-id]');
+        if (!tr || tr.dataset.editable !== '1') return;
+        openClockEditorFromRow(tr);
+      });
+      el('btnPrevEmp').onclick = () => navigateEmp(-1); el('btnNextEmp').onclick = () => navigateEmp(1); el('btnTcPrevEmp').onclick = () => navigateEmp(-1); el('btnTcNextEmp').onclick = () => navigateEmp(1);
+      el('btnPrevYear').onclick = async () => { state.year = clampYear(state.year - 1); await loadProfile(); };
+      el('btnNextYear').onclick = async () => {
+        if (state.year >= CURRENT_YEAR) { refreshYearControls(); return; }
+        state.year = clampYear(state.year + 1);
+        await loadProfile();
+      };
+      el('yearInput').onchange = async () => { state.year = clampYear(el('yearInput').value); await loadProfile(); };
+      el('btnBackHub').onclick = () => window.location.href = `../app-hub.html?api_origin=${encodeURIComponent(API_ORIGIN)}`;
+      el('btnSignOut').onclick = () => { localStorage.removeItem(AUTH_STORAGE_KEY); window.location.href = `../login.html?api_origin=${encodeURIComponent(API_ORIGIN)}`; };
+      el('btnImportOD').onclick = async () => withSelectedPeriod(async (period) => {
+        try {
+          const payload = {
+            start_date: period.periodFrom,
+            end_date: period.periodTo,
+            employee_ids: [Number(empId)],
+          };
+          const stage = await api('/timesheets/payroll/timesheets/stage-opendental', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          });
+          const result = await api('/timesheets/payroll/timesheets/import-opendental', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          });
+          await Promise.all([
+            loadProfile(),
+            openTimeCard(period.periodFrom, period.periodTo),
+          ]);
+          const stagedFromOd = Number(stage?.stage?.total_events || 0);
+          const totals = result?.totals || {};
+          const staged = Number(totals.staged_events || 0);
+          const inserted = Number(totals.inserted || 0);
+          const updated = Number(totals.updated || 0);
+          const skipped = Number(totals.skipped || 0);
+          const reconciliations = Number(totals.reconciliations || 0);
+          const overlapConflicts = Number(totals.overlap_conflicts || 0);
+          if (overlapConflicts > 0) {
+            await resolvePendingOverlapConflicts();
+          }
+          if (staged <= 0) {
+            alert('OpenDental sync staged ' + stagedFromOd + ' events, but payroll import found 0 events for this employee/period.');
+          } else {
+            alert('OpenDental import completed. OD staged: ' + stagedFromOd + ', payroll events: ' + staged + ', inserted: ' + inserted + ', updated: ' + updated + ', skipped: ' + skipped + ', reconciliations: ' + reconciliations + ', overlap conflicts: ' + overlapConflicts + '.');
+          }
+        } catch (err) {
+          alert(err?.message || 'OpenDental import failed.');
+        }
+      });
+      el('btnImportCSV').onclick = () => withSelectedPeriod(async () => {
+        const input = el('csvFileInput');
+        if (input) input.click();
+      });
+      el('csvFileInput').onchange = async (event) => {
+        try {
+          const file = event?.target?.files?.[0];
+          if (!file) return;
+          const text = await file.text();
+          await importCsvText(text);
+        } catch (err) {
+          alert(err?.message || 'CSV import failed.');
+        } finally {
+          const input = el('csvFileInput');
+          if (input) input.value = '';
+        }
+      };
+      el('btnManualInput').onclick = async () => withSelectedPeriod(async (period) => {
+        await openTimeCard(period.periodFrom, period.periodTo);
+      });
+      el('btnLeavePanel').onclick = () => { el('leaveRows').innerHTML = ''; addLeaveRow(); openModal('leaveModalWrap', true); };
+      el('btnLeaveNext').onclick = () => addLeaveRow();
+      el('btnLeaveAddTimesheet').onclick = () => alert('Leave entries will be inserted to timesheets and audited. OpenDental sync hook to be connected.');
+      el('btnTcAddFromTo').onclick = () => appendManualDraftRow('fromto');
+      el('btnTcAddHour').onclick = () => appendManualDraftRow('hour');
+      el('btnTcLeavePanel').onclick = () => el('btnLeavePanel').click();
+      const closeTimeCardWithAutoSave = async () => {
+        try {
+          await saveAllDraftRows({ reload: true });
+          openModal('timeCardModalWrap', false);
+        } catch (err) {
+          alert(err?.message || 'Failed to save manual row');
+        }
+      };
+      el('btnTcClose').onclick = () => closeTimeCardWithAutoSave();
+      el('btnCloseTimeCard').onclick = () => closeTimeCardWithAutoSave();
+      el('btnCloseClockEdit').onclick = () => openModal('clockEventModalWrap', false); el('btnClockCancel').onclick = () => openModal('clockEventModalWrap', false);
+      el('btnCloseLeave').onclick = () => openModal('leaveModalWrap', false);
+      el('btnClosePeriodPicker').onclick = () => openModal('periodPickerModalWrap', false);
+      el('btnCancelPeriodPicker').onclick = () => openModal('periodPickerModalWrap', false);
+      el('btnApplyPeriodPicker').onclick = () => applyPeriodPicker().catch((err) => alert(err?.message || 'Failed to apply period'));
+      el('btnCloseOdApi').onclick = () => openModal('odApiModalWrap', false);
+      el('btnCancelOdApi').onclick = () => openModal('odApiModalWrap', false);
+      el('btnSaveOdApi').onclick = () => {
+        const url = String(el('odApiUrlInput')?.value || '').trim();
+        const key = String(el('odApiKeyInput')?.value || '').trim();
+        if (!url || !key) { alert('Please enter API URL and API Key.'); return; }
+        localStorage.setItem('payroll.opendental.api_url', url);
+        localStorage.setItem('payroll.opendental.api_key', key);
+        openModal('odApiModalWrap', false);
+      };
+      el('btnPeriodCurrentMonth').onclick = () => {
+        const m = currentMonthToToday();
+        if (el('periodFromInput')) el('periodFromInput').value = m.from;
+        if (el('periodToInput')) el('periodToInput').value = m.to;
+      };
+      el('btnPeriodPreviousMonth').onclick = () => {
+        const m = monthBoundaries(-1);
+        if (el('periodFromInput')) el('periodFromInput').value = m.from;
+        if (el('periodToInput')) el('periodToInput').value = m.to;
+      };
+      el('btnClockInNow').onclick = () => { const now = new Date().toISOString().slice(0, 16).replace('T', ' '); el('clockInDisplayed').value = now; };
+      el('btnClockOutNow').onclick = () => { const now = new Date().toISOString().slice(0, 16).replace('T', ' '); el('clockOutDisplayed').value = now; };
+      el('btnClockOutClear').onclick = () => { el('clockOutDisplayed').value = ''; };
+      el('btnClockDelete').onclick = async () => { if (!state.clockEditRow || state.clockEditRow.dataset.deletable !== '1') return; await deleteTimeCardRow(state.clockEditRow); };
+      el('btnClockOk').onclick = async () => { const id = Number(state.clockEditRow?.dataset?.tsId || 0); if (!id || state.clockEditRow?.dataset?.editable !== '1') return; const notes = el('clockNotes').value || null; await api(`/timesheets/payroll/timesheets/${id}`, { method: 'PATCH', body: JSON.stringify({ notes }) }); openModal('clockEventModalWrap', false); if (state.selectedPeriod) await openTimeCard(state.selectedPeriod.periodFrom, state.selectedPeriod.periodTo); await loadProfile(); };
+    }
+    refreshYearControls();
+    init().catch((err) => alert(err.message || 'Failed to load profile'));
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+

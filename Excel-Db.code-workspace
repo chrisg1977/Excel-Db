@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "M:/"
+		}
+	],
+	"settings": {
+		"chat.tools.terminal.autoApprove": {
+			"docker compose": true
+		},
+		"python-envs.defaultEnvManager": "ms-python.python:system",
+		"powershell.cwd": "Excel-Db"
+	}
+}

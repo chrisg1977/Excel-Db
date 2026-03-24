@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EOS Workspace</title>
+  <link rel="icon" type="image/png" href="/dashboard/assets/logos/database-logo.png" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #2E5090;
+      --green: #2D8659;
+      --ink: #162033;
+      --muted: #5a6a80;
+      --line: #d9e1ee;
+      --surface: #ffffff;
+      --surface-soft: #f6f8fc;
+      --surface-accent: #eaf3ff;
+      --error-bg: #fff1f3;
+      --error-line: #ffcad1;
+      --error-text: #8d2032;
+      --info-bg: #ecf8f1;
+      --info-line: #b9e4c9;
+      --info-text: #1e6a41;
+      --shadow: 0 14px 36px rgba(20, 33, 61, 0.12);
+      --radius: 14px;
+      --font: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+    }
+    html, body {
+      min-height: 100%;
+      background: linear-gradient(180deg, #f2f6fd 0%, #f8fafc 52%, #f3f6fb 100%);
+      color: var(--ink);
+      font-family: var(--font);
+      font-size: 16px;
+    }
+    .hidden { display: none !important; }
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(234, 243, 255, 0.96);
+      border-bottom: 1px solid rgba(46, 80, 144, 0.14);
+      box-shadow: 0 8px 24px rgba(24, 40, 72, 0.08);
+    }
+    .app-header-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      min-height: 72px;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .header-left, .header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .header-center { display: flex; align-items: center; justify-content: center; flex: 1 1 auto; min-width: 180px; }
+    .logo-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(46, 80, 144, 0.16);
+      background: rgba(255, 255, 255, 0.92);
+    }
+    .group-logo { max-width: 210px; max-height: 42px; object-fit: contain; }
+    .mcorez-logo { max-width: 180px; max-height: 54px; object-fit: contain; }
+    .user-info { text-align: right; }
+    .user-name { font-size: 14px; font-weight: 700; }
+    .user-role { font-size: 12px; color: var(--muted); }
+    .save-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      min-height: 38px;
+      border-radius: 999px;
+      border: 1px solid rgba(46, 80, 144, 0.14);
+      background: rgba(255, 255, 255, 0.92);
+      color: #2f3d53;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .save-status img { max-width: 22px; max-height: 22px; object-fit: contain; }
+    .btn, .btn-inline, .btn-icon {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: var(--blue);
+      color: #ffffff;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 700;
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+    .btn:hover, .btn-inline:hover, .btn-icon:hover { filter: brightness(0.97); transform: translateY(-1px); }
+    .btn:disabled, .btn-inline:disabled, .btn-icon:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn { padding: 10px 14px; font-size: 14px; }
+    .btn.alt, .btn-icon {
+      background: var(--surface);
+      color: var(--blue);
+      border-color: rgba(46, 80, 144, 0.18);
+    }
+    .btn-inline { padding: 8px 10px; font-size: 12px; }
+    .btn-icon { width: 40px; height: 40px; }
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px 20px 0;
+      display: grid;
+      gap: 16px;
+    }
+    .panel, .message, .stat-card {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(46, 80, 144, 0.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .panel { padding: 20px; display: grid; gap: 16px; }
+    .hero { display: grid; gap: 12px; }
+    .hero h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.05; }
+    .hero p { color: var(--muted); line-height: 1.6; max-width: 68ch; }
+    .hero-actions, .panel-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .stat-card { padding: 16px 18px; }
+    .stat-label { font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    .stat-value { font-size: 20px; font-weight: 800; word-break: break-word; }
+    .message { padding: 14px 16px; line-height: 1.6; font-size: 14px; }
+    .message.error { background: var(--error-bg); border-color: var(--error-line); color: var(--error-text); }
+    .message.info { background: var(--info-bg); border-color: var(--info-line); color: var(--info-text); }
+    .section-block {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 16px;
+      background: var(--surface-soft);
+      border: 1px solid rgba(46, 80, 144, 0.08);
+    }
+    .panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; }
+    .panel-head p, .muted { color: var(--muted); line-height: 1.55; }
+    .grid { display: grid; gap: 12px; }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    label { display: grid; gap: 6px; font-size: 12px; font-weight: 800; color: #34425c; text-transform: uppercase; }
+    input, textarea {
+      width: 100%;
+      border: 1px solid rgba(46, 80, 144, 0.18);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #ffffff;
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 14px;
+    }
+    textarea { min-height: 82px; resize: vertical; }
+    .table-wrap {
+      overflow: auto;
+      border-radius: 14px;
+      border: 1px solid rgba(46, 80, 144, 0.10);
+      background: #ffffff;
+      max-height: 460px;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 960px; font-size: 13px; }
+    th, td { border-bottom: 1px solid #e8edf6; padding: 10px 12px; text-align: left; vertical-align: top; }
+    th { position: sticky; top: 0; background: #f5f8fd; color: #2b4068; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+    td input, td textarea { min-width: 110px; padding: 8px 10px; font-size: 13px; }
+    td pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-family: Consolas, monospace; font-size: 12px; }
+    .footer { max-width: 1280px; margin: 24px auto 0; padding: 0 20px; color: var(--muted); font-size: 12px; text-align: center; }
+    @media (max-width: 980px) {
+      .stats, .grid.two, .grid.three { grid-template-columns: 1fr; }
+      .app-header-inner { justify-content: center; }
+      .header-center { order: -1; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const view = String(params.get('view') || 'overview').trim().toLowerCase();
+      document.body.setAttribute('data-app-id', view === 'receipt-books' ? 'receipt-books' : 'eos');
+    })();
+  </script>
+
+  <header class="app-header">
+    <div class="app-header-inner">
+      <div class="header-left">
+        <div class="logo-pill"><img class="group-logo" src="assets/logos/group-logo.png" alt="Mediatrix Group" /></div>
+        <button class="btn-icon" id="btnBack" type="button">Home</button>
+      </div>
+      <div class="header-center">
+        <div class="logo-pill"><img class="mcorez-logo" src="assets/logos/database-logo.png" alt="M-CoreZ" /></div>
+      </div>
+      <div class="header-right">
+        <div class="save-status"><img src="assets/logos/2.png" alt="EOS" /><span id="saveStatusText">EOS frontend ready</span></div>
+        <div class="user-info">
+          <div class="user-name" id="userName">Resolving user...</div>
+          <div class="user-role" id="userRole">Connecting</div>
+        </div>
+        <button class="btn alt" id="btnSignOut" type="button">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel hero">
+      <h1>End of Service frontend is now live.</h1>
+      <p>
+        This is the AppHub-facing EOS page. It uses the existing authenticated Receipt Books APIs so the EOS launcher
+        and the new Receipt Books launcher both resolve to a working frontend.
+      </p>
+      <div class="hero-actions">
+        <button class="btn" id="btnJumpReceiptBooks" type="button">Open Receipt Books</button>
+        <button class="btn alt" id="btnRefreshAll" type="button">Refresh Data</button>
+      </div>
+    </section>
+
+    <section class="stats">
+      <article class="stat-card">
+        <div class="stat-label">View</div>
+        <div class="stat-value" id="activeView">Overview</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-label">Access Scope</div>
+        <div class="stat-value" id="accessScope">Resolving...</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-label">API Origin</div>
+        <div class="stat-value" id="apiOriginLabel">Connecting...</div>
+      </article>
+    </section>
+
+    <section class="message error hidden" id="errorBanner"></section>
+    <section class="message info hidden" id="infoBanner"></section>
+
+    <section class="panel" id="receiptBooksSection">
+      <div class="panel-head">
+        <div>
+          <h2>Receipt Books</h2>
+          <p>Static EOS frontend backed by the existing `/receipt-books/*` endpoints.</p>
+        </div>
+        <div class="panel-actions">
+          <button class="btn alt" id="btnRefreshEntries" type="button" data-disable-when-busy>Refresh Entries</button>
+          <button class="btn alt hidden" id="btnRefreshManagerReport" type="button" data-disable-when-busy>Refresh Manager Report</button>
+          <button class="btn alt hidden" id="btnRefreshAdminReport" type="button" data-disable-when-busy>Refresh Admin Report</button>
+        </div>
+      </div>
+
+      <section class="section-block">
+        <h3>New Entry</h3>
+        <div class="grid two">
+          <label>Entry Date<input id="entryDate" type="date" /></label>
+          <label>Clinic<input id="clinicCode" type="text" placeholder="MDCZ" /></label>
+        </div>
+        <div class="grid two">
+          <label>Identifier<input id="identifier" type="text" placeholder="green / deposit / other" /></label>
+          <label>Total Amount<input id="totalAmount" type="number" min="0" step="0.01" /></label>
+        </div>
+        <div class="grid two">
+          <label>First Receipt Number<input id="firstReceiptNumber" type="text" /></label>
+          <label>First Receipt Date<input id="firstReceiptDate" type="date" /></label>
+        </div>
+        <div class="grid two">
+          <label>Last Receipt Number<input id="lastReceiptNumber" type="text" /></label>
+          <label>Last Receipt Date<input id="lastReceiptDate" type="date" /></label>
+        </div>
+        <label>Notes<textarea id="notes"></textarea></label>
+        <div class="panel-actions">
+          <button class="btn" id="btnCreateEntry" type="button" data-disable-when-busy>Save Entry</button>
+          <button class="btn" id="btnGenerateSplitRows" type="button" data-disable-when-busy>Generate Monthly Drafts</button>
+        </div>
+      </section>
+
+      <section class="section-block hidden" id="splitRowsPanel">
+        <div class="panel-head">
+          <div>
+            <h3>Month Split Helper</h3>
+            <p>Generated drafts stay client-side until you save them.</p>
+          </div>
+          <div class="panel-actions">
+            <button class="btn" id="btnSaveSplitRows" type="button" data-disable-when-busy>Save Split Rows</button>
+            <button class="btn alt" id="btnClearSplitRows" type="button" data-disable-when-busy>Clear Drafts</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Entry Date</th><th>Clinic</th><th>Identifier</th><th>First #</th><th>First Date</th>
+                <th>Last #</th><th>Last Date</th><th>Total</th><th>Notes</th><th>Remove</th>
+              </tr>
+            </thead>
+            <tbody id="splitRowsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <h3>Entries</h3>
+        <div class="grid three">
+          <label>Month From<input id="monthFrom" type="month" /></label>
+          <label>Month To<input id="monthTo" type="month" /></label>
+          <label>Clinic<input id="filterClinicCode" type="text" placeholder="optional" /></label>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th><th>Entry Date</th><th>Clinic</th><th>Identifier</th><th>Bucket</th><th>First #</th>
+                <th>First Date</th><th>Last #</th><th>Last Date</th><th>Total</th><th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="entriesBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section-block hidden" id="managerReportPanel">
+        <h3>Manager Report</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Month</th><th>Clinic</th><th>Bucket</th><th>Entries</th><th>Total</th></tr></thead>
+            <tbody id="managerReportBody"></tbody>
+          </table>
+        </div>
+        <p class="muted" id="managerReportTotal">Selected range total: EUR0.00</p>
+      </section>
+
+      <section class="section-block hidden" id="adminReportPanel">
+        <h3>Admin Report</h3>
+        <div class="grid two"><label>Year<input id="adminYear" type="number" min="2020" max="2100" /></label></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Year</th><th>Month</th><th>Clinic</th><th>Bucket</th><th>Entries</th><th>Total</th></tr></thead>
+            <tbody id="adminReportBody"></tbody>
+          </table>
+        </div>
+        <p class="muted" id="adminReportDelta">Delta: EUR0.00</p>
+      </section>
+
+      <section class="section-block hidden" id="auditPanel">
+        <h3>Audit</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>When</th><th>Action</th><th>Actor</th><th>Old</th><th>New</th></tr></thead>
+            <tbody id="auditBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div class="footer">EOS frontend and Receipt Books launcher for AppHub.</div>
+  <script src="assets/js/usage-tracker.js"></script>
+  <script>
+    const API_ORIGIN_STORAGE_KEY = 'empinfo.api_origin.v1';
+    const AUTH_STORAGE_KEY = 'empinfo.auth.v1';
+    const VIEW_PARAM = String(new URLSearchParams(window.location.search).get('view') || 'overview').trim().toLowerCase();
+    const DEFAULT_API_ORIGIN = window.location.port === '8055'
+      ? window.location.origin
+      : `${window.location.protocol}//${window.location.hostname}:8055`;
+
+    function normalizeApiOrigin(origin) {
+      return String(origin || '').trim().replace(/\/$/, '');
+    }
+
+    function readStoredApiOrigin() {
+      try {
+        return normalizeApiOrigin(localStorage.getItem(API_ORIGIN_STORAGE_KEY));
+      } catch {
+        return '';
+      }
+    }
+
+    function persistApiOrigin(origin) {
+      const normalized = normalizeApiOrigin(origin);
+      if (!normalized) return normalized;
+      try {
+        localStorage.setItem(API_ORIGIN_STORAGE_KEY, normalized);
+      } catch {}
+      return normalized;
+    }
+
+    function getApiOrigin() {
+      const params = new URLSearchParams(window.location.search);
+      return (
+        normalizeApiOrigin(params.get('api_origin')) ||
+        readStoredApiOrigin() ||
+        normalizeApiOrigin(DEFAULT_API_ORIGIN)
+      );
+    }
+
+    let ACTIVE_API_ORIGIN = persistApiOrigin(getApiOrigin()) || normalizeApiOrigin(DEFAULT_API_ORIGIN);
+
+    function getAuthToken() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || '{}');
+        return stored?.access_token || '';
+      } catch {
+        return '';
+      }
+    }
+
+    function clearAuth() {
+      try {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+      } catch {}
+    }
+
+    function redirectToLogin(reason) {
+      const suffix = reason ? `&reason=${encodeURIComponent(reason)}` : '';
+      window.location.href = `./login.html?api_origin=${encodeURIComponent(ACTIVE_API_ORIGIN)}${suffix}`;
+    }
+
+    const state = {
+      busy: false,
+      access: {
+        scope: 'user',
+        can_input: true,
+        can_view_reports: false,
+        can_view_admin_reports: false,
+        manager_edit_window_days: 7
+      },
+      entries: [],
+      managerReport: { grouped: [], totals: {} },
+      adminReport: { grouped: [], totals: {} },
+      auditRows: [],
+      splitRows: []
+    };
+
+    const refs = {
+      userName: document.getElementById('userName'),
+      userRole: document.getElementById('userRole'),
+      saveStatusText: document.getElementById('saveStatusText'),
+      activeView: document.getElementById('activeView'),
+      accessScope: document.getElementById('accessScope'),
+      apiOriginLabel: document.getElementById('apiOriginLabel'),
+      errorBanner: document.getElementById('errorBanner'),
+      infoBanner: document.getElementById('infoBanner'),
+      receiptBooksSection: document.getElementById('receiptBooksSection'),
+      managerReportPanel: document.getElementById('managerReportPanel'),
+      adminReportPanel: document.getElementById('adminReportPanel'),
+      auditPanel: document.getElementById('auditPanel'),
+      splitRowsPanel: document.getElementById('splitRowsPanel'),
+      entryDate: document.getElementById('entryDate'),
+      clinicCode: document.getElementById('clinicCode'),
+      identifier: document.getElementById('identifier'),
+      totalAmount: document.getElementById('totalAmount'),
+      firstReceiptNumber: document.getElementById('firstReceiptNumber'),
+      firstReceiptDate: document.getElementById('firstReceiptDate'),
+      lastReceiptNumber: document.getElementById('lastReceiptNumber'),
+      lastReceiptDate: document.getElementById('lastReceiptDate'),
+      notes: document.getElementById('notes'),
+      monthFrom: document.getElementById('monthFrom'),
+      monthTo: document.getElementById('monthTo'),
+      filterClinicCode: document.getElementById('filterClinicCode'),
+      adminYear: document.getElementById('adminYear'),
+      entriesBody: document.getElementById('entriesBody'),
+      splitRowsBody: document.getElementById('splitRowsBody'),
+      managerReportBody: document.getElementById('managerReportBody'),
+      adminReportBody: document.getElementById('adminReportBody'),
+      auditBody: document.getElementById('auditBody'),
+      managerReportTotal: document.getElementById('managerReportTotal'),
+      adminReportDelta: document.getElementById('adminReportDelta'),
+      btnBack: document.getElementById('btnBack'),
+      btnSignOut: document.getElementById('btnSignOut'),
+      btnJumpReceiptBooks: document.getElementById('btnJumpReceiptBooks'),
+      btnRefreshAll: document.getElementById('btnRefreshAll'),
+      btnRefreshEntries: document.getElementById('btnRefreshEntries'),
+      btnRefreshManagerReport: document.getElementById('btnRefreshManagerReport'),
+      btnRefreshAdminReport: document.getElementById('btnRefreshAdminReport'),
+      btnCreateEntry: document.getElementById('btnCreateEntry'),
+      btnGenerateSplitRows: document.getElementById('btnGenerateSplitRows'),
+      btnSaveSplitRows: document.getElementById('btnSaveSplitRows'),
+      btnClearSplitRows: document.getElementById('btnClearSplitRows')
+    };
+
+    function asCurrency(value) {
+      return `EUR${Number(value || 0).toFixed(2)}`;
+    }
+
+    function pretty(value) {
+      return JSON.stringify(value ?? null, null, 2);
+    }
+
+    function setBusy(value) {
+      state.busy = Boolean(value);
+      refs.saveStatusText.textContent = state.busy ? 'Working...' : 'EOS frontend ready';
+      document.querySelectorAll('[data-disable-when-busy]').forEach((button) => {
+        button.disabled = state.busy;
+      });
+    }
+
+    function showError(message) {
+      refs.errorBanner.textContent = String(message || '').trim();
+      refs.errorBanner.classList.toggle('hidden', !refs.errorBanner.textContent);
+    }
+
+    function showInfo(message) {
+      refs.infoBanner.textContent = String(message || '').trim();
+      refs.infoBanner.classList.toggle('hidden', !refs.infoBanner.textContent);
+    }
+
+    function clearMessages() {
+      showError('');
+      showInfo('');
+    }
+
+    function getHeaders() {
+      const token = getAuthToken();
+      if (!token) {
+        redirectToLogin('missing_token');
+        throw new Error('Authentication required');
+      }
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+    }
+
+    async function api(path, method = 'GET', body) {
+      const response = await fetch(`${ACTIVE_API_ORIGIN}${path}`, {
+        method,
+        headers: getHeaders(),
+        body: body ? JSON.stringify(body) : undefined
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        clearAuth();
+        redirectToLogin('expired_token');
+        throw new Error('Authentication required');
+      }
+      if (!response.ok) {
+        throw new Error(data?.error || data?.details || `${response.status}`);
+      }
+      return data;
+    }
+
+    function getFilters() {
+      return {
+        month_from: String(refs.monthFrom.value || '').trim(),
+        month_to: String(refs.monthTo.value || '').trim(),
+        clinic_code: String(refs.filterClinicCode.value || '').trim().toUpperCase()
+      };
+    }
+
+    function canEditRow(row) {
+      if (state.access.scope === 'admin') return true;
+      if (state.access.scope !== 'manager') return false;
+      const created = new Date(row.created_at || '').getTime();
+      if (!Number.isFinite(created)) return false;
+      const ageDays = (Date.now() - created) / (1000 * 60 * 60 * 24);
+      return ageDays <= Number(state.access.manager_edit_window_days || 7);
+    }
+
+    function renderEntries() {
+      if (!state.entries.length) {
+        refs.entriesBody.innerHTML = '<tr><td colspan="11" class="muted">No entries found for the selected filters.</td></tr>';
+        return;
+      }
+
+      refs.entriesBody.innerHTML = state.entries.map((row) => {
+        const editable = canEditRow(row);
+        const identifierCell = editable
+          ? `<input id="entry-identifier-${row.id}" type="text" value="${String(row.identifier || '').replace(/"/g, '&quot;')}" />`
+          : `<span>${String(row.identifier || '')}</span>`;
+        const totalCell = editable
+          ? `<input id="entry-total-${row.id}" type="number" min="0" step="0.01" value="${Number(row.total_amount || 0).toFixed(2)}" />`
+          : `<span>${asCurrency(row.total_amount)}</span>`;
+        const actionButtons = [
+          editable ? `<button class="btn-inline" type="button" data-row-action="save" data-row-id="${row.id}">Save</button>` : '',
+          state.access.scope !== 'user' ? `<button class="btn-inline" type="button" data-row-action="audit" data-row-id="${row.id}">Audit</button>` : ''
+        ].filter(Boolean).join(' ');
+
+        return `
+          <tr>
+            <td>${row.id}</td>
+            <td>${row.entry_date || ''}</td>
+            <td>${row.clinic_code || ''}</td>
+            <td>${identifierCell}</td>
+            <td>${row.identifier_bucket || ''}</td>
+            <td>${row.first_receipt_number || ''}</td>
+            <td>${row.first_receipt_date || ''}</td>
+            <td>${row.last_receipt_number || ''}</td>
+            <td>${row.last_receipt_date || ''}</td>
+            <td>${totalCell}</td>
+            <td>${actionButtons || '<span class="muted">-</span>'}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderSplitRows() {
+      refs.splitRowsPanel.classList.toggle('hidden', state.splitRows.length === 0);
+      refs.splitRowsBody.innerHTML = state.splitRows.map((row, index) => `
+        <tr>
+          <td><input type="date" data-split-index="${index}" data-field="entry_date" value="${row.entry_date || ''}" /></td>
+          <td><input type="text" data-split-index="${index}" data-field="clinic_code" value="${String(row.clinic_code || '').replace(/"/g, '&quot;')}" /></td>
+          <td><input type="text" data-split-index="${index}" data-field="identifier" value="${String(row.identifier || '').replace(/"/g, '&quot;')}" /></td>
+          <td><input type="text" data-split-index="${index}" data-field="first_receipt_number" value="${String(row.first_receipt_number || '').replace(/"/g, '&quot;')}" /></td>
+          <td><input type="date" data-split-index="${index}" data-field="first_receipt_date" value="${row.first_receipt_date || ''}" /></td>
+          <td><input type="text" data-split-index="${index}" data-field="last_receipt_number" value="${String(row.last_receipt_number || '').replace(/"/g, '&quot;')}" /></td>
+          <td><input type="date" data-split-index="${index}" data-field="last_receipt_date" value="${row.last_receipt_date || ''}" /></td>
+          <td><input type="number" min="0" step="0.01" data-split-index="${index}" data-field="total_amount" value="${Number(row.total_amount || 0).toFixed(2)}" /></td>
+          <td><textarea data-split-index="${index}" data-field="notes">${row.notes || ''}</textarea></td>
+          <td><button class="btn-inline" type="button" data-split-remove="${index}">Remove</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function renderManagerReport() {
+      const rows = Array.isArray(state.managerReport.grouped) ? state.managerReport.grouped : [];
+      refs.managerReportBody.innerHTML = rows.length
+        ? rows.map((row) => `
+            <tr>
+              <td>${row.month_key || ''}</td>
+              <td>${row.clinic_code || ''}</td>
+              <td>${row.identifier_bucket || ''}</td>
+              <td>${row.entry_count || 0}</td>
+              <td>${asCurrency(row.total_amount)}</td>
+            </tr>
+          `).join('')
+        : '<tr><td colspan="5" class="muted">No manager report rows available.</td></tr>';
+      refs.managerReportTotal.textContent = `Selected range total: ${asCurrency(state.managerReport?.totals?.selected_range_total || 0)}`;
+    }
+
+    function renderAdminReport() {
+      const rows = Array.isArray(state.adminReport.grouped) ? state.adminReport.grouped : [];
+      refs.adminReportBody.innerHTML = rows.length
+        ? rows.map((row) => `
+            <tr>
+              <td>${row.year || ''}</td>
+              <td>${row.month_key || ''}</td>
+              <td>${row.clinic_code || ''}</td>
+              <td>${row.identifier_bucket || ''}</td>
+              <td>${row.entry_count || 0}</td>
+              <td>${asCurrency(row.total_amount)}</td>
+            </tr>
+          `).join('')
+        : '<tr><td colspan="6" class="muted">No admin report rows available.</td></tr>';
+      const comparison = state.adminReport?.totals?.comparison || {};
+      refs.adminReportDelta.textContent = `Delta ${comparison.previous_year || ''} -> ${comparison.current_year || ''}: ${asCurrency(comparison.delta || 0)}`;
+    }
+
+    function renderAudit() {
+      refs.auditPanel.classList.toggle('hidden', state.auditRows.length === 0);
+      refs.auditBody.innerHTML = state.auditRows.map((row) => `
+        <tr>
+          <td>${row.changed_at || ''}</td>
+          <td>${row.action || ''}</td>
+          <td>${row.actor_email || row.actor_user_id || ''}</td>
+          <td><pre>${pretty(row.old_values_json)}</pre></td>
+          <td><pre>${pretty(row.new_values_json)}</pre></td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadCurrentUser() {
+      const payload = await api('/users/me?fields=first_name,email,role.name');
+      const user = payload?.data || {};
+      refs.userName.textContent = user.first_name || user.email || 'Authenticated user';
+      refs.userRole.textContent = user?.role?.name || 'User';
+    }
+
+    async function loadAccess() {
+      const payload = await api('/receipt-books/access');
+      Object.assign(state.access, payload?.access || {});
+      refs.accessScope.textContent = state.access.scope || 'user';
+      refs.managerReportPanel.classList.toggle('hidden', !state.access.can_view_reports);
+      refs.adminReportPanel.classList.toggle('hidden', !state.access.can_view_admin_reports);
+      refs.btnRefreshManagerReport.classList.toggle('hidden', !state.access.can_view_reports);
+      refs.btnRefreshAdminReport.classList.toggle('hidden', !state.access.can_view_admin_reports);
+    }
+
+    async function loadEntries() {
+      const payload = await api(`/receipt-books/entries?${new URLSearchParams(getFilters()).toString()}`);
+      state.entries = Array.isArray(payload.entries) ? payload.entries : [];
+      renderEntries();
+    }
+
+    async function loadManagerReport() {
+      if (!state.access.can_view_reports) return;
+      const payload = await api(`/receipt-books/reports/manager?${new URLSearchParams(getFilters()).toString()}`);
+      state.managerReport = payload || { grouped: [], totals: {} };
+      renderManagerReport();
+    }
+
+    async function loadAdminReport() {
+      if (!state.access.can_view_admin_reports) return;
+      const query = new URLSearchParams({
+        year: String(refs.adminYear.value || new Date().getFullYear()),
+        clinic_code: String(refs.filterClinicCode.value || '').trim().toUpperCase()
+      });
+      const payload = await api(`/receipt-books/reports/admin?${query.toString()}`);
+      state.adminReport = payload || { grouped: [], totals: {} };
+      renderAdminReport();
+    }
+
+    async function viewAudit(entryId) {
+      const payload = await api(`/receipt-books/audit/${entryId}`);
+      state.auditRows = Array.isArray(payload.audit) ? payload.audit : [];
+      renderAudit();
+      refs.auditPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function getFormPayload() {
+      return {
+        entry_date: refs.entryDate.value,
+        clinic_code: refs.clinicCode.value.trim().toUpperCase(),
+        identifier: refs.identifier.value.trim(),
+        first_receipt_number: refs.firstReceiptNumber.value.trim(),
+        first_receipt_date: refs.firstReceiptDate.value,
+        last_receipt_number: refs.lastReceiptNumber.value.trim(),
+        last_receipt_date: refs.lastReceiptDate.value,
+        total_amount: Number(refs.totalAmount.value || 0),
+        notes: refs.notes.value.trim()
+      };
+    }
+
+    async function createEntry() {
+      clearMessages();
+      setBusy(true);
+      try {
+        await api('/receipt-books/entries', 'POST', getFormPayload());
+        showInfo('Entry saved.');
+        await loadEntries();
+        await loadManagerReport();
+        await loadAdminReport();
+      } catch (error) {
+        showError(error instanceof Error ? error.message : 'Save failed');
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function monthStart(date) { return new Date(date.getFullYear(), date.getMonth(), 1); }
+    function monthEnd(date) { return new Date(date.getFullYear(), date.getMonth() + 1, 0); }
+    function toDateInput(date) { return date.toISOString().slice(0, 10); }
+
+    function generateSplitRows() {
+      clearMessages();
+      const start = new Date(refs.firstReceiptDate.value || '');
+      const end = new Date(refs.lastReceiptDate.value || '');
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+        showError('First and last receipt dates are required to generate split rows.');
+        return;
+      }
+      if (end < start) {
+        showError('Last receipt date must be greater than or equal to first receipt date.');
+        return;
+      }
+
+      const drafts = [];
+      let cursor = monthStart(start);
+      let index = 0;
+      while (cursor <= end) {
+        const segmentStart = new Date(Math.max(monthStart(cursor).getTime(), start.getTime()));
+        const segmentEnd = new Date(Math.min(monthEnd(cursor).getTime(), end.getTime()));
+        drafts.push({
+          entry_date: toDateInput(segmentStart),
+          clinic_code: refs.clinicCode.value.trim().toUpperCase(),
+          identifier: refs.identifier.value.trim(),
+          first_receipt_number: index === 0 ? refs.firstReceiptNumber.value.trim() : '',
+          first_receipt_date: toDateInput(segmentStart),
+          last_receipt_number: segmentEnd.getTime() === end.getTime() ? refs.lastReceiptNumber.value.trim() : '',
+          last_receipt_date: toDateInput(segmentEnd),
+          total_amount: 0,
+          notes: `Split from ${refs.firstReceiptDate.value} to ${refs.lastReceiptDate.value}`
+        });
+        cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+        index += 1;
+      }
+      state.splitRows = drafts;
+      renderSplitRows();
+      showInfo(`Generated ${drafts.length} monthly draft row(s). Fill receipt numbers and totals, then save.`);
+    }
+
+    async function saveSplitRows() {
+      if (!state.splitRows.length) return;
+      clearMessages();
+      setBusy(true);
+      try {
+        const payload = state.splitRows.map((row) => ({
+          entry_date: row.entry_date,
+          clinic_code: String(row.clinic_code || '').trim().toUpperCase(),
+          identifier: String(row.identifier || '').trim(),
+          first_receipt_number: String(row.first_receipt_number || '').trim(),
+          first_receipt_date: row.first_receipt_date,
+          last_receipt_number: String(row.last_receipt_number || '').trim(),
+          last_receipt_date: row.last_receipt_date,
+          total_amount: Number(row.total_amount || 0),
+          notes: String(row.notes || '').trim()
+        }));
+        const response = await api('/receipt-books/entries/batch', 'POST', { entries: payload });
+        state.splitRows = [];
+        renderSplitRows();
+        showInfo(`Saved ${response.count || payload.length} split row(s).`);
+        await loadEntries();
+        await loadManagerReport();
+        await loadAdminReport();
+      } catch (error) {
+        showError(error instanceof Error ? error.message : 'Batch save failed');
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function clearSplitRows() {
+      state.splitRows = [];
+      renderSplitRows();
+    }
+
+    async function saveRow(entryId) {
+      clearMessages();
+      setBusy(true);
+      try {
+        await api(`/receipt-books/entries/${entryId}`, 'PATCH', {
+          identifier: document.getElementById(`entry-identifier-${entryId}`)?.value?.trim?.() || '',
+          total_amount: Number(document.getElementById(`entry-total-${entryId}`)?.value || 0)
+        });
+        showInfo(`Entry #${entryId} updated.`);
+        await loadEntries();
+        await loadManagerReport();
+        await loadAdminReport();
+      } catch (error) {
+        showError(error instanceof Error ? error.message : 'Update failed');
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function seedDefaults() {
+      const today = new Date().toISOString().slice(0, 10);
+      refs.entryDate.value = today;
+      refs.monthFrom.value = today.slice(0, 7);
+      refs.monthTo.value = today.slice(0, 7);
+      refs.adminYear.value = String(new Date().getFullYear());
+      refs.activeView.textContent = VIEW_PARAM === 'receipt-books' ? 'Receipt Books' : 'EOS Overview';
+      refs.apiOriginLabel.textContent = ACTIVE_API_ORIGIN;
+    }
+
+    function bindEvents() {
+      refs.btnBack.addEventListener('click', () => {
+        window.location.href = `./app-hub.html?api_origin=${encodeURIComponent(ACTIVE_API_ORIGIN)}`;
+      });
+      refs.btnSignOut.addEventListener('click', () => {
+        clearAuth();
+        redirectToLogin('signed_out');
+      });
+      refs.btnJumpReceiptBooks.addEventListener('click', () => {
+        refs.receiptBooksSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      refs.btnRefreshAll.addEventListener('click', loadAll);
+      refs.btnRefreshEntries.addEventListener('click', loadEntries);
+      refs.btnRefreshManagerReport.addEventListener('click', loadManagerReport);
+      refs.btnRefreshAdminReport.addEventListener('click', loadAdminReport);
+      refs.btnCreateEntry.addEventListener('click', createEntry);
+      refs.btnGenerateSplitRows.addEventListener('click', generateSplitRows);
+      refs.btnSaveSplitRows.addEventListener('click', saveSplitRows);
+      refs.btnClearSplitRows.addEventListener('click', clearSplitRows);
+
+      refs.entriesBody.addEventListener('click', async (event) => {
+        const target = event.target instanceof HTMLElement ? event.target : null;
+        if (!target) return;
+        const action = target.dataset.rowAction;
+        const entryId = Number(target.dataset.rowId || 0);
+        if (!action || !entryId) return;
+        if (action === 'save') await saveRow(entryId);
+        if (action === 'audit') await viewAudit(entryId);
+      });
+
+      refs.splitRowsBody.addEventListener('input', (event) => {
+        const target = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement ? event.target : null;
+        if (!target) return;
+        const index = Number(target.dataset.splitIndex || -1);
+        const field = String(target.dataset.field || '').trim();
+        if (!field || index < 0 || !state.splitRows[index]) return;
+        state.splitRows[index][field] = field === 'total_amount' ? Number(target.value || 0) : target.value;
+      });
+
+      refs.splitRowsBody.addEventListener('click', (event) => {
+        const target = event.target instanceof HTMLElement ? event.target : null;
+        if (!target) return;
+        const index = Number(target.dataset.splitRemove || -1);
+        if (index < 0) return;
+        state.splitRows.splice(index, 1);
+        renderSplitRows();
+      });
+    }
+
+    async function loadAll() {
+      clearMessages();
+      setBusy(true);
+      try {
+        await loadCurrentUser();
+        await loadAccess();
+        await loadEntries();
+        await loadManagerReport();
+        await loadAdminReport();
+        if (VIEW_PARAM === 'receipt-books') {
+          refs.receiptBooksSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      } catch (error) {
+        showError(error instanceof Error ? error.message : 'Initialization failed');
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    seedDefaults();
+    bindEvents();
+    loadAll();
+  </script>
+</body>
+</html>

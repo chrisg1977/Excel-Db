@@ -1,0 +1,1931 @@
+<!DOCTYPE html>
+<!--
+  
+    EMPINFO  HR Dashboard (UPDATED)                                    
+                                                                        
+    Features:                                                           
+       Color-coded by designation (4 colors, expandable)              
+       Filters: Type, Nationality, Status, Payroll                    
+       Tabs: Current, Dentists, FT                                    
+       Columns: Emp ID, Surname, First Name, Designation,            
+                 Department, ID/Residency Card No, Status, Edit                
+       Pagination (10 rows per page)                                  
+       Click NEW to add employee                                      
+                                                                        
+    No server required  opens directly in browser.                     
+    The live app connects to PostgreSQL database.                       
+  
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M-CodeZ - HR Dashboard</title>
+<style>
+/*  Reset & Base  */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue:      #2E5090;
+  --green:     #2D8659;
+  --purple:    #5B4D82;
+  --orange:    #D97C3A;
+  --red:       #C0392B;
+  --employer-titlebar-bg: #eaf3ff;
+  --gray-100:  #f4f5f7;
+  --gray-200:  #e8eaed;
+  --gray-400:  #9aa0aa;
+  --gray-700:  #3d4350;
+  --gray-900:  #1a1d23;
+  --white:     #ffffff;
+  --shadow:    0 2px 8px rgba(0,0,0,0.10);
+  --radius:    6px;
+  --font:      'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+}
+
+html, body {
+  min-height: 100%;
+  background: var(--gray-100);
+  color: var(--gray-900);
+  font-family: var(--font);
+  font-size: 16px;
+}
+
+/*  Preview Banner  */
+.preview-banner {
+  background: #fff3cd;
+  border-bottom: 1px solid #ffc107;
+  color: #664d03;
+  font-size: 14px;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/*  Header  */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  background: var(--employer-titlebar-bg);
+  color: var(--gray-900);
+  padding: 0 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow);
+}
+
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-shortcuts { display: inline-flex; align-items: center; gap: 6px; }
+
+.title-home-btn {
+  border: 1px solid var(--gray-200);
+  background: #fff;
+  border-radius: 999px;
+  min-width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  gap: 6px;
+  padding: 2px 8px;
+}
+.title-home-btn:hover { border-color: var(--blue); }
+.title-home-btn img {
+  max-width: 96px;
+  max-height: 24px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.app-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--gray-900);
+}
+
+.header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 220px;
+  height: 100%;
+  pointer-events: none;
+}
+
+.header-date { font-size: 15px; opacity: 0.85; }
+
+.group-logo {
+  max-height: 44px;
+  max-width: 200px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.mcorez-logo {
+  max-height: 36px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+.save-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--gray-200);
+  background: #ffffff;
+  color: #2f3d53;
+  font-size: 12px;
+  font-weight: 600;
+  min-height: 34px;
+}
+.save-status-text { white-space: nowrap; }
+
+.header-right { display: flex; align-items: center; gap: 10px; }
+
+.header-nav { display: flex; align-items: center; gap: 6px; }
+
+.nav-btn {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--gray-700);
+  cursor: pointer;
+}
+
+.nav-btn:hover { background: var(--gray-100); border-color: var(--blue); }
+
+.logo-placeholder { display: none; }
+
+/*  Tabs  */
+.tab-bar {
+  display: flex;
+  align-items: stretch;
+  background: var(--white);
+  border-bottom: 2px solid var(--gray-200);
+  padding: 0 20px;
+  height: 44px;
+  gap: 4px;
+}
+
+.top-sticky-panels {
+  position: sticky;
+  top: 64px;
+  z-index: 90;
+}
+
+.tab {
+  padding: 0 22px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-400);
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+
+.tab:hover  { color: var(--blue); }
+.tab.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+
+/*  Toolbar  */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-groups { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+
+.filter-group {
+  display: flex;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  overflow: hidden;
+  gap: 0;
+}
+
+.filter-btn {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--white);
+  color: var(--gray-700);
+  border: none;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  white-space: nowrap;
+}
+
+.filter-btn + .filter-btn { border-left: 1px solid var(--gray-200); }
+.filter-btn:hover  { background: var(--gray-100); }
+.filter-btn.active { background: var(--blue); color: var(--white); }
+
+.payroll-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-visibility-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.status-visibility-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.search-group,
+.designation-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.payroll-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.search-label,
+.designation-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.search-input {
+  padding: 6px 12px;
+  font-size: 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  width: 240px;
+  font-family: var(--font);
+}
+
+.designation-select {
+  padding: 6px 12px;
+  font-size: 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  min-width: 190px;
+  font-family: var(--font);
+  background: var(--white);
+}
+
+.payroll-input {
+  padding: 6px 12px;
+  font-size: 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  width: 120px;
+  font-family: var(--font);
+}
+
+.toolbar-actions { display: flex; gap: 8px; align-items: center; }
+
+.btn {
+  padding: 7px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: filter .12s;
+  letter-spacing: .4px;
+}
+
+.btn:hover { filter: brightness(0.9); }
+.btn-success { background: var(--green); color: var(--white); }
+
+/*  Legend  */
+.legend {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 10px 20px;
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  font-size: 11px;
+}
+.legend-item { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--gray-700); }
+.legend-dot  { width: 14px; height: 14px; border-radius: 3px; }
+.designation-sup { font-weight: 800; letter-spacing: 0.01em; }
+.designation-trainee { font-weight: 500; opacity: 0.72; }
+
+/*  Main / Table  */
+.main { padding: 16px 20px; }
+
+.table-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.table-card table { width: 100%; border-collapse: collapse; }
+
+.table-card thead th {
+  background: var(--gray-100);
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--gray-400);
+  border-bottom: 2px solid var(--gray-200);
+  white-space: nowrap;
+}
+
+.table-card thead th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.table-card thead th.sortable .sort-indicator {
+  margin-left: 6px;
+  font-size: 10px;
+  color: var(--gray-400);
+}
+
+.table-card thead th.sortable.active {
+  color: var(--blue);
+}
+
+.table-card thead th.sortable.active .sort-indicator {
+  color: var(--blue);
+}
+
+.table-card tbody tr { border-bottom: 1px solid var(--gray-200); transition: filter .1s; }
+.table-card tbody tr:last-child { border-bottom: none; }
+.table-card tbody tr:hover { filter: brightness(0.95); cursor: pointer; }
+
+.table-card td { padding: 10px 14px; font-size: 13px; vertical-align: middle; color: var(--gray-900); }
+.leave-col-head {
+  width: 66px;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.leave-col-cell {
+  width: 66px;
+  text-align: center;
+  font-size: 12px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.leave-red { color: #c0392b !important; font-weight: 700; }
+.leave-green { color: #2d8659 !important; font-weight: 700; }
+.leave-black { color: var(--gray-900) !important; }
+
+.btn-edit {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--blue);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: .4px;
+  transition: background .12s;
+}
+.btn-edit:hover { background: #1e3a6e; }
+
+.row-actions {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.btn-view {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--white);
+  color: var(--blue);
+  border: 1px solid var(--blue);
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: .4px;
+  transition: background .12s, color .12s;
+}
+.btn-view:hover { background: #eaf1ff; }
+
+.pending-badges {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 8px;
+  vertical-align: middle;
+  flex-wrap: wrap;
+}
+
+.pending-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  color: var(--gray-700);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+
+.pending-badge-surname {
+  border-color: #9cc1ff;
+  background: #eaf1ff;
+  color: #1e3a6e;
+}
+
+.pending-badge-termination {
+  border-color: #f1aeb5;
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.pending-badge-od-sync {
+  border-color: #a3cfbb;
+  background: #d4edda;
+  color: #155724;
+}
+
+.pending-badge-missing-sub {
+  border-color: #f1aeb5;
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/*  Pills  */
+.pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .3px;
+}
+.pill-current { background: #d4edda; color: #155724; }
+.pill-term    { background: #f8d7da; color: #721c24; }
+.pill-prosp   { background: #d1ecf1; color: #0c5460; }
+.pill-arch    { background: #e8eaed; color: #3d4350; }
+
+/*  Pagination  */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-top: 1px solid var(--gray-200);
+  font-size: 12px;
+  color: var(--gray-400);
+}
+
+.pagination-controls { display: flex; gap: 4px; }
+.catalog-actions {
+  margin: 10px 16px 14px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pg-btn {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-700);
+  transition: background .1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pg-btn:hover  { background: var(--gray-100); border-color: var(--blue); }
+.pg-btn.active { background: var(--blue); color: var(--white); border-color: var(--blue); }
+
+/*  Responsive  */
+@media (max-width: 768px) {
+  .app-header { padding: 0 12px; }
+  .main { padding: 10px 8px; }
+  .toolbar { padding: 8px 12px; font-size: 11px; }
+  .tab-bar { padding: 0 8px; }
+  .table-card td, .table-card th { padding: 6px 8px; }
+  .filter-group { gap: 0; }
+  .filter-btn { padding: 5px 10px; font-size: 11px; }
+}
+</style>
+</head>
+<body data-app-id="empinfo">
+
+<!--  Preview banner  -->
+<div class="preview-banner" id="previewBanner" style="display:none;">
+  ️ <strong>PREVIEW</strong>  Live app (dashboard/server.js) loads from PostgreSQL database.
+</div>
+
+<!--  Header  -->
+<header class="app-header">
+  <div class="header-left">
+    <span class="app-title">M-CodeZ</span>
+    <div class="header-shortcuts">
+      <button class="title-home-btn" id="btnSaveStatusLogo" type="button" title="M-CodeZ App Hub">
+        <img src="assets/logos/mcorezButton.png" alt="M-CodeZ App Hub" />
+      </button>
+    </div>
+  </div>
+  <div class="header-center">
+    <img class="group-logo" src="assets/logos/group-logo.png" alt="Group Logo" />
+    <span class="header-date" id="headerDate" style="display:none;"></span>
+  </div>
+  <div class="header-right">
+    <div class="save-status" id="saveStatus">
+      <span class="save-status-text" id="saveStatusText">No DB save on this page</span>
+    </div>
+    <div class="header-nav">
+      <button class="nav-btn" id="btnNavBack" title="Back" type="button">&larr;</button>
+      <button class="nav-btn" id="btnNavForward" title="Forward" type="button">&rarr;</button>
+      <button class="nav-btn" id="btnNavHome" title="Home" type="button">Home</button>
+      <button class="nav-btn" id="btnLogout" title="Sign Out" type="button">Sign Out</button>
+    </div>
+  </div>
+</header>
+
+<div class="top-sticky-panels">
+<!--  Color legend  -->
+<div class="legend" id="designationLegend"></div>
+
+<!--  Toolbar  -->
+<div class="toolbar">
+  <div class="filter-groups">
+
+    <!-- Type  -->
+    <div class="filter-group" role="group" aria-label="Employment Type">
+      <button class="filter-btn active" data-filter="type" data-val="">All</button>
+      <button class="filter-btn"        data-filter="type" data-val="FT">FT</button>
+      <button class="filter-btn"        data-filter="type" data-val="PT">PT</button>
+      <button class="filter-btn"        data-filter="type" data-val="SE">SE</button>
+    </div>
+
+    <!-- Nationality  -->
+    <div class="filter-group" role="group" aria-label="Nationality">
+      <button class="filter-btn active" data-filter="nat" data-val="">All</button>
+      <button class="filter-btn"        data-filter="nat" data-val="EU">EU</button>
+      <button class="filter-btn"        data-filter="nat" data-val="NON_EU">Non-EU</button>
+    </div>
+
+    <!-- Status  -->
+    <div class="filter-group" role="group" aria-label="Status">
+      <button class="filter-btn"        data-filter="status" data-val="CURRENT">Current</button>
+      <button class="filter-btn"        data-filter="status" data-val="PROSPECTIVE">Prospective</button>
+      <button class="filter-btn active" data-filter="status" data-val="">All</button>
+    </div>
+
+    <!-- Payroll (new)  -->
+    <div class="payroll-group">
+      <label class="payroll-label">Payroll:</label>
+      <select id="payrollFilter" class="payroll-input" title="Filter payroll">
+        <option value="">All</option>
+        <option value="Main" selected>Main</option>
+        <option value="Providers">Providers</option>
+        <option value="3">O3P</option>
+      </select>
+    </div>
+
+    <div class="status-visibility-group" aria-label="Status visibility">
+      <label class="status-visibility-item" for="showArchivedToggle">
+        <input type="checkbox" id="showArchivedToggle" />
+        <span>Show archived</span>
+      </label>
+      <label class="status-visibility-item" for="showTerminatedToggle">
+        <input type="checkbox" id="showTerminatedToggle" />
+        <span>Show terminated</span>
+      </label>
+    </div>
+
+    <!-- Designation  -->
+    <div class="designation-group">
+      <label class="designation-label" for="designationFilter">Designation:</label>
+      <select id="designationFilter" class="designation-select" aria-label="Designation filter">
+        <option value="">All</option>
+      </select>
+    </div>
+
+    <!-- Search  -->
+    <div class="search-group">
+      <label class="search-label" for="searchFilter">Search:</label>
+      <input
+        type="search"
+        id="searchFilter"
+        class="search-input"
+        placeholder="name, surname, emp id, designation"
+        aria-label="Search employees"
+        autocomplete="off"
+        spellcheck="false"
+      />
+    </div>
+
+  </div>
+
+  <div class="toolbar-actions">
+    <button class="btn btn-success" id="btnNew">+ NEW EMPLOYEE</button>
+  </div>
+</div>
+</div>
+
+<!--  Main  -->
+<main class="main">
+  <div class="table-card">
+    <table id="empTable">
+      <thead>
+        <tr>
+          <th class="sortable" data-sort="id">Emp ID <span class="sort-indicator">&lt;&gt;</span></th>
+          <th class="sortable" data-sort="surname">Surname <span class="sort-indicator">&lt;&gt;</span></th>
+          <th>First Name</th>
+          <th class="sortable" data-sort="designation">Designation <span class="sort-indicator">&lt;&gt;</span></th>
+          <th class="sortable" data-sort="department">Department <span class="sort-indicator">&lt;&gt;</span></th>
+          <th>Type</th>
+          <th>Nationality</th>
+          <th>ID / Residency Card No</th>
+          <th class="leave-col-head">VL</th>
+          <th class="leave-col-head">SL</th>
+          <th class="leave-col-head">BANKED</th>
+          <th class="sortable" data-sort="status">Status <span class="sort-indicator">&lt;&gt;</span></th>
+        </tr>
+      </thead>
+      <tbody id="empBody"></tbody>
+    </table>
+    <div class="pagination-bar" id="paginationBar">
+      <span id="pgInfo"></span>
+      <div class="pagination-controls" id="pgControls"></div>
+    </div>
+    <div class="catalog-actions">
+      <button class="btn btn-outline" id="btnCatalogManager" type="button">Add Designation or Department</button>
+    </div>
+  </div>
+</main>
+
+<script src="assets/js/usage-tracker.js"></script>
+<script src="assets/js/idle-logout.js"></script>
+<script>
+/*  Live data (strict API mode)  */
+let ALL_EMPLOYEES = [];
+let DESIGNATION_COLOR_OVERRIDES = {};
+let DESIGNATION_DISPLAY_ORDER = {};
+const DEFAULT_DESIGNATION_STYLE_ROWS = [
+  { name: 'Sup. Dental Assistant', color_hex: '#00838F', display_order: 1 },
+  { name: 'Dental Assistant', color_hex: '#6D35B0', display_order: 2 },
+  { name: 'Dental Hygenist', color_hex: '#722F37', display_order: 3 },
+  { name: 'CLINICAL Manager', color_hex: '#C7DDBA', display_order: 4 },
+  { name: 'OFFICE Manager', color_hex: '#4E7F2E', display_order: 5 },
+  { name: 'Principal', color_hex: '#6D4C41', display_order: 6 },
+  { name: 'Receptionist', color_hex: '#C011A5', display_order: 7 },
+  { name: 'Housekeeping', color_hex: '#2E5090', display_order: 8 },
+  { name: 'Dental Surgeon', color_hex: '#3E73C5', display_order: 9 },
+  { name: 'Dental Assistant Trainee', color_hex: '#EB9A45', display_order: 10 },
+  { name: 'Receptionist Trainee', color_hex: '#FF9AA2', display_order: 11 },
+  { name: 'Maintenance', color_hex: '#C8A316', display_order: 12 }
+];
+let DESIGNATION_STYLE_ROWS = DEFAULT_DESIGNATION_STYLE_ROWS.slice();
+
+const PAGE_SIZE = 10;
+const EMPLOYEE_FORM_URL = './employee-form.html';
+const AUTH_STORAGE_KEY = 'empinfo.auth.v1';
+const apiOriginFromQuery = new URLSearchParams(window.location.search).get('api_origin');
+const API_ORIGIN = (apiOriginFromQuery || 'http://localhost:8055').replace(/\/$/, '');
+const ROLE_RANK = {
+  'general user': 1,
+  management: 2,
+  hr: 3,
+  full: 4,
+  admin: 5,
+  administrator: 5,
+  superadmin: 5
+};
+let currentUserRoleRank = 0;
+
+function buildEmployeeFormUrl(empId, mode) {
+  const params = new URLSearchParams();
+  if (empId !== undefined && empId !== null && String(empId).trim()) {
+    params.set('id', String(empId).trim());
+  }
+  if (mode) params.set('mode', String(mode).trim().toLowerCase());
+  params.set('api_origin', API_ORIGIN);
+  params.set('_ts', String(Date.now()));
+  return `${EMPLOYEE_FORM_URL}?${params.toString()}`;
+}
+
+function getRoleRank(roleName) {
+  const normalized = String(roleName || '').trim().toLowerCase();
+  if (!normalized) return 0;
+  if (ROLE_RANK[normalized]) return ROLE_RANK[normalized];
+  if (normalized.includes('super') || normalized.includes('admin')) return ROLE_RANK.admin;
+  if (normalized.includes('full')) return ROLE_RANK.full;
+  if (normalized.includes('hr')) return ROLE_RANK.hr;
+  if (normalized.includes('manag')) return ROLE_RANK.management;
+  if (normalized.includes('general') || normalized.includes('user')) return ROLE_RANK['general user'];
+  return 0;
+}
+
+function isManagerRestrictedFromO3P() {
+  return currentUserRoleRank === ROLE_RANK.management;
+}
+
+function isHrO3pOnly() {
+  return currentUserRoleRank === ROLE_RANK.hr;
+}
+
+function normalizePayrollFilterValue(rawValue) {
+  const raw = String(rawValue || '').trim();
+  if (!raw) return '';
+  const normalized = raw.toLowerCase();
+  if (normalized === 'all' || normalized.startsWith('al')) return '';
+  if (normalized === 'main' || normalized.startsWith('mai')) return 'Main';
+  if (
+    normalized === 'provider' ||
+    normalized === 'providers' ||
+    normalized === 'prov' ||
+    normalized === 'provider tax' ||
+    normalized.startsWith('pro')
+  ) return 'Providers';
+  if (
+    normalized === '3' ||
+    normalized === 'o3p' ||
+    normalized === 'thirdparty' ||
+    normalized === 'third party' ||
+    normalized.startsWith('o3') ||
+    normalized.startsWith('thi')
+  ) return '3';
+  return raw;
+}
+
+function applyRoleRestrictions() {
+  const payrollInput = document.getElementById('payrollFilter');
+  if (!payrollInput) return;
+  const statusVisibilityGroup = document.querySelector('.status-visibility-group');
+
+  const setPayrollOptions = (options) => {
+    const previous = normalizePayrollFilterValue(payrollInput.value);
+    payrollInput.innerHTML = '';
+    options.forEach((opt) => {
+      const option = document.createElement('option');
+      option.value = opt.value;
+      option.textContent = opt.label;
+      payrollInput.appendChild(option);
+    });
+    const allowedValues = new Set(options.map((o) => o.value));
+    const nextValue = allowedValues.has(previous) ? previous : options[0]?.value || '';
+    payrollInput.value = nextValue;
+    state.payroll = normalizePayrollFilterValue(nextValue);
+  };
+
+  if (isManagerRestrictedFromO3P()) {
+    setPayrollOptions([
+      { value: '', label: 'All' },
+      { value: 'Main', label: 'Main' },
+      { value: 'Providers', label: 'Providers' }
+    ]);
+    payrollInput.title = 'Select: All, Main, or Providers';
+    if (state.payroll === '3') {
+      payrollInput.value = '';
+      state.payroll = '';
+    }
+  } else {
+    setPayrollOptions([
+      { value: '', label: 'All' },
+      { value: 'Main', label: 'Main' },
+      { value: 'Providers', label: 'Providers' },
+      { value: '3', label: 'O3P' }
+    ]);
+    payrollInput.title = 'Select: All, Main, Providers, or O3P';
+  }
+
+  if (statusVisibilityGroup) {
+    const canSeeArchivedControls = currentUserRoleRank >= ROLE_RANK.hr;
+    statusVisibilityGroup.style.display = canSeeArchivedControls ? 'flex' : 'none';
+    if (!canSeeArchivedControls) {
+      state.showArchived = false;
+      state.showTerminated = false;
+      const archivedToggle = document.getElementById('showArchivedToggle');
+      const terminatedToggle = document.getElementById('showTerminatedToggle');
+      if (archivedToggle) archivedToggle.checked = false;
+      if (terminatedToggle) terminatedToggle.checked = false;
+    }
+  }
+}
+
+function parseNationalityParts(rawValue, explicitCountry, explicitRegion) {
+  const euKeys = new Set([
+    'AUSTRIA', 'AUSTRIAN', 'BELGIUM', 'BELGIAN', 'BULGARIA', 'BULGARIAN', 'CROATIA', 'CROATIAN', 'CYPRUS', 'CYPRIOT',
+    'CZECH REPUBLIC', 'CZECHIA', 'CZECH', 'DENMARK', 'DANISH', 'ESTONIA', 'ESTONIAN', 'FINLAND', 'FINNISH',
+    'FRANCE', 'FRENCH', 'GERMANY', 'GERMAN', 'GREECE', 'GREEK', 'HUNGARY', 'HUNGARIAN', 'IRELAND', 'IRISH',
+    'ITALY', 'ITALIAN', 'LATVIA', 'LATVIAN', 'LITHUANIA', 'LITHUANIAN', 'LUXEMBOURG', 'LUXEMBOURGER',
+    'MALTA', 'MALTESE', 'NETHERLANDS', 'DUTCH', 'POLAND', 'POLISH', 'PORTUGAL', 'PORTUGUESE', 'ROMANIA', 'ROMANIAN',
+    'SLOVAKIA', 'SLOVAK', 'SLOVENIA', 'SLOVENIAN', 'SPAIN', 'SPANISH', 'SWEDEN', 'SWEDISH'
+  ]);
+
+  const raw = String(rawValue || '').trim();
+  const rawUpper = raw.toUpperCase();
+  const rawCountry = raw.includes('/') ? raw.split('/')[0] : raw;
+  const explicitCountryText = String(explicitCountry || '').trim();
+  const explicitRegionText = String(explicitRegion || '').trim().toUpperCase();
+  const normalizedExplicitRegion = explicitRegionText === 'EU'
+    ? 'EU'
+    : (explicitRegionText === 'NON_EU' || explicitRegionText === 'NON-EU' || explicitRegionText === 'OTHER' ? 'NON_EU' : '');
+
+  let country = String(explicitCountryText || rawCountry || '').trim();
+  if (String(country).toUpperCase() === 'MT' || String(country).toUpperCase() === 'MALTA' || String(country).toUpperCase() === 'MALTESE') {
+    country = 'Maltese';
+  }
+
+  let region = normalizedExplicitRegion;
+  if (!region) {
+    if (rawUpper.includes('/NON-EU') || rawUpper.includes('/NON EU') || rawUpper.includes('/OTHER') || rawUpper === 'NON-EU' || rawUpper === 'OTHER') {
+      region = 'NON_EU';
+    } else if (rawUpper.includes('/EU') || rawUpper === 'EU' || rawUpper.includes('EUROPE')) {
+      region = 'EU';
+    } else if (country && euKeys.has(String(country).toUpperCase())) {
+      region = 'EU';
+    } else if (country) {
+      region = 'NON_EU';
+    }
+  }
+
+  const normalizedCountry = String(country || '').trim();
+  const display = normalizedCountry && region
+    ? `${normalizedCountry}/${region === 'EU' ? 'EU' : 'Non-EU'}`
+    : (normalizedCountry || '-');
+
+  return {
+    country: normalizedCountry,
+    region,
+    display
+  };
+}
+
+function normalizeDesignationKey(value) {
+  return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function cleanDesignationText(value) {
+  return String(value || '')
+    .replace(/^\s*\d+[\.)-]?\s*/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+function cleanPersonText(value) {
+  return String(value || '')
+    .replace(/_/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+function mapDesignationColor(designation) {
+  const key = normalizeDesignationKey(cleanDesignationText(designation));
+  if (DESIGNATION_COLOR_OVERRIDES[key]) return DESIGNATION_COLOR_OVERRIDES[key];
+  return '#2E5090';
+}
+
+function mapDesignationTextColor(designation) {
+  const bgColor = mapDesignationColor(designation);
+  const hex = String(bgColor || '').trim();
+  const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!match) return bgColor || '#2E5090';
+  const r = parseInt(match[1], 16);
+  const g = parseInt(match[2], 16);
+  const b = parseInt(match[3], 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.65 ? '#2B4A33' : bgColor;
+}
+
+function formatDesignationHtml(designation) {
+  const safe = esc(cleanDesignationText(designation));
+  if (!safe) return '';
+  return safe
+    .replace(/\b(sup\.?)\b/ig, '<span class="designation-sup">$1</span>')
+    .replace(/\b(trainee)\b/ig, '<span class="designation-trainee">$1</span>');
+}
+
+function mapDesignationCategory(designation) {
+  const text = cleanDesignationText(designation).toLowerCase();
+  if (text.includes('manager')) return 'MANAGER';
+  if (text.includes('assistant')) return 'ASSISTANT';
+  if (text.includes('reception') || text.includes('trainee')) return 'RECEPTIONIST_TRAINEE';
+  if (text.includes('maint')) return 'MAINTENANCE';
+  return 'DENTIST';
+}
+
+function normalizeEmploymentTypeTag(rawType) {
+  const value = String(rawType || '').trim().toUpperCase();
+  if (!value) return 'FT';
+  if (value === 'SE' || value.includes('SELF')) return 'SE';
+  if (value.startsWith('PT')) return 'PT';
+  return 'FT';
+}
+
+function renderDesignationLegend() {
+  const legendEl = document.getElementById('designationLegend');
+  if (!legendEl) return;
+
+  legendEl.innerHTML = '';
+
+  const byKey = new Map();
+
+  // Always show DB-configured designation list first, in DB display_order.
+  DESIGNATION_STYLE_ROWS
+    .slice()
+    .sort((a, b) => {
+      const ao = Number(a.display_order || 999999);
+      const bo = Number(b.display_order || 999999);
+      if (ao !== bo) return ao - bo;
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    })
+    .forEach((row) => {
+      const name = String(row?.name || '').trim();
+      if (!name) return;
+      const key = normalizeDesignationKey(name);
+      if (!byKey.has(key)) byKey.set(key, name);
+    });
+
+  const ordered = Array.from(byKey.values());
+  if (!ordered.length) return;
+
+  ordered.forEach((designation) => {
+    const item = document.createElement('span');
+    item.className = 'legend-item';
+
+    const dot = document.createElement('span');
+    dot.className = 'legend-dot';
+    dot.style.background = mapDesignationColor(designation);
+
+    const text = document.createElement('span');
+    text.textContent = designation;
+
+    item.appendChild(dot);
+    item.appendChild(text);
+    legendEl.appendChild(item);
+  });
+}
+
+async function loadDesignationStyles(token) {
+  const tryAssignStyles = (styles) => {
+    const rows = Array.isArray(styles) ? styles : [];
+    if (!rows.length) return false;
+    const colors = {};
+    const orders = {};
+    DESIGNATION_STYLE_ROWS = rows
+      .map((row) => ({
+        name: String(row?.name || '').trim(),
+        color_hex: String(row?.color_hex || '').trim(),
+        display_order: Number(row?.display_order) || null
+      }))
+      .filter((row) => Boolean(row.name));
+    DESIGNATION_STYLE_ROWS.forEach((row) => {
+      const key = normalizeDesignationKey(row.name);
+      if (row.color_hex) colors[key] = row.color_hex;
+      if (Number.isFinite(row.display_order) && row.display_order > 0) orders[key] = row.display_order;
+    });
+    DESIGNATION_COLOR_OVERRIDES = colors;
+    DESIGNATION_DISPLAY_ORDER = orders;
+    return DESIGNATION_STYLE_ROWS.length > 0;
+  };
+
+  // Always start with agreed mapping so colors/order stay stable even if API lookup fails.
+  tryAssignStyles(DEFAULT_DESIGNATION_STYLE_ROWS);
+
+  try {
+    // Primary source: Directus DB table (persisted config).
+    const directusRes = await fetch(`${API_ORIGIN}/items/employee_designations?limit=200&fields=name,color_hex,display_order&sort=display_order,id`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (directusRes.ok) {
+      const directusPayload = await directusRes.json();
+      const directusStyles = Array.isArray(directusPayload?.data) ? directusPayload.data : [];
+      if (tryAssignStyles(directusStyles)) return;
+    }
+
+    // Fallback: custom endpoint (older code paths).
+    const response = await fetch(`${API_ORIGIN}/employee-form/payroll/employee-form/lookups`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!response.ok) return;
+    const payload = await response.json();
+    const styles = Array.isArray(payload?.designation_styles) ? payload.designation_styles : [];
+    tryAssignStyles(styles);
+  } catch (error) {
+    console.warn('Failed to load designation styles from DB lookups', error);
+  }
+}
+
+function formatPayrollLabel(row) {
+  const main = Boolean(row?.payroll_main_tax);
+  const provider = Boolean(row?.payroll_provider_tax);
+  const third = Boolean(row?.payroll_three_tax);
+  const count = [main, provider, third].filter(Boolean).length;
+  if (!count) return 'None';
+  if (count > 1) return 'Multi';
+  if (main) return 'Main';
+  if (provider) return 'Providers';
+  return '3';
+}
+
+function toFiniteNumber(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function getYearProgressFraction(now = new Date()) {
+  const year = now.getFullYear();
+  const start = new Date(year, 0, 1);
+  const end = new Date(year + 1, 0, 1);
+  const elapsedMs = Math.max(0, now.getTime() - start.getTime());
+  const totalMs = Math.max(1, end.getTime() - start.getTime());
+  return Math.min(1, elapsedMs / totalMs);
+}
+
+function computeLeaveDashboardMetrics(emp) {
+  const vlAnnual = toFiniteNumber(emp?.vl_annual_hours, 0);
+  const vlTaken = toFiniteNumber(emp?.vl_taken_hours, 0);
+  const slAnnual = toFiniteNumber(emp?.sl_annual_hours, 0);
+  const slTaken = toFiniteNumber(emp?.sl_taken_hours, 0);
+  const banked = toFiniteNumber(emp?.banked_hours, 0);
+
+  const fraction = getYearProgressFraction();
+  const vlYtdEntitlement = vlAnnual * fraction;
+  const slYtdEntitlement = slAnnual * fraction;
+  const epsilon = 0.05;
+
+  let vlClass = 'leave-black';
+  if (vlTaken > vlYtdEntitlement + epsilon) vlClass = 'leave-red';
+  else if (vlTaken < vlYtdEntitlement - epsilon) vlClass = 'leave-green';
+
+  let slClass = 'leave-black';
+  if (slTaken > slYtdEntitlement + epsilon) slClass = 'leave-red';
+
+  return {
+    vlClass,
+    slClass,
+    vlRemaining: Math.max(0, vlAnnual - vlTaken),
+    slRemaining: Math.max(0, slAnnual - slTaken),
+    bankedHours: banked
+  };
+}
+
+function formatHoursForColumn(value) {
+  const n = toFiniteNumber(value, 0);
+  return `${n.toFixed(1)}h`;
+}
+
+function mapEmployeeRow(row) {
+  const designation = cleanDesignationText(row?.designation);
+  const taxType = String(row?.tax_update || '').trim().toUpperCase();
+  const hasMain = Boolean(row?.payroll_main_tax);
+  const hasProvider = Boolean(row?.payroll_provider_tax);
+  const hasO3p = Boolean(row?.payroll_three_tax);
+  const normalizedStatus = String(row?.employment_status || '').trim().toUpperCase();
+  const status = ['CURRENT', 'PROSPECTIVE', 'TERMINATED', 'ARCHIVED'].includes(normalizedStatus)
+    ? normalizedStatus
+    : (row?.is_active === false ? 'ARCHIVED' : 'CURRENT');
+  const pendingBadges = Array.isArray(row?.pending_badges)
+    ? row.pending_badges.map((badge) => String(badge || '').trim()).filter(Boolean)
+    : [];
+  return {
+    id: String(row?.emp_id || '').trim(),
+    surname: cleanPersonText(row?.surname),
+    first_name: cleanPersonText(row?.first_name),
+    designation,
+    department: String(row?.department || '').trim(),
+    phone: String(row?.id_card || '').trim(),
+    payroll: formatPayrollLabel(row),
+    status,
+    type: normalizeEmploymentTypeTag(taxType),
+    nat_region: parseNationalityParts(row?.nationality, row?.nationality_country, row?.nationality_region).region,
+    nat_country: parseNationalityParts(row?.nationality, row?.nationality_country, row?.nationality_region).country,
+    nat_display: parseNationalityParts(row?.nationality, row?.nationality_country, row?.nationality_region).display,
+    color: mapDesignationColor(designation),
+    cat: mapDesignationCategory(designation),
+    has_main: hasMain,
+    has_provider: hasProvider,
+    has_o3p: hasO3p,
+    pending_badges: pendingBadges,
+    vl_annual_hours: toFiniteNumber(row?.vl_annual_hours, 0),
+    vl_taken_hours: toFiniteNumber(row?.vl_taken_hours, 0),
+    sl_annual_hours: toFiniteNumber(row?.sl_annual_hours, 0),
+    sl_taken_hours: toFiniteNumber(row?.sl_taken_hours, 0),
+    banked_hours: toFiniteNumber(row?.banked_hours, 0)
+  };
+}
+
+function mapViewEmployeeRow(row) {
+  const designation = cleanDesignationText(row?.designation);
+  const employmentType = String(row?.employment_type || '').trim().toUpperCase();
+  const firstName = cleanPersonText(row?.first_name || row?.name);
+  const terminatedOnRaw = row?.terminated_on;
+  const normalizedStatus = String(row?.employment_status || '').trim().toUpperCase();
+  let status = ['CURRENT', 'PROSPECTIVE', 'ARCHIVED', 'TERMINATED'].includes(normalizedStatus)
+    ? normalizedStatus
+    : 'CURRENT';
+  if (status !== 'ARCHIVED' && terminatedOnRaw) {
+    const terminatedOn = new Date(terminatedOnRaw);
+    if (!Number.isNaN(terminatedOn.getTime())) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      terminatedOn.setHours(0, 0, 0, 0);
+      if (terminatedOn <= today) {
+        status = 'TERMINATED';
+      }
+    }
+  }
+  return {
+    id: String(row?.emp_id || '').trim(),
+    surname: cleanPersonText(row?.surname),
+    first_name: firstName,
+    designation,
+    department: String(row?.department_code || row?.department || '').trim(),
+    phone: String(row?.national_id || row?.eu_residency_no || '').trim(),
+    payroll: 'None',
+    status,
+    type: normalizeEmploymentTypeTag(employmentType),
+    nat_region: parseNationalityParts(row?.nationality, row?.nationality_country, row?.nationality_region).region,
+    nat_country: parseNationalityParts(row?.nationality, row?.nationality_country, row?.nationality_region).country,
+    nat_display: parseNationalityParts(row?.nationality, row?.nationality_country, row?.nationality_region).display,
+    color: mapDesignationColor(designation),
+    cat: mapDesignationCategory(designation),
+    has_main: false,
+    has_provider: false,
+    has_o3p: false,
+    pending_badges: [],
+    vl_annual_hours: 0,
+    vl_taken_hours: 0,
+    sl_annual_hours: 0,
+    sl_taken_hours: 0,
+    banked_hours: 0
+  };
+}
+
+async function mergePendingBadgesFromPayrollApi(token) {
+  try {
+    const response = await fetch(`${API_ORIGIN}/employee-form/payroll/employee-form`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!response.ok) return;
+
+    const payload = await response.json();
+    const rows = Array.isArray(payload?.employees) ? payload.employees : [];
+    const statusById = new Map(
+      rows.map((row) => [
+        String(row?.emp_id || '').trim(),
+        String(row?.employment_status || '').trim().toUpperCase()
+      ])
+    );
+    const pendingById = new Map(
+      rows.map((row) => [
+        String(row?.emp_id || '').trim(),
+        Array.isArray(row?.pending_badges)
+          ? row.pending_badges.map((badge) => String(badge || '').trim()).filter(Boolean)
+          : []
+      ])
+    );
+    const payrollById = new Map(
+      rows.map((row) => {
+        const empId = String(row?.emp_id || '').trim();
+        return [empId, {
+          payroll: formatPayrollLabel(row),
+          has_main: Boolean(row?.payroll_main_tax),
+          has_provider: Boolean(row?.payroll_provider_tax),
+          has_o3p: Boolean(row?.payroll_three_tax)
+        }];
+      })
+    );
+    const identityById = new Map(
+      rows.map((row) => {
+        const empId = String(row?.emp_id || '').trim();
+        return [empId, {
+          designation: cleanDesignationText(row?.designation),
+          department: String(row?.department || '').trim(),
+          first_name: cleanPersonText(row?.first_name),
+          surname: cleanPersonText(row?.surname),
+          nat_region: parseNationalityParts(row?.nationality, row?.nationality_country, row?.nationality_region).region,
+          nat_country: parseNationalityParts(row?.nationality, row?.nationality_country, row?.nationality_region).country,
+          nat_display: parseNationalityParts(row?.nationality, row?.nationality_country, row?.nationality_region).display,
+          type: normalizeEmploymentTypeTag(row?.tax_update),
+          color: mapDesignationColor(row?.designation),
+          cat: mapDesignationCategory(row?.designation)
+        }];
+      })
+    );
+    const leaveById = new Map(
+      rows.map((row) => {
+        const empId = String(row?.emp_id || '').trim();
+        return [empId, {
+          vl_annual_hours: toFiniteNumber(row?.vl_annual_hours, 0),
+          vl_taken_hours: toFiniteNumber(row?.vl_taken_hours, 0),
+          sl_annual_hours: toFiniteNumber(row?.sl_annual_hours, 0),
+          sl_taken_hours: toFiniteNumber(row?.sl_taken_hours, 0),
+          banked_hours: toFiniteNumber(row?.banked_hours, 0)
+        }];
+      })
+    );
+
+    const existingById = new Map(
+      ALL_EMPLOYEES.map((employee) => [String(employee.id || '').trim(), employee])
+    );
+
+    for (const row of rows) {
+      const empId = String(row?.emp_id || '').trim();
+      if (!empId || existingById.has(empId)) continue;
+      const mapped = mapEmployeeRow(row);
+      if (!mapped?.id) continue;
+      existingById.set(empId, mapped);
+    }
+
+    ALL_EMPLOYEES = Array.from(existingById.values());
+
+    ALL_EMPLOYEES = ALL_EMPLOYEES.map((employee) => {
+      const employeeId = String(employee.id || '').trim();
+      const mergedPending = pendingById.get(employeeId) || [];
+      const mergedStatus = statusById.get(employeeId) || String(employee.status || '').toUpperCase();
+      const mergedPayroll = payrollById.get(employeeId);
+      const identity = identityById.get(employeeId);
+      const mergedLeave = leaveById.get(employeeId);
+      return {
+        ...employee,
+        designation: employee.designation || identity?.designation || '',
+        department: employee.department || identity?.department || '',
+        first_name: employee.first_name || identity?.first_name || '',
+        surname: employee.surname || identity?.surname || '',
+        status: ['CURRENT', 'PROSPECTIVE', 'TERMINATED', 'ARCHIVED'].includes(mergedStatus) ? mergedStatus : employee.status,
+        pending_badges: mergedPending,
+        payroll: mergedPayroll?.payroll || employee.payroll,
+        has_main: typeof mergedPayroll?.has_main === 'boolean' ? mergedPayroll.has_main : employee.has_main,
+        has_provider: typeof mergedPayroll?.has_provider === 'boolean' ? mergedPayroll.has_provider : employee.has_provider,
+        has_o3p: typeof mergedPayroll?.has_o3p === 'boolean' ? mergedPayroll.has_o3p : employee.has_o3p,
+        nat_region: employee.nat_region || identity?.nat_region || employee.nat_region,
+        nat_country: employee.nat_country || identity?.nat_country || employee.nat_country,
+        nat_display: employee.nat_display || identity?.nat_display || employee.nat_display,
+        type: employee.type || identity?.type || employee.type,
+        color: employee.color || identity?.color || employee.color,
+        cat: employee.cat || identity?.cat || employee.cat,
+        vl_annual_hours: mergedLeave ? mergedLeave.vl_annual_hours : toFiniteNumber(employee.vl_annual_hours, 0),
+        vl_taken_hours: mergedLeave ? mergedLeave.vl_taken_hours : toFiniteNumber(employee.vl_taken_hours, 0),
+        sl_annual_hours: mergedLeave ? mergedLeave.sl_annual_hours : toFiniteNumber(employee.sl_annual_hours, 0),
+        sl_taken_hours: mergedLeave ? mergedLeave.sl_taken_hours : toFiniteNumber(employee.sl_taken_hours, 0),
+        banked_hours: mergedLeave ? mergedLeave.banked_hours : toFiniteNumber(employee.banked_hours, 0)
+      };
+    });
+  } catch (error) {
+    console.warn('Failed to merge pending badge metadata', error);
+  }
+}
+
+const btnNavBack = document.getElementById('btnNavBack');
+const btnNavForward = document.getElementById('btnNavForward');
+const btnNavHome = document.getElementById('btnNavHome');
+const btnLogout = document.getElementById('btnLogout');
+const btnSaveStatusLogo = document.getElementById('btnSaveStatusLogo');
+const previewBanner = document.getElementById('previewBanner');
+
+if (btnNavBack) btnNavBack.addEventListener('click', () => window.history.back());
+if (btnNavForward) btnNavForward.addEventListener('click', () => window.history.forward());
+if (btnNavHome) {
+  btnNavHome.addEventListener('click', () => {
+    window.location.href = './app-hub.html?api_origin=' + encodeURIComponent(API_ORIGIN);
+  });
+}
+if (btnLogout) {
+  btnLogout.addEventListener('click', () => {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    window.location.href = './login.html?api_origin=' + encodeURIComponent(API_ORIGIN);
+  });
+}
+if (btnSaveStatusLogo) {
+  btnSaveStatusLogo.addEventListener('click', () => {
+    window.location.href = './app-hub.html?api_origin=' + encodeURIComponent(API_ORIGIN);
+  });
+}
+
+function getAccessToken() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || '{}');
+    return String(stored?.access_token || '').trim();
+  } catch {
+    return '';
+  }
+}
+
+async function ensureAuthenticated() {
+  const token = getAccessToken();
+  if (!token) {
+    window.location.href = './login.html?api_origin=' + encodeURIComponent(API_ORIGIN);
+    return false;
+  }
+
+  try {
+    const response = await fetch(`${API_ORIGIN}/users/me?fields=id,role.name`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Auth check failed');
+    const payload = await response.json().catch(() => ({}));
+    const roleName = String(payload?.data?.role?.name || '').trim();
+    currentUserRoleRank = getRoleRank(roleName);
+    applyRoleRestrictions();
+    if (typeof window.initIdleLogout === 'function') window.initIdleLogout(roleName);
+    if (previewBanner) previewBanner.style.display = 'none';
+    return true;
+  } catch {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    window.location.href = './login.html?api_origin=' + encodeURIComponent(API_ORIGIN);
+    return false;
+  }
+}
+
+/*  State  */
+const state = { tab: 'current', type: '', nat: '', status: '', payroll: 'Main', designation: '', search: '', showArchived: false, showTerminated: false, page: 1, sortBy: 'default', sortDir: 'asc' };
+
+/*  Init  */
+document.getElementById('headerDate').textContent =
+  new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
+
+ensureAuthenticated().then((ok) => {
+  if (!ok) return;
+  loadEmployeesFromApi();
+});
+
+async function loadEmployeesFromApi() {
+  const token = getAccessToken();
+  if (!token) return;
+
+  if (previewBanner) {
+    previewBanner.style.display = 'none';
+    previewBanner.textContent = '';
+  }
+
+  try {
+    await loadEmployeesFromViewApi(token);
+
+    if (!ALL_EMPLOYEES.length) {
+      console.warn('Current employee view returned no rows, trying payroll fallback');
+      await loadEmployeesFromPayrollApi(token);
+    }
+
+    await mergePendingBadgesFromPayrollApi(token);
+
+    await loadDesignationStyles(token);
+    renderDesignationLegend();
+    initDesignationFilter();
+    renderTable();
+  } catch (error) {
+    console.warn('Primary current-view load failed, trying payroll fallback', error);
+    await loadEmployeesFromPayrollApi(token);
+    if (!ALL_EMPLOYEES.length && previewBanner) {
+      previewBanner.textContent = 'Employee list failed to load. Please re-login or check permissions for employee_current and payroll endpoint.';
+      previewBanner.style.display = 'flex';
+    }
+    await mergePendingBadgesFromPayrollApi(token);
+    await loadDesignationStyles(token);
+    renderDesignationLegend();
+    initDesignationFilter();
+    renderTable();
+  }
+}
+
+async function loadEmployeesFromPayrollApi(token) {
+  try {
+    const response = await fetch(`${API_ORIGIN}/employee-form/payroll/employee-form`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Payroll fallback failed (${response.status})`);
+    }
+
+    const payload = await response.json();
+    const rows = Array.isArray(payload?.employees) ? payload.employees : [];
+    ALL_EMPLOYEES = rows.map(mapEmployeeRow).filter((row) => row.id);
+  } catch (error) {
+    console.error('Failed to load employee dashboard from payroll fallback', error);
+    ALL_EMPLOYEES = [];
+  }
+}
+
+async function loadEmployeesFromViewApi(token) {
+  try {
+    const fields = [
+      'emp_id',
+      'surname',
+      'first_name',
+      'position_held',
+      'department_code',
+      'national_id',
+      'eu_residency_no',
+      'terminated_on',
+      'employment_type',
+      'nationality'
+      , 'nationality_country'
+      , 'nationality_region'
+    ].join(',');
+
+    const url = `${API_ORIGIN}/items/employee_current?limit=1000&fields=${encodeURIComponent(fields)}&sort=emp_id`;
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Fallback failed (${response.status})`);
+    }
+
+    const payload = await response.json();
+    const rows = Array.isArray(payload?.data) ? payload.data : [];
+    ALL_EMPLOYEES = rows.map(mapViewEmployeeRow).filter((row) => row.id);
+  } catch (error) {
+    throw error;
+  }
+}
+
+/*  Filter button clicks  */
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const group  = btn.dataset.filter;
+    const val    = btn.dataset.val;
+    document.querySelectorAll(`.filter-btn[data-filter="${group}"]`)
+      .forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state[group] = val;
+    state.page = 1;
+    renderTable();
+  });
+});
+
+/*  Payroll filter  */
+document.getElementById('payrollFilter').addEventListener('change', (e) => {
+  const normalized = normalizePayrollFilterValue(e.target.value);
+  if (isManagerRestrictedFromO3P() && normalized === '3') {
+    e.target.value = '';
+    state.payroll = '';
+    state.page = 1;
+    renderTable();
+    return;
+  }
+  state.payroll = normalized;
+  state.page = 1;
+  renderTable();
+});
+
+/*  Designation filter  */
+document.getElementById('designationFilter').addEventListener('change', (e) => {
+  state.designation = e.target.value;
+  state.page = 1;
+  renderTable();
+});
+
+document.getElementById('showArchivedToggle').addEventListener('change', (e) => {
+  state.showArchived = Boolean(e.target.checked);
+  state.page = 1;
+  renderTable();
+});
+
+document.getElementById('showTerminatedToggle').addEventListener('change', (e) => {
+  state.showTerminated = Boolean(e.target.checked);
+  state.page = 1;
+  renderTable();
+});
+
+/*  Search filter  */
+document.getElementById('searchFilter').addEventListener('input', (e) => {
+  state.search = String(e.target.value || '').trim().toLowerCase();
+  state.page = 1;
+  renderTable();
+});
+
+function initDesignationFilter() {
+  const select = document.getElementById('designationFilter');
+  if (!select) return;
+  const byKey = new Map();
+
+  DESIGNATION_STYLE_ROWS
+    .slice()
+    .sort((a, b) => {
+      const ao = Number(a.display_order || 999999);
+      const bo = Number(b.display_order || 999999);
+      if (ao !== bo) return ao - bo;
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    })
+    .forEach((row) => {
+      const name = String(row?.name || '').trim();
+      if (!name) return;
+      const key = normalizeDesignationKey(name);
+      if (!byKey.has(key)) byKey.set(key, name);
+    });
+
+  const unique = Array.from(byKey.values());
+
+  select.innerHTML = '<option value="">All</option>';
+  unique.forEach((designation) => {
+    const option = document.createElement('option');
+    option.value = designation;
+    option.textContent = designation;
+    select.appendChild(option);
+  });
+}
+
+function syncFilter(group, val) {
+  document.querySelectorAll(`.filter-btn[data-filter="${group}"]`).forEach(b => {
+    b.classList.toggle('active', b.dataset.val === val);
+  });
+}
+
+function compareStatus(a, b) {
+  const order = { CURRENT: 1, PROSPECTIVE: 2, ARCHIVED: 3, TERMINATED: 4 };
+  const av = order[String(a || '').toUpperCase()] || 99;
+  const bv = order[String(b || '').toUpperCase()] || 99;
+  return av - bv;
+}
+
+const DEFAULT_DESIGNATION_SORT_RANK = new Map([
+  ['dental surgeon', 1],
+  ['dental hygienist', 2],
+  ['dental hygenist', 2],
+  ['dental hygeinist', 2],
+  ['sup dental assistant', 3],
+  ['super dental assistant', 3],
+  ['dental assistant', 4],
+  ['dental assistant trainee', 5],
+  ['receptionist', 6],
+  ['receptionist trainee', 7],
+  ['housekeeping', 8],
+  ['maintenance', 9],
+  ['office manager', 10],
+  ['clinical manager', 11],
+  ['principal', 12]
+]);
+
+function normalizeDesignationForSort(value) {
+  return cleanDesignationText(value).toLowerCase().replace(/[.]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function designationSortRank(value) {
+  const normalized = normalizeDesignationForSort(value);
+  if (!normalized) return 999;
+  if (DEFAULT_DESIGNATION_SORT_RANK.has(normalized)) {
+    return DEFAULT_DESIGNATION_SORT_RANK.get(normalized);
+  }
+  if (normalized.includes('hygien') || normalized.includes('hygen') || normalized.includes('hygein')) return 2;
+  return 999;
+}
+
+function compareText(a, b) {
+  return String(a || '').localeCompare(String(b || ''), undefined, { sensitivity: 'base' });
+}
+
+function compareDefaultDashboardOrder(a, b) {
+  const deptCompare = compareText(a.department, b.department);
+  if (deptCompare !== 0) return deptCompare;
+  const rankCompare = designationSortRank(a.designation) - designationSortRank(b.designation);
+  if (rankCompare !== 0) return rankCompare;
+  const surnameCompare = compareText(a.surname, b.surname);
+  if (surnameCompare !== 0) return surnameCompare;
+  const firstNameCompare = compareText(a.first_name, b.first_name);
+  if (firstNameCompare !== 0) return firstNameCompare;
+  return Number(a.id || 0) - Number(b.id || 0);
+}
+
+function compareBySortKey(a, b) {
+  const key = state.sortBy;
+  if (key === 'default') return compareDefaultDashboardOrder(a, b);
+  if (key === 'id') return Number(a.id || 0) - Number(b.id || 0);
+  if (key === 'status') return compareStatus(a.status, b.status);
+  const av = String(a[key] || '').toLowerCase();
+  const bv = String(b[key] || '').toLowerCase();
+  return av.localeCompare(bv);
+}
+
+function sortedRows(rows) {
+  const dir = state.sortDir === 'desc' ? -1 : 1;
+  return rows.slice().sort((a, b) => compareBySortKey(a, b) * dir);
+}
+
+function updateSortHeaders() {
+  document.querySelectorAll('th.sortable').forEach((th) => {
+    const key = th.dataset.sort;
+    const indicator = th.querySelector('.sort-indicator');
+    const active = key === state.sortBy;
+    th.classList.toggle('active', active);
+    if (!indicator) return;
+    if (!active) {
+      indicator.textContent = '<>';
+      return;
+    }
+    indicator.textContent = state.sortDir === 'asc' ? '^' : 'v';
+  });
+}
+
+document.querySelectorAll('th.sortable').forEach((th) => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.sort;
+    if (!key) return;
+    if (state.sortBy === key) {
+      state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      state.sortBy = key;
+      state.sortDir = 'asc';
+    }
+    state.page = 1;
+    renderTable();
+  });
+});
+
+/*  Filter & render  */
+function filteredRows() {
+  const matchesPayroll = (emp, payrollFilter) => {
+    if (!payrollFilter) return true;
+    if (payrollFilter === 'Main') return Boolean(emp.has_main) || emp.payroll === 'Main';
+    if (payrollFilter === 'Providers') return Boolean(emp.has_provider) || emp.payroll === 'Providers';
+    if (payrollFilter === '3') return Boolean(emp.has_o3p) || emp.payroll === '3';
+    return emp.payroll === payrollFilter;
+  };
+
+  return ALL_EMPLOYEES.filter(emp => {
+    if (isManagerRestrictedFromO3P() && (emp.payroll === '3' || Boolean(emp.has_o3p))) return false;
+    if (state.tab === 'dentists' && emp.cat !== 'DENTIST') return false;
+    if (state.tab === 'ft'       && emp.type !== 'FT')     return false;
+    if (state.type   && emp.type   !== state.type)   return false;
+    if (state.nat    && emp.nat_region !== state.nat)     return false;
+    if (!state.showArchived && emp.status === 'ARCHIVED') return false;
+    if (!state.showTerminated && emp.status === 'TERMINATED') return false;
+    if (state.status && emp.status !== state.status)  return false;
+    if (!matchesPayroll(emp, state.payroll)) return false;
+    if (state.designation && emp.designation !== state.designation) return false;
+    if (state.search) {
+      const haystack = [emp.id, emp.surname, emp.first_name, emp.designation, emp.department, emp.nat_display, emp.nat_region, emp.payroll]
+        .map(v => String(v || '').toLowerCase())
+        .join(' ');
+      if (!haystack.includes(state.search)) return false;
+    }
+    return true;
+  });
+}
+
+function hexToRgba(hex, alpha) {
+  if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return '';
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function pillClass(status) {
+  if (status === 'CURRENT')    return 'pill-current';
+  if (status === 'ARCHIVED')   return 'pill-arch';
+  if (status === 'TERMINATED') return 'pill-term';
+  return 'pill-prosp';
+}
+
+function pendingBadgeClass(badge) {
+  const normalized = String(badge || '').trim().toLowerCase();
+  if (normalized === 'surname') return 'pending-badge-surname';
+  if (normalized === 'termination') return 'pending-badge-termination';
+  if (normalized === 'od sync') return 'pending-badge-od-sync';
+  return '';
+}
+
+function warningTooltipForBadge(badge) {
+  const normalized = String(badge || '').trim().toLowerCase();
+  if (!normalized) return 'Pending item detected for this employee.';
+
+  if (normalized === 'surname') {
+    return 'A future surname update is scheduled and not yet effective.';
+  }
+  if (normalized === 'termination') {
+    return 'A termination date is scheduled and pending.';
+  }
+  if (normalized === 'od sync') {
+    return 'OpenDental sync request is pending for this employee.';
+  }
+  if (normalized === 'transition' || normalized === 'status change') {
+    return 'Employee file/status transition is pending approval/effective date.';
+  }
+  if (normalized === 'pr') {
+    return 'No payroll subscription is assigned yet (PR required).';
+  }
+  if (normalized.startsWith('pending forms')) {
+    return 'Required payroll form fields are missing for this employee.';
+  }
+  return 'Pending item detected for this employee.';
+}
+
+function hasAnyPayrollSubscription(emp) {
+  return Boolean(emp?.has_main) || Boolean(emp?.has_provider) || Boolean(emp?.has_o3p);
+}
+
+function isMainOnlyBadge(badge) {
+  const normalized = String(badge || '').trim().toLowerCase();
+  if (!normalized) return false;
+
+  const maritalTokens = new Set([
+    'sing',
+    'single',
+    'marr',
+    'married',
+    'wid',
+    'widow',
+    'separated',
+    'sep',
+    'divorced',
+    'div'
+  ]);
+
+  if (normalized.includes('fs4')) return true;
+  if (normalized.includes('social security') || normalized.includes('soc sec') || normalized === 'ssc') return true;
+  if (normalized.includes('marital')) return true;
+  if (normalized.includes('tax employment')) return true;
+  if (normalized.includes('hours/wk') || normalized.includes('hours per week') || normalized.includes('fixed hours')) return true;
+  if (normalized.startsWith('pending forms')) return true;
+  if (maritalTokens.has(normalized)) return true;
+  if (normalized === 'none') return true;
+
+  return false;
+}
+
+function isFs4RelatedBadge(badge) {
+  const normalized = String(badge || '').trim().toLowerCase();
+  if (!normalized) return false;
+  if (normalized.includes('fs4')) return true;
+  if (normalized.startsWith('pending forms')) return true;
+  return false;
+}
+
+function getMissingSubscriptionLabels(emp) {
+  if (hasAnyPayrollSubscription(emp)) return [];
+  return ['PR'];
+}
+
+function renderTable() {
+  const rows   = sortedRows(filteredRows());
+  const total  = rows.length;
+  const pages  = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (state.page > pages) state.page = pages;
+  const start  = (state.page - 1) * PAGE_SIZE;
+  const slice  = rows.slice(start, start + PAGE_SIZE);
+
+  const tbody = document.getElementById('empBody');
+  tbody.innerHTML = '';
+  updateSortHeaders();
+
+  if (slice.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--gray-400)">
+      No employees match the current filters.</td></tr>`;
+  } else {
+    slice.forEach(emp => {
+      const tr  = document.createElement('tr');
+      const rowColor = mapDesignationColor(emp.designation);
+      const rowTextColor = mapDesignationTextColor(emp.designation);
+      const blockedForHr = isHrO3pOnly() && !Boolean(emp.has_o3p);
+      // Bolder color background (increased alpha from 0.12 to 0.28)
+      const bg  = hexToRgba(rowColor, 0.28);
+      if (bg) tr.style.backgroundColor = bg;
+
+      const pendingBadges = Array.isArray(emp.pending_badges)
+        ? emp.pending_badges
+            .map((badge) => String(badge || '').trim())
+            .filter(Boolean)
+            .filter((badge) => {
+              if (Boolean(emp.has_main)) {
+                if (String(emp.type || '').trim().toUpperCase() === 'PT' && isFs4RelatedBadge(badge)) {
+                  return false;
+                }
+                return true;
+              }
+              return !isMainOnlyBadge(badge);
+            })
+        : [];
+      const pendingBadgesHtml = pendingBadges.length
+        ? `<span class="pending-badges">${pendingBadges.map((badge) => {
+            const badgeClass = pendingBadgeClass(badge);
+            const className = badgeClass ? `pending-badge ${badgeClass}` : 'pending-badge';
+            const tooltip = warningTooltipForBadge(badge);
+            return `<span class="${className}" title="${esc(tooltip)}">${esc(badge)}</span>`;
+          }).join('')}</span>`
+        : '';
+      const missingSubscriptions = getMissingSubscriptionLabels(emp);
+      const missingSubscriptionsHtml = missingSubscriptions.length
+        ? `<span class="pending-badges"><span class="pending-badge pending-badge-missing-sub" title="${esc(warningTooltipForBadge(missingSubscriptions.join(', ')))}">${esc(missingSubscriptions.join(', '))}</span></span>`
+        : '';
+
+      const statusLabel = emp.status.charAt(0) + emp.status.slice(1).toLowerCase();
+      const leaveMetrics = computeLeaveDashboardMetrics(emp);
+      const typeLabel = String(emp.type || '').trim().toUpperCase() || '-';
+      const natLabel = String(emp.nat_display || '-');
+      tr.innerHTML = `
+        <td><strong>${esc(emp.id)}</strong></td>
+        <td><strong>${esc(emp.surname)}</strong>${pendingBadgesHtml}${missingSubscriptionsHtml}</td>
+        <td>${esc(emp.first_name)}</td>
+        <td><strong style="color:${rowTextColor}">${formatDesignationHtml(emp.designation)}</strong></td>
+        <td>${esc(emp.department)}</td>
+        <td>${esc(typeLabel)}</td>
+        <td>${esc(natLabel)}</td>
+        <td>${esc(emp.phone)}</td>
+        <td class="leave-col-cell ${leaveMetrics.vlClass}">${esc(formatHoursForColumn(leaveMetrics.vlRemaining))}</td>
+        <td class="leave-col-cell ${leaveMetrics.slClass}">${esc(formatHoursForColumn(leaveMetrics.slRemaining))}</td>
+        <td class="leave-col-cell leave-black">${esc(formatHoursForColumn(leaveMetrics.bankedHours))}</td>
+        <td><span class="pill ${pillClass(emp.status)}">${esc(statusLabel)}</span></td>
+      `;
+
+      tr.addEventListener('click', () => {
+        if (blockedForHr) return;
+        window.location.href = buildEmployeeFormUrl(emp.id, 'view');
+      });
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Pagination info
+  document.getElementById('pgInfo').textContent =
+    `Showing ${start + 1}-${Math.min(start + PAGE_SIZE, total)} of ${total} employees`;
+
+  // Pagination controls
+  const pgControls = document.getElementById('pgControls');
+  pgControls.innerHTML = '';
+
+  const prevBtn = document.createElement('button');
+  prevBtn.className = 'pg-btn';
+  prevBtn.textContent = '<';
+  prevBtn.disabled = state.page <= 1;
+  prevBtn.addEventListener('click', () => { state.page--; renderTable(); });
+  pgControls.appendChild(prevBtn);
+
+  for (let p = 1; p <= pages; p++) {
+    const pb = document.createElement('button');
+    pb.className = 'pg-btn' + (p === state.page ? ' active' : '');
+    pb.textContent = String(p);
+    pb.addEventListener('click', (pp => () => { state.page = pp; renderTable(); })(p));
+    pgControls.appendChild(pb);
+  }
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'pg-btn';
+  nextBtn.textContent = '>';
+  nextBtn.disabled = state.page >= pages;
+  nextBtn.addEventListener('click', () => { state.page++; renderTable(); });
+  pgControls.appendChild(nextBtn);
+}
+
+/*  NEW button  Add employee  */
+document.getElementById('btnNew').addEventListener('click', () => {
+  window.location.href = buildEmployeeFormUrl('', '');
+});
+document.getElementById('btnCatalogManager').addEventListener('click', () => {
+  const popupUrl = `./new_designation_Dept.html?api_origin=${encodeURIComponent(API_ORIGIN)}`;
+  window.open(popupUrl, 'catalogManager', 'width=1100,height=760,resizable=yes,scrollbars=yes');
+});
+
+/*  Helper  */
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

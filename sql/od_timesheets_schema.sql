@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS od_user_map (
   id BIGSERIAL PRIMARY KEY,
   employee_id INTEGER NOT NULL REFERENCES employees(emp_id) ON DELETE CASCADE,
   od_user_num INTEGER NOT NULL,
+  od_employee_num INTEGER,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -13,6 +14,7 @@ CREATE TABLE IF NOT EXISTS od_user_map (
 );
 
 CREATE INDEX IF NOT EXISTS idx_od_user_map_employee ON od_user_map(employee_id);
+CREATE INDEX IF NOT EXISTS idx_od_user_map_od_employee_num ON od_user_map(od_employee_num);
 
 CREATE TABLE IF NOT EXISTS timesheet_events (
   id BIGSERIAL PRIMARY KEY,

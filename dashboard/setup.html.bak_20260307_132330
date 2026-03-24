@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Setup Landing</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f3f7ff;
+      color: #1a1d23;
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: #eaf3ff;
+      border: 1px solid #d3dff5;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+    .head h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #2e5090;
+    }
+    .btn {
+      border: 1px solid #c4d2ea;
+      background: #fff;
+      color: #2f3d53;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #dbe4f2;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 8px 20px rgba(24, 43, 78, 0.08);
+      text-decoration: none;
+      color: inherit;
+    }
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      color: #2e5090;
+    }
+    .muted { color: #637086; font-size: 13px; }
+    .status { margin-top: 10px; font-size: 13px; color: #59667d; }
+    .status.err { color: #b42318; }
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <h1>Setup</h1>
+      <a class="btn" id="btnBackHub" href="./app-hub.html">Back to App Hub</a>
+    </div>
+    <div class="grid" id="setupGrid" style="display:none;">
+      <a class="card" id="linkDeptDesignation" href="./new_designation_Dept.html">
+        <h2>Edit / Add Department</h2>
+        <div class="muted">Create, edit and categorize departments, addresses, and contacts.</div>
+      </a>
+      <a class="card" id="linkDesignation" href="./new_designation_Dept.html">
+        <h2>Edit / Add / Change Designation</h2>
+        <div class="muted">Manage industry/profession category, provider category, PE defaults, and department linkage.</div>
+      </a>
+      <a class="card" id="linkLogos" href="./new_designation_Dept.html">
+        <h2>Update Logo</h2>
+        <div class="muted">Update department logos and whole-group logo.</div>
+      </a>
+    </div>
+    <div class="status" id="statusLine">Checking access...</div>
+  </div>
+  <script>
+    const AUTH_STORAGE_KEY = 'empinfo.auth.v1';
+    const apiOriginFromQuery = new URLSearchParams(window.location.search).get('api_origin');
+    const API_ORIGIN = (apiOriginFromQuery || 'http://localhost:8055').replace(/\/$/, '');
+    const ROLE_RANK = { 'general user': 1, management: 2, hr: 3, full: 4, admin: 5, administrator: 5, superadmin: 5 };
+    const statusLine = document.getElementById('statusLine');
+    const setupGrid = document.getElementById('setupGrid');
+    const btnBackHub = document.getElementById('btnBackHub');
+    const links = [
+      document.getElementById('linkDeptDesignation'),
+      document.getElementById('linkDesignation'),
+      document.getElementById('linkLogos')
+    ];
+
+    function getToken() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || '{}');
+        return String(stored?.access_token || '').trim();
+      } catch {
+        return '';
+      }
+    }
+    function roleRank(roleName) {
+      const normalized = String(roleName || '').trim().toLowerCase();
+      if (!normalized) return 0;
+      if (ROLE_RANK[normalized]) return ROLE_RANK[normalized];
+      if (normalized.includes('super') || normalized.includes('admin')) return ROLE_RANK.admin;
+      if (normalized.includes('full')) return ROLE_RANK.full;
+      if (normalized.includes('hr')) return ROLE_RANK.hr;
+      if (normalized.includes('manag')) return ROLE_RANK.management;
+      if (normalized.includes('general') || normalized.includes('user')) return ROLE_RANK['general user'];
+      return 0;
+    }
+    function applyLinks() {
+      const common = `api_origin=${encodeURIComponent(API_ORIGIN)}`;
+      document.getElementById('linkDeptDesignation').href = `./new_designation_Dept.html?section=departments&${common}`;
+      document.getElementById('linkDesignation').href = `./new_designation_Dept.html?section=designations&${common}`;
+      document.getElementById('linkLogos').href = `./new_designation_Dept.html?section=logos&${common}`;
+      btnBackHub.href = `./app-hub.html?api_origin=${encodeURIComponent(API_ORIGIN)}`;
+    }
+    async function init() {
+      applyLinks();
+      const token = getToken();
+      if (!token) {
+        window.location.href = `./login.html?api_origin=${encodeURIComponent(API_ORIGIN)}`;
+        return;
+      }
+      const response = await fetch(`${API_ORIGIN}/users/me?fields=id,email,role.name`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        statusLine.className = 'status err';
+        statusLine.textContent = 'Unable to validate access.';
+        return;
+      }
+      const roleName = String(payload?.data?.role?.name || '').trim();
+      if (roleRank(roleName) < ROLE_RANK.hr) {
+        statusLine.className = 'status err';
+        statusLine.textContent = 'Setup is only available for HR/Admin-level users.';
+        links.forEach((a) => { if (a) a.style.display = 'none'; });
+        return;
+      }
+      setupGrid.style.display = 'grid';
+      statusLine.textContent = `Access granted (${roleName || 'HR/Admin'})`;
+    }
+    init().catch((error) => {
+      statusLine.className = 'status err';
+      statusLine.textContent = error?.message || 'Failed to initialize setup page.';
+    });
+  </script>
+</body>
+</html>

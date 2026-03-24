@@ -204,6 +204,7 @@ CREATE TABLE IF NOT EXISTS payslips (
     -- Signature & Bank Details
     signature_image_url VARCHAR(255),
     bank_transaction_number VARCHAR(50),
+    paid_previously_amount NUMERIC(12,2),
     
     -- PDF Storage
     pdf_file_url VARCHAR(255),

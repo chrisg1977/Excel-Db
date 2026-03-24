@@ -91,6 +91,27 @@
       </div>
     </div>
 
+    <div class="permission-card">
+      <div class="card-title">Inventory Access Wiring</div>
+      <div class="perm-grid">
+        <label class="perm-check"><input type="checkbox" id="permInventoryEnabled" /> Inventory access enabled</label>
+        <label class="perm-check"><input type="checkbox" id="permSellEnabled" /> SELL access enabled</label>
+        <label class="perm-check"><input type="checkbox" id="permApproveSensitive" /> Can approve sensitive</label>
+        <label class="perm-check"><input type="checkbox" id="permOverrideDept" /> Can override department scope</label>
+      </div>
+
+      <div class="perm-dates">
+        <label>Effective from <input type="date" id="permEffectiveFrom" /></label>
+        <label>Inactive from <input type="date" id="permInactiveFrom" /></label>
+      </div>
+
+      <div class="perm-note">Department scope remains primary. Location scope is optional per department.</div>
+      <div id="departmentScopeContainer" class="scope-container"></div>
+      <div class="scope-actions">
+        <button class="btn-action btn-blue" id="btnSaveInventoryAccess" type="button">Save Inventory Access</button>
+      </div>
+    </div>
+
   </div>
 </div>
 

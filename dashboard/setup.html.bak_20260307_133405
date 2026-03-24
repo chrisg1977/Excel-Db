@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EMPINFO - Setup</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f8fc;
+      --surface: #ffffff;
+      --line: #d7deea;
+      --text: #13243b;
+      --muted: #5f6e86;
+      --brand: #24539a;
+      --brand-strong: #1a3f75;
+      --danger: #8f1f34;
+      --danger-bg: #fff2f5;
+      --good: #1f6d43;
+      --good-bg: #edf9f1;
+      --radius: 12px;
+      --shadow: 0 8px 24px rgba(20, 36, 58, 0.1);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #edf3fc 0%, #f8fbff 65%, #f3f7fd 100%);
+      color: var(--text);
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+    }
+
+    .wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 24px 18px 40px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .head {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin: 0 0 6px;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .row {
+      display: grid;
+      gap: 10px;
+    }
+
+    @media (min-width: 860px) {
+      .row.two {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #2a3f60;
+    }
+
+    input,
+    select {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      height: 38px;
+      padding: 0 10px;
+      font-size: 14px;
+      color: var(--text);
+      background: #fff;
+    }
+
+    .btn {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: var(--brand);
+      color: #fff;
+      height: 38px;
+      padding: 0 14px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .btn:hover {
+      background: var(--brand-strong);
+    }
+
+    .btn.alt {
+      background: #fff;
+      color: var(--brand);
+      border-color: #bdd0eb;
+    }
+
+    .btn.danger {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border-color: #f2c2cc;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .status {
+      border-radius: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      background: #f9fbff;
+      color: #2e4468;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .status.ok {
+      border-color: #bce2cb;
+      background: var(--good-bg);
+      color: var(--good);
+    }
+
+    .status.err {
+      border-color: #efc3cd;
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 9px 8px;
+      border-bottom: 1px solid #e8edf6;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #f4f8ff;
+      color: #294668;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .badge {
+      display: inline-block;
+      border: 1px solid #c7d7ef;
+      background: #eef5ff;
+      color: #234f92;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .small {
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="card">
+      <div class="head">
+        <div>
+          <h1>System Setup</h1>
+          <p>Configure API endpoint and review authorized devices in your network.</p>
+        </div>
+        <div class="toolbar">
+          <button id="btnEditNetwork" class="btn alt" type="button">Edit Network</button>
+        </div>
+      </div>
+
+      <div class="row two" style="margin-top: 12px;">
+        <label>
+          API Origin
+          <input id="apiOriginInput" type="text" placeholder="http://192.168.35.116:8055" />
+        </label>
+        <label>
+          Signed-in User (for reference)
+          <input id="signedInUserInput" type="text" placeholder="admin@example.com" />
+        </label>
+      </div>
+      <p class="small muted" style="margin-top: 8px;">Tip: URL parameter <code>api_origin=...</code> is auto-detected.</p>
+    </section>
+
+    <section id="networkPanel" class="card hidden">
+      <div class="head">
+        <div>
+          <h2 style="margin: 0 0 6px;">Network Devices and Users</h2>
+          <p>Use this to review PCs now, and mobile devices in future, then remove access for past employees.</p>
+        </div>
+        <div class="toolbar">
+          <button id="btnRefreshNetwork" class="btn" type="button">Refresh List</button>
+        </div>
+      </div>
+
+      <div class="row two" style="margin-top: 12px;">
+        <label>
+          Search Hostname/User/IP
+          <input id="searchInput" type="text" placeholder="Type to filter list" />
+        </label>
+        <label>
+          Device Type
+          <select id="deviceTypeFilter">
+            <option value="all">All</option>
+            <option value="workstation">Workstation</option>
+            <option value="mobile">Mobile</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="networkStatus" class="status" style="margin-top: 12px;">Network panel ready.</div>
+
+      <div class="table-wrap" style="margin-top: 12px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>Hostname</th>
+              <th>IP</th>
+              <th>User</th>
+              <th>Location</th>
+              <th>Last Seen</th>
+              <th>Status</th>
+              <th>Type</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="networkTableBody">
+            <tr><td colspan="9" class="muted">No data loaded yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      const API_ORIGIN_STORAGE_KEY = "empinfo.api_origin.v1";
+      const DEFAULT_API_ORIGIN = `${window.location.protocol}//${window.location.hostname}:8055`;
+
+      const state = {
+        apiOrigin: "",
+        devices: [],
+        panelOpen: false,
+      };
+
+      const el = {
+        apiOriginInput: document.getElementById("apiOriginInput"),
+        signedInUserInput: document.getElementById("signedInUserInput"),
+        btnEditNetwork: document.getElementById("btnEditNetwork"),
+        btnRefreshNetwork: document.getElementById("btnRefreshNetwork"),
+        networkPanel: document.getElementById("networkPanel"),
+        networkStatus: document.getElementById("networkStatus"),
+        networkTableBody: document.getElementById("networkTableBody"),
+        searchInput: document.getElementById("searchInput"),
+        deviceTypeFilter: document.getElementById("deviceTypeFilter"),
+      };
+
+      function normalizeApiOrigin(value) {
+        const raw = String(value || "").trim();
+        if (!raw) return "";
+        try {
+          const url = new URL(raw);
+          return `${url.protocol}//${url.hostname}${url.port ? `:${url.port}` : ""}`;
+        } catch {
+          return "";
+        }
+      }
+
+      function setStatus(message, tone) {
+        el.networkStatus.className = "status";
+        if (tone === "ok") el.networkStatus.classList.add("ok");
+        if (tone === "err") el.networkStatus.classList.add("err");
+        el.networkStatus.textContent = message;
+      }
+
+      function getApiOrigin() {
+        const fromInput = normalizeApiOrigin(el.apiOriginInput.value);
+        if (fromInput) return fromInput;
+        const fromStored = normalizeApiOrigin(localStorage.getItem(API_ORIGIN_STORAGE_KEY));
+        if (fromStored) return fromStored;
+
+        const params = new URLSearchParams(window.location.search || "");
+        const fromQuery = normalizeApiOrigin(params.get("api_origin"));
+        if (fromQuery) return fromQuery;
+
+        return normalizeApiOrigin(DEFAULT_API_ORIGIN) || "";
+      }
+
+      function persistApiOrigin(origin) {
+        const normalized = normalizeApiOrigin(origin);
+        if (normalized) {
+          localStorage.setItem(API_ORIGIN_STORAGE_KEY, normalized);
+        }
+        return normalized;
+      }
+
+      function safeText(value) {
+        return String(value == null ? "" : value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function formatDateTime(value) {
+        if (!value) return "-";
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return String(value);
+        return d.toLocaleString();
+      }
+
+      function matchesFilter(item) {
+        const search = String(el.searchInput.value || "").trim().toLowerCase();
+        const type = String(el.deviceTypeFilter.value || "all");
+
+        if (type !== "all" && String(item.device_type || "workstation") !== type) {
+          return false;
+        }
+
+        if (!search) return true;
+
+        const haystack = [
+          item.workstation_name,
+          item.hostname,
+          item.current_ip,
+          item.assigned_user_name,
+          item.assigned_user_email,
+          item.location_name,
+          item.department_name,
+          item.physical_address_name,
+        ]
+          .map((v) => String(v || "").toLowerCase())
+          .join(" | ");
+
+        return haystack.includes(search);
+      }
+
+      function renderRows() {
+        const rows = state.devices.filter(matchesFilter);
+        if (!rows.length) {
+          el.networkTableBody.innerHTML = '<tr><td colspan="9" class="muted">No devices match current filters.</td></tr>';
+          return;
+        }
+
+        el.networkTableBody.innerHTML = rows
+          .map((item) => {
+            const userLabel = item.assigned_user_name || item.assigned_user_email || "Unassigned";
+            const location = [item.location_name, item.department_name, item.physical_address_name]
+              .filter(Boolean)
+              .join(" / ") || "-";
+            const exclusive = item.is_exclusive_to_user ? "Exclusive" : "Shared";
+            const deviceType = item.device_type || "workstation";
+            return `
+              <tr>
+                <td>${safeText(item.workstation_name || item.hostname || "(Unnamed)")}<div class="muted">${safeText(exclusive)}</div></td>
+                <td>${safeText(item.hostname || "-")}</td>
+                <td>${safeText(item.current_ip || "-")}</td>
+                <td>${safeText(userLabel)}</td>
+                <td>${safeText(location)}</td>
+                <td>${safeText(formatDateTime(item.last_seen_at))}</td>
+                <td>${safeText(item.status || "active")}</td>
+                <td><span class="badge">${safeText(deviceType)}</span></td>
+                <td>
+                  <button class="btn danger small" data-revoke-id="${safeText(item.id)}" type="button">
+                    Remove Access
+                  </button>
+                </td>
+              </tr>
+            `;
+          })
+          .join("");
+      }
+
+      async function loadDevices() {
+        state.apiOrigin = persistApiOrigin(getApiOrigin());
+        if (!state.apiOrigin) {
+          setStatus("Please enter a valid API Origin first.", "err");
+          return;
+        }
+
+        setStatus("Loading devices from network registry...", "");
+
+        try {
+          const response = await fetch(`${state.apiOrigin}/workstations-admin/network/devices`, {
+            method: "GET",
+            headers: { Accept: "application/json" },
+            credentials: "include",
+          });
+
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok || payload?.status !== "success") {
+            throw new Error(payload?.message || `Request failed (${response.status})`);
+          }
+
+          const devices = payload?.data?.devices;
+          state.devices = Array.isArray(devices) ? devices : [];
+          renderRows();
+
+          const warning = payload?.data?.warning;
+          if (warning) {
+            setStatus(`${state.devices.length} device(s) loaded. ${warning}`, "");
+          } else {
+            setStatus(`${state.devices.length} device(s) loaded.`, "ok");
+          }
+        } catch (error) {
+          setStatus(`Could not load devices: ${error.message || error}`, "err");
+          state.devices = [];
+          renderRows();
+        }
+      }
+
+      async function revokeDevice(workstationId) {
+        if (!workstationId) return;
+
+        const reason = window.prompt(
+          "Reason for removing access (optional):",
+          "Past employee or unauthorized device"
+        );
+
+        if (reason === null) return;
+
+        if (!window.confirm("Remove access for this device/user assignment?")) {
+          return;
+        }
+
+        state.apiOrigin = persistApiOrigin(getApiOrigin());
+        if (!state.apiOrigin) {
+          setStatus("Please enter a valid API Origin first.", "err");
+          return;
+        }
+
+        setStatus("Applying revoke action...", "");
+
+        try {
+          const response = await fetch(`${state.apiOrigin}/workstations-admin/network/revoke`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              workstation_id: workstationId,
+              reason: String(reason || "").trim(),
+            }),
+          });
+
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok || payload?.status !== "success") {
+            throw new Error(payload?.message || `Request failed (${response.status})`);
+          }
+
+          setStatus("Access removed successfully. Refreshing list...", "ok");
+          await loadDevices();
+        } catch (error) {
+          setStatus(`Failed to remove access: ${error.message || error}`, "err");
+        }
+      }
+
+      function toggleNetworkPanel() {
+        state.panelOpen = !state.panelOpen;
+        el.networkPanel.classList.toggle("hidden", !state.panelOpen);
+        if (state.panelOpen) {
+          loadDevices();
+          el.btnEditNetwork.textContent = "Hide Network";
+        } else {
+          el.btnEditNetwork.textContent = "Edit Network";
+        }
+      }
+
+      function wireEvents() {
+        el.apiOriginInput.addEventListener("change", () => {
+          const normalized = persistApiOrigin(getApiOrigin());
+          if (normalized) {
+            el.apiOriginInput.value = normalized;
+          }
+        });
+
+        el.btnEditNetwork.addEventListener("click", toggleNetworkPanel);
+        el.btnRefreshNetwork.addEventListener("click", loadDevices);
+
+        el.searchInput.addEventListener("input", renderRows);
+        el.deviceTypeFilter.addEventListener("change", renderRows);
+
+        el.networkTableBody.addEventListener("click", (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) return;
+          const revokeId = target.getAttribute("data-revoke-id");
+          if (revokeId) {
+            revokeDevice(revokeId);
+          }
+        });
+      }
+
+      function init() {
+        const params = new URLSearchParams(window.location.search || "");
+        const queryOrigin = normalizeApiOrigin(params.get("api_origin"));
+        const initial = persistApiOrigin(queryOrigin || localStorage.getItem(API_ORIGIN_STORAGE_KEY) || DEFAULT_API_ORIGIN);
+        state.apiOrigin = initial;
+        el.apiOriginInput.value = initial;
+
+        const userHint = params.get("user") || "";
+        el.signedInUserInput.value = userHint;
+
+        wireEvents();
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>

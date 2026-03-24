@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M-CodeZ - Ecotax</title>
+  <link rel="icon" type="image/png" href="/dashboard/assets/logos/database-logo.png" />
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --brand: #1f4f80;
+      --brand-2: #2b6b9e;
+      --ink: #1a2635;
+      --muted: #5f7189;
+      --line: #d8e3f1;
+      --surface: #ffffff;
+      --bg-a: #eef6ff;
+      --bg-b: #f6fbff;
+      --ok: #186842;
+      --ok-bg: #edf9f1;
+      --err: #a12237;
+      --err-bg: #fff1f4;
+      --warn: #8d6214;
+      --warn-bg: #fff8e9;
+      --shadow: 0 12px 30px rgba(20, 51, 86, 0.14);
+      --radius: 16px;
+      --font: "Segoe UI", Arial, sans-serif;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: radial-gradient(circle at 12% 0%, var(--bg-a) 0%, #f8fbff 44%, var(--bg-b) 100%);
+      color: var(--ink);
+      font-family: var(--font);
+    }
+
+    .wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 18px;
+      margin-bottom: 14px;
+      display: flex;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      border: 1px solid #f0d7ab;
+      background: var(--warn-bg);
+      color: var(--warn);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--brand);
+      font-size: 34px;
+      letter-spacing: 0.01em;
+    }
+
+    .sub {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+      max-width: 760px;
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      min-height: 40px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: var(--brand);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn:hover { background: var(--brand-2); }
+    .btn.secondary {
+      background: #ffffff;
+      color: var(--brand);
+      border-color: #bfd2ea;
+    }
+
+    .status {
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: #3c516d;
+    }
+    .status.ok { background: var(--ok-bg); border-color: #bcdfc8; color: var(--ok); }
+    .status.err { background: var(--err-bg); border-color: #f0c2cb; color: var(--err); }
+
+    .hidden { display: none !important; }
+
+    .section {
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .section h2 {
+      margin: 0;
+      color: var(--brand);
+      font-size: 22px;
+    }
+
+    .copy {
+      margin: 8px 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 800;
+      color: #3f5470;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .field input, .field textarea {
+      width: 100%;
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid #bfd2ea;
+      border-radius: 10px;
+      background: #ffffff;
+      color: var(--ink);
+      font: inherit;
+    }
+
+    .field textarea {
+      min-height: 88px;
+      resize: vertical;
+    }
+
+    .info-line {
+      margin: 0;
+      padding: 10px 12px;
+      border: 1px solid #f0d7ab;
+      border-radius: 10px;
+      background: var(--warn-bg);
+      color: #744f12;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .history {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: auto;
+      background: #ffffff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 780px;
+      font-size: 13px;
+    }
+
+    th, td {
+      text-align: left;
+      border-bottom: 1px solid #e7eef9;
+      padding: 10px 12px;
+      vertical-align: top;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #f2f7ff;
+      color: #35567d;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid #c4d6ec;
+      border-radius: 999px;
+      background: #edf4ff;
+      color: #1f4f80;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+      .actions { width: 100%; justify-content: flex-start; }
+      h1 { font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="card hero">
+      <div>
+        <span class="eyebrow">Management Yearly Task</span>
+        <h1>Ecotax</h1>
+        <p class="sub">Configure annual Ecotax policy used with receipts. Changes create a new effective version, keeping previous years visible for audit.</p>
+      </div>
+      <div class="actions">
+        <a class="btn secondary" id="btnBackHub" href="#">Back to App Hub</a>
+        <button class="btn secondary" id="btnReload" type="button">Reload</button>
+      </div>
+    </header>
+
+    <div class="card status" id="statusLine">Loading Ecotax settings...</div>
+
+    <section class="card section hidden" id="deniedPanel">
+      <h2>Access Restricted</h2>
+      <p class="copy" id="deniedCopy">Ecotax requires Management role or above.</p>
+    </section>
+
+    <section class="card section hidden" id="contentPanel">
+      <h2>Ecotax Rates</h2>
+      <p class="copy">Use this once yearly. Save the new year values with an implementation date and when the old rate stops applying.</p>
+
+      <div class="grid">
+        <div class="field">
+          <label for="ratePerNight">Ecotax Rate Per Night (EUR)</label>
+          <input id="ratePerNight" type="number" step="0.01" min="0" placeholder="0.00" />
+        </div>
+
+        <div class="field">
+          <label for="chargeAgeFrom">Age (Guests Pay From)</label>
+          <input id="chargeAgeFrom" type="number" step="1" min="0" placeholder="0" />
+        </div>
+
+        <div class="field">
+          <label for="maxFee">Maximum Fee (EUR)</label>
+          <input id="maxFee" type="number" step="0.01" min="0" placeholder="0.00" />
+        </div>
+
+        <div class="field">
+          <label for="effectiveFrom">Implemented From (Date)</label>
+          <input id="effectiveFrom" type="date" />
+        </div>
+
+        <div class="field">
+          <label for="previousRateUntil">Previous Rate Valid Until (Date)</label>
+          <input id="previousRateUntil" type="date" />
+        </div>
+
+        <div class="field full">
+          <label for="notes">Notes (Optional)</label>
+          <textarea id="notes" placeholder="Optional management note for this yearly change"></textarea>
+        </div>
+      </div>
+
+      <p class="info-line">These Ecotax values are assumed to be applied with receipts in the guest workflow.</p>
+
+      <div class="actions" style="margin-top: 14px; justify-content: flex-start;">
+        <button class="btn" id="btnSave" type="button">Save New Ecotax Year</button>
+      </div>
+    </section>
+
+    <section class="card section hidden" id="historyPanel">
+      <h2>Recent Ecotax History</h2>
+      <p class="copy">Latest versions are listed first. Active row is the current policy.</p>
+      <div class="history">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Rate/Night</th>
+              <th>Age From</th>
+              <th>Max Fee</th>
+              <th>Implemented From</th>
+              <th>Previous Rate Until</th>
+              <th>Updated</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="7">No Ecotax history found yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const AUTH_STORAGE_KEY = 'empinfo.auth.v1';
+    const API_ORIGIN_STORAGE_KEY = 'empinfo.api_origin.v1';
+    const PAGE_QUERY = new URLSearchParams(window.location.search);
+    const ROLE_RANK = { 'general user': 1, management: 2, hr: 3, full: 4, admin: 5, administrator: 5, superadmin: 5 };
+    const DEFAULT_API_ORIGIN = window.location.port === '8055'
+      ? window.location.origin
+      : `${window.location.protocol}//${window.location.hostname}:8055`;
+
+    const refs = {
+      statusLine: document.getElementById('statusLine'),
+      deniedPanel: document.getElementById('deniedPanel'),
+      deniedCopy: document.getElementById('deniedCopy'),
+      contentPanel: document.getElementById('contentPanel'),
+      historyPanel: document.getElementById('historyPanel'),
+      btnBackHub: document.getElementById('btnBackHub'),
+      btnReload: document.getElementById('btnReload'),
+      btnSave: document.getElementById('btnSave'),
+      ratePerNight: document.getElementById('ratePerNight'),
+      chargeAgeFrom: document.getElementById('chargeAgeFrom'),
+      maxFee: document.getElementById('maxFee'),
+      effectiveFrom: document.getElementById('effectiveFrom'),
+      previousRateUntil: document.getElementById('previousRateUntil'),
+      notes: document.getElementById('notes'),
+      historyBody: document.getElementById('historyBody'),
+    };
+
+    const state = {
+      apiOrigin: '',
+      token: '',
+      actor: null,
+      current: null,
+      recent: [],
+    };
+
+    function normalizeApiOrigin(value) {
+      return String(value || '').trim().replace(/\/$/, '');
+    }
+
+    function getApiOrigin() {
+      const fromQuery = normalizeApiOrigin(PAGE_QUERY.get('api_origin'));
+      if (fromQuery) return fromQuery;
+      try {
+        const stored = normalizeApiOrigin(localStorage.getItem(API_ORIGIN_STORAGE_KEY));
+        if (stored) return stored;
+      } catch {}
+      return DEFAULT_API_ORIGIN;
+    }
+
+    function persistApiOrigin(value) {
+      const normalized = normalizeApiOrigin(value);
+      if (!normalized) return;
+      state.apiOrigin = normalized;
+      try { localStorage.setItem(API_ORIGIN_STORAGE_KEY, normalized); } catch {}
+    }
+
+    function getStoredAuthRecord() {
+      try { return JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || '{}'); } catch { return {}; }
+    }
+
+    function getAuthToken() {
+      const stored = getStoredAuthRecord();
+      return String(stored?.access_token || '').trim();
+    }
+
+    function getRoleRank(roleName) {
+      const normalized = String(roleName || '').trim().toLowerCase();
+      if (!normalized) return 0;
+      if (ROLE_RANK[normalized]) return ROLE_RANK[normalized];
+      if (normalized.includes('super') || normalized.includes('admin')) return ROLE_RANK.admin;
+      if (normalized.includes('full')) return ROLE_RANK.full;
+      if (normalized.includes('hr')) return ROLE_RANK.hr;
+      if (normalized.includes('manag')) return ROLE_RANK.management;
+      if (normalized.includes('general') || normalized.includes('user')) return ROLE_RANK['general user'];
+      return 0;
+    }
+
+    function setStatus(message, tone) {
+      refs.statusLine.textContent = message;
+      refs.statusLine.classList.remove('ok', 'err');
+      if (tone) refs.statusLine.classList.add(tone);
+    }
+
+    function buildHubHref() {
+      return `./app-hub.html?api_origin=${encodeURIComponent(state.apiOrigin)}`;
+    }
+
+    function showDenied(message) {
+      refs.deniedPanel.classList.remove('hidden');
+      refs.contentPanel.classList.add('hidden');
+      refs.historyPanel.classList.add('hidden');
+      refs.deniedCopy.textContent = message;
+    }
+
+    function showContent() {
+      refs.deniedPanel.classList.add('hidden');
+      refs.contentPanel.classList.remove('hidden');
+      refs.historyPanel.classList.remove('hidden');
+    }
+
+    function getHeaders(hasBody) {
+      const headers = { Accept: 'application/json' };
+      if (state.token) headers.Authorization = `Bearer ${state.token}`;
+      if (hasBody) headers['Content-Type'] = 'application/json';
+      return headers;
+    }
+
+    async function fetchJson(path, options = {}) {
+      const hasBody = Object.prototype.hasOwnProperty.call(options, 'body');
+      const response = await fetch(`${state.apiOrigin}${path}`, {
+        method: options.method || 'GET',
+        headers: getHeaders(hasBody),
+        body: hasBody ? JSON.stringify(options.body) : undefined,
+      });
+
+      const text = await response.text();
+      let data = {};
+      try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+      return { response, data };
+    }
+
+    function getErrorMessage(payload, fallback) {
+      return payload?.errors?.[0]?.message || payload?.error || payload?.raw || fallback;
+    }
+
+    function formatDate(value) {
+      const text = String(value || '').trim();
+      if (!text) return '-';
+      const dt = new Date(text);
+      if (Number.isNaN(dt.getTime())) return text;
+      return dt.toLocaleDateString('en-MT');
+    }
+
+    function formatDateTime(value) {
+      const text = String(value || '').trim();
+      if (!text) return '-';
+      const dt = new Date(text);
+      if (Number.isNaN(dt.getTime())) return text;
+      return dt.toLocaleString('en-MT');
+    }
+
+    function formatMoney(value) {
+      const num = Number(value || 0);
+      if (!Number.isFinite(num)) return 'EUR0.00';
+      return `EUR${num.toFixed(2)}`;
+    }
+
+    function renderForm() {
+      const row = state.current || {};
+      refs.ratePerNight.value = row.rate_per_night ?? '';
+      refs.chargeAgeFrom.value = row.charge_age_from ?? '';
+      refs.maxFee.value = row.max_fee ?? '';
+      refs.effectiveFrom.value = String(row.effective_from || '').slice(0, 10);
+      refs.previousRateUntil.value = String(row.previous_rate_valid_until || '').slice(0, 10);
+      refs.notes.value = row.notes || '';
+    }
+
+    function renderHistory() {
+      const rows = Array.isArray(state.recent) ? state.recent : [];
+      if (!rows.length) {
+        refs.historyBody.innerHTML = '<tr><td colspan="7">No Ecotax history found yet.</td></tr>';
+        return;
+      }
+
+      refs.historyBody.innerHTML = rows.map((row) => {
+        const active = Boolean(row.is_active);
+        return `
+          <tr>
+            <td><span class="pill">${active ? 'Active' : 'Archived'}</span></td>
+            <td>${formatMoney(row.rate_per_night)}</td>
+            <td>${Number.isFinite(Number(row.charge_age_from)) ? Number(row.charge_age_from) : '-'}</td>
+            <td>${formatMoney(row.max_fee)}</td>
+            <td>${formatDate(row.effective_from)}</td>
+            <td>${formatDate(row.previous_rate_valid_until)}</td>
+            <td>${formatDateTime(row.updated_at || row.created_at)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function loadCurrent() {
+      setStatus('Loading Ecotax settings...');
+      const { response, data } = await fetchJson('/ecotax-settings/current');
+      if (!response.ok) {
+        throw new Error(getErrorMessage(data, `Failed to load Ecotax settings (${response.status}).`));
+      }
+      state.current = data?.current || null;
+      state.recent = Array.isArray(data?.recent) ? data.recent : [];
+      state.actor = data?.actor || null;
+      renderForm();
+      renderHistory();
+      const actorRole = String(state.actor?.role_name || '').trim();
+      setStatus(`Ecotax loaded. Signed in as ${state.actor?.email || 'user'} (${actorRole || 'Management'}).`, 'ok');
+    }
+
+    function getPayloadFromForm() {
+      const ratePerNight = Number(refs.ratePerNight.value);
+      const chargeAgeFrom = Number.parseInt(String(refs.chargeAgeFrom.value || '').trim(), 10);
+      const maxFee = Number(refs.maxFee.value);
+      const effectiveFrom = String(refs.effectiveFrom.value || '').trim();
+      const previousRateValidUntil = String(refs.previousRateUntil.value || '').trim();
+
+      if (!Number.isFinite(ratePerNight) || ratePerNight < 0) {
+        throw new Error('Ecotax rate per night must be a non-negative number.');
+      }
+      if (!Number.isFinite(chargeAgeFrom) || chargeAgeFrom < 0) {
+        throw new Error('Age from must be a non-negative whole number.');
+      }
+      if (!Number.isFinite(maxFee) || maxFee < 0) {
+        throw new Error('Maximum fee must be a non-negative number.');
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(effectiveFrom)) {
+        throw new Error('Implemented from date is required.');
+      }
+      if (previousRateValidUntil && !/^\d{4}-\d{2}-\d{2}$/.test(previousRateValidUntil)) {
+        throw new Error('Previous rate valid until must be a valid date.');
+      }
+      if (previousRateValidUntil && previousRateValidUntil >= effectiveFrom) {
+        throw new Error('Previous rate valid until must be before implemented from date.');
+      }
+
+      return {
+        rate_per_night: Number(ratePerNight.toFixed(2)),
+        charge_age_from: chargeAgeFrom,
+        max_fee: Number(maxFee.toFixed(2)),
+        effective_from: effectiveFrom,
+        previous_rate_valid_until: previousRateValidUntil || null,
+        notes: String(refs.notes.value || '').trim() || null,
+      };
+    }
+
+    async function saveCurrent() {
+      const payload = getPayloadFromForm();
+      setStatus('Saving Ecotax settings...');
+      const { response, data } = await fetchJson('/ecotax-settings/current', {
+        method: 'POST',
+        body: payload,
+      });
+      if (!response.ok) {
+        throw new Error(getErrorMessage(data, `Failed to save Ecotax settings (${response.status}).`));
+      }
+      await loadCurrent();
+      setStatus('Ecotax settings saved as a new active yearly version.', 'ok');
+    }
+
+    async function verifyRoleFromUserProfile() {
+      const { response, data } = await fetchJson('/users/me?fields=id,email,role.name');
+      if (!response.ok) throw new Error(getErrorMessage(data, `Failed to verify session (${response.status}).`));
+      const roleName = String(data?.data?.role?.name || '').trim();
+      const roleRank = getRoleRank(roleName);
+      if (roleRank < ROLE_RANK.management) {
+        throw new Error('Ecotax is available only to Management role and above.');
+      }
+      if (typeof window.initIdleLogout === 'function') window.initIdleLogout(roleName);
+    }
+
+    function bindEvents() {
+      refs.btnBackHub.href = buildHubHref();
+      refs.btnReload.addEventListener('click', async () => {
+        try {
+          await loadCurrent();
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : 'Reload failed.', 'err');
+        }
+      });
+      refs.btnSave.addEventListener('click', async () => {
+        try {
+          await saveCurrent();
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : 'Save failed.', 'err');
+        }
+      });
+    }
+
+    async function bootstrap() {
+      persistApiOrigin(getApiOrigin());
+      refs.btnBackHub.href = buildHubHref();
+      state.token = getAuthToken();
+
+      if (!state.token) {
+        setStatus('No active Directus session found. Log in first.', 'err');
+        showDenied('No active Directus session was found in this browser. Open this from App Hub after login.');
+        return;
+      }
+
+      try {
+        await verifyRoleFromUserProfile();
+        showContent();
+        bindEvents();
+        await loadCurrent();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to initialize Ecotax.';
+        setStatus(message, 'err');
+        showDenied(message);
+      }
+    }
+
+    bootstrap();
+  </script>
+  <script src="assets/js/idle-logout.js"></script>
+</body>
+</html>

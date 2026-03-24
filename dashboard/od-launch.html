@@ -1,0 +1,94 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M-CodeZ - Launch</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f6f8fc;
+      color: #1a1d23;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e3e7ee;
+      border-radius: 10px;
+      max-width: 560px;
+      width: 100%;
+      padding: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+    h1 {
+      font-size: 18px;
+      margin: 0 0 10px;
+      color: #2e5090;
+    }
+    p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1 id="title">Launching M-CodeZ...</h1>
+    <p id="message">Please wait.</p>
+  </div>
+
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+
+      function firstNonEmptyParam(keys) {
+        for (const key of keys) {
+          const value = (params.get(key) || '').trim();
+          if (value) return value;
+        }
+        return '';
+      }
+
+      const odUser = firstNonEmptyParam([
+        'od_user', 'od_username', 'odusername',
+        'user', 'username', 'UserName', 'ODUserName'
+      ]);
+      const odUserNum = firstNonEmptyParam([
+        'od_user_num', 'odusernum', 'od_num',
+        'user_num', 'usernum', 'UserNum'
+      ]);
+      const directusEmail = firstNonEmptyParam(['directus_email', 'email', 'Email']);
+      const odTs = firstNonEmptyParam(['od_ts', 'ts']);
+      const odSig = firstNonEmptyParam(['od_sig', 'sig', 'signature']);
+      const apiOrigin = firstNonEmptyParam(['api_origin']) || 'http://192.168.35.116:8055';
+
+      const target = new URL('./app-hub.html', window.location.href);
+      target.searchParams.set('api_origin', apiOrigin);
+      target.searchParams.set('od_force_auth', '1');
+      target.searchParams.set('od_launch_at', String(Date.now()));
+
+      // Accept and forward any OD launch values exactly as received.
+      for (const [key, value] of params.entries()) {
+        const cleanedKey = String(key || '').trim();
+        const cleanedValue = String(value || '').trim();
+        if (!cleanedKey || !cleanedValue) continue;
+        target.searchParams.set(cleanedKey, cleanedValue);
+      }
+
+      // Ensure aliases still populate expected keys for older clients.
+      if (odUser && !target.searchParams.get('od_user')) target.searchParams.set('od_user', odUser);
+      if (odUserNum && !target.searchParams.get('od_user_num')) target.searchParams.set('od_user_num', odUserNum);
+      if (directusEmail && !target.searchParams.get('directus_email')) target.searchParams.set('directus_email', directusEmail);
+      if (odTs && !target.searchParams.get('od_ts')) target.searchParams.set('od_ts', odTs);
+      if (odSig && !target.searchParams.get('od_sig')) target.searchParams.set('od_sig', odSig);
+
+      window.location.replace(target.toString());
+    })();
+  </script>
+</body>
+</html>

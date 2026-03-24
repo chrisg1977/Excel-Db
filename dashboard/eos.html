@@ -1,0 +1,4416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EOS Reception Workspace</title>
+  <link rel="icon" type="image/png" href="/dashboard/assets/logos/database-logo.png" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #2e5090;
+      --green: #2d8659;
+      --ink: #162033;
+      --muted: #5a6a80;
+      --line: #d9e1ee;
+      --surface: rgba(255, 255, 255, 0.96);
+      --surface-soft: #f6f8fc;
+      --warning-bg: #fff9ec;
+      --warning-line: #efd9a6;
+      --warning-text: #7b5a12;
+      --error-bg: #fff1f3;
+      --error-line: #ffcad1;
+      --error-text: #8d2032;
+      --info-bg: #ecf8f1;
+      --info-line: #b9e4c9;
+      --info-text: #1e6a41;
+      --shadow: 0 14px 36px rgba(20, 33, 61, 0.12);
+      --radius: 16px;
+      --font: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    }
+
+    html, body {
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top left, rgba(46, 80, 144, 0.14), transparent 32%),
+        linear-gradient(180deg, #edf3fb 0%, #f8fafd 56%, #eff4fa 100%);
+      color: var(--ink);
+      font-family: var(--font);
+      font-size: 16px;
+    }
+
+    body { padding-bottom: 24px; }
+    body.modal-open { overflow: hidden; }
+    .hidden { display: none !important; }
+
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(14px);
+      background: rgba(234, 243, 255, 0.92);
+      border-bottom: 1px solid rgba(46, 80, 144, 0.14);
+      box-shadow: 0 10px 26px rgba(24, 40, 72, 0.08);
+    }
+
+    .app-header-inner {
+      max-width: 1380px;
+      margin: 0 auto;
+      min-height: 74px;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .header-left, .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .header-center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1 1 auto;
+      min-width: 220px;
+    }
+
+    .logo-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(46, 80, 144, 0.16);
+      background: rgba(255, 255, 255, 0.94);
+    }
+
+    .group-logo { max-width: 210px; max-height: 42px; object-fit: contain; }
+    .mcorez-logo { max-width: 180px; max-height: 54px; object-fit: contain; }
+
+    .workspace-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(46, 80, 144, 0.16);
+      font-size: 12px;
+      font-weight: 800;
+      color: #2b4068;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .workspace-pill img { width: 20px; height: 20px; object-fit: contain; }
+
+    .btn, .btn-inline, .btn-icon {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: var(--blue);
+      color: #ffffff;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 700;
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+
+    .btn:hover, .btn-inline:hover, .btn-icon:hover {
+      filter: brightness(0.97);
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled, .btn-inline:disabled, .btn-icon:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn { padding: 10px 14px; font-size: 14px; }
+    .btn.alt, .btn-icon, .btn-inline {
+      background: #ffffff;
+      color: var(--blue);
+      border-color: rgba(46, 80, 144, 0.18);
+    }
+    .btn-inline { padding: 7px 10px; font-size: 12px; }
+    .btn-icon { width: 40px; height: 40px; }
+
+    .container {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 24px 20px 0;
+      display: grid;
+      gap: 18px;
+    }
+
+    .panel, .message, .summary-card, .context-card {
+      background: var(--surface);
+      border: 1px solid rgba(46, 80, 144, 0.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      padding: 20px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero {
+      display: grid;
+      gap: 10px;
+      background:
+        linear-gradient(135deg, rgba(46, 80, 144, 0.10), rgba(255, 255, 255, 0.72)),
+        rgba(255, 255, 255, 0.96);
+    }
+
+    .hero h1 { font-size: clamp(30px, 4vw, 42px); line-height: 1.04; }
+    .hero p { color: var(--muted); line-height: 1.65; max-width: 74ch; }
+    .hero-actions, .panel-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .context-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .context-card, .summary-card { padding: 16px 18px; }
+
+    .context-label, .summary-label {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .context-value, .summary-value {
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .context-subvalue {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .context-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .section-block {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 16px;
+      background: var(--surface-soft);
+      border: 1px solid rgba(46, 80, 144, 0.08);
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .panel-head p, .muted {
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #34425c;
+      text-transform: uppercase;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid rgba(46, 80, 144, 0.18);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #ffffff;
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    textarea {
+      min-height: 108px;
+      resize: vertical;
+    }
+
+    select { cursor: pointer; }
+
+    .message {
+      padding: 14px 16px;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .message.error {
+      background: var(--error-bg);
+      border-color: var(--error-line);
+      color: var(--error-text);
+    }
+
+    .message.info {
+      background: var(--info-bg);
+      border-color: var(--info-line);
+      color: var(--info-text);
+    }
+
+    .message.warning {
+      background: var(--warning-bg);
+      border-color: var(--warning-line);
+      color: var(--warning-text);
+    }
+
+    .opening-response {
+      display: grid;
+      gap: 12px;
+    }
+
+    .opening-response-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #5d4614;
+    }
+
+    .opening-response-copy {
+      color: var(--warning-text);
+    }
+
+    .opening-response-owner {
+      font-size: 13px;
+      font-weight: 700;
+      color: #5d4614;
+    }
+
+    .opening-response-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .opening-response-fields {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .opening-response-note {
+      font-size: 12px;
+      color: #7b5a12;
+      line-height: 1.6;
+    }
+
+    .hint-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .hint-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid rgba(46, 80, 144, 0.12);
+      font-size: 12px;
+      font-weight: 700;
+      color: #2b4068;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border-radius: 14px;
+      border: 1px solid rgba(46, 80, 144, 0.10);
+      background: #ffffff;
+      max-height: 560px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1080px;
+      font-size: 13px;
+    }
+
+    th, td {
+      border-bottom: 1px solid #e8edf6;
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #f5f8fd;
+      color: #2b4068;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      z-index: 1;
+    }
+
+    tbody tr.is-excluded {
+      opacity: 0.56;
+      background: #f4f6f9;
+    }
+
+    .row-status {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .row-status.included {
+      color: #175d37;
+      background: #e7f6ed;
+      border: 1px solid #c4e8d1;
+    }
+
+    .row-status.carry-forward {
+      color: #7b5a12;
+      background: #fff7e2;
+      border: 1px solid #efd9a6;
+    }
+
+    .table-feedback {
+      font-weight: 700;
+      line-height: 1.6;
+    }
+
+    .table-feedback.loading {
+      color: #2b4068;
+      background: #f5f8fd;
+    }
+
+    .table-feedback.error {
+      color: var(--error-text);
+      background: #fff5f7;
+    }
+
+    .sort-inline {
+      min-width: 220px;
+      font-size: 11px;
+    }
+
+    .sort-inline select {
+      min-width: 200px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border: 1px solid rgba(46, 80, 144, 0.14);
+      background: #eef4fd;
+      color: #2b4068;
+    }
+
+    .status-badge.morning-open {
+      background: #edf6ff;
+      border-color: #bfdaff;
+      color: #1f4a86;
+    }
+
+    .status-badge.amended {
+      background: #fff7e2;
+      border-color: #efd9a6;
+      color: #7b5a12;
+    }
+
+    input.is-amended {
+      border-color: #d7aa4b;
+      background: #fffbee;
+      box-shadow: inset 0 0 0 1px rgba(215, 170, 75, 0.18);
+    }
+
+    .timing-note {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(46, 80, 144, 0.10);
+      color: #355079;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .status-badge.good {
+      background: #e7f6ed;
+      border-color: #c4e8d1;
+      color: #175d37;
+    }
+
+    .status-badge.alert {
+      background: #fff1f3;
+      border-color: #ffcad1;
+      color: #8d2032;
+    }
+
+    .status-badge.neutral {
+      background: #f0f4fb;
+      border-color: #d9e1ee;
+      color: #395172;
+    }
+
+    .status-badge.pending {
+      background: #fff7e2;
+      border-color: #efd9a6;
+      color: #7b5a12;
+    }
+
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(46, 80, 144, 0.10);
+    }
+
+    .toggle-row-copy {
+      display: grid;
+      gap: 4px;
+    }
+
+    .toggle-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .toggle-copy {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .checkbox-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #34425c;
+      text-transform: none;
+    }
+
+    .field-note, .section-lock-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .section-lock-note {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #f7f9fc;
+      border: 1px dashed rgba(46, 80, 144, 0.18);
+    }
+
+    .panel.is-locked {
+      opacity: 0.72;
+    }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .readout-card {
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(46, 80, 144, 0.10);
+    }
+
+    .readout-label {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .readout-value {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--ink);
+      line-height: 1.4;
+    }
+
+    .readout-subvalue {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .recon-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .stack-card {
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(46, 80, 144, 0.10);
+      display: grid;
+      gap: 12px;
+    }
+
+    .stack-head {
+      display: grid;
+      gap: 4px;
+    }
+
+    .stack-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .stack-copy {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .placeholder-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .placeholder-card {
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(46, 80, 144, 0.10);
+      display: grid;
+      gap: 8px;
+    }
+
+    .placeholder-card.alert {
+      background: #fff8f9;
+      border-color: #ffd8de;
+    }
+
+    .placeholder-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .placeholder-body {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .placeholder-meta {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #395172;
+    }
+
+    .submit-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .registration-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(12, 22, 40, 0.48);
+      backdrop-filter: blur(10px);
+    }
+
+    .registration-modal {
+      width: min(100%, 620px);
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(46, 80, 144, 0.14);
+      border-radius: 20px;
+      box-shadow: 0 22px 56px rgba(14, 26, 52, 0.22);
+      padding: 24px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .registration-modal h2 {
+      font-size: 28px;
+      line-height: 1.1;
+    }
+
+    .registration-modal p {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .registration-note {
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #f3f7fd;
+      border: 1px solid rgba(46, 80, 144, 0.10);
+      color: #355079;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .registration-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .footer {
+      max-width: 1380px;
+      margin: 24px auto 0;
+      padding: 0 20px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    @media (max-width: 1180px) {
+      .context-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .recon-grid, .placeholder-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 860px) {
+      .context-grid, .summary-grid, .grid.two, .grid.three, .grid.four, .recon-grid, .placeholder-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .app-header-inner { justify-content: center; }
+      .header-center { order: -1; width: 100%; }
+    }
+  </style>
+</head>
+<body data-app-id="eos">
+  <header class="app-header">
+    <div class="app-header-inner">
+      <div class="header-left">
+        <div class="logo-pill"><img class="group-logo" src="assets/logos/group-logo.png" alt="Mediatrix Group" /></div>
+        <button class="btn-icon" id="btnBack" type="button">Home</button>
+      </div>
+      <div class="header-center">
+        <div class="logo-pill"><img class="mcorez-logo" src="assets/logos/database-logo.png" alt="M-CoreZ" /></div>
+      </div>
+      <div class="header-right">
+        <div class="workspace-pill"><img src="assets/logos/2.png" alt="EOS" /><span id="workspaceStatus">EOS reception shell</span></div>
+        <button class="btn alt" id="btnRefreshMock" type="button">Refresh Mock</button>
+        <button class="btn alt" id="btnSignOut" type="button">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel hero">
+      <h1>EOS Reception Workspace</h1>
+      <p>
+        One EOS front page now serves both EOSZ and EOSQ receptions. Open the shift first, then load the EOS report,
+        reconcile the cash position, review exceptions, and prepare the report for submission.
+      </p>
+      <div class="hero-actions">
+        <button class="btn" id="btnExtractTop" type="button">Obtain Open Dental Report</button>
+        <button class="btn alt" id="btnResetWindow" type="button">Reset Window</button>
+      </div>
+      <div class="status-row">
+        <span class="status-badge pending" id="openingStatusBadge">Opening Not Saved</span>
+        <span class="status-badge neutral" id="reportStatusBadge">Report Not Loaded</span>
+        <span class="status-badge neutral" id="discrepancyStatusBadge">Balanced</span>
+        <span class="status-badge neutral" id="readyStatusBadge">Not Ready</span>
+        <span class="status-badge alert hidden" id="takeoverStatusBadge">Manager takeover active</span>
+        <span class="status-badge alert hidden" id="takeoverOwnerBadge">Amending EOS of -</span>
+      </div>
+    </section>
+
+    <section class="message error hidden" id="errorBanner"></section>
+    <section class="message info hidden" id="infoBanner"></section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Top Context Bar</h2>
+          <p>Reception, workstation, and shift context stay visible before extraction and while reviewing rows.</p>
+        </div>
+      </div>
+
+      <div class="context-grid">
+        <article class="context-card">
+          <div class="context-label">Workstation Name</div>
+          <div class="context-value" id="workstationName">Resolving...</div>
+          <div class="context-subvalue" id="workstationKey">-</div>
+        </article>
+
+        <article class="context-card">
+          <div class="context-label">Detected Reception / Location</div>
+          <div class="context-value" id="receptionName">Resolving...</div>
+          <div class="context-subvalue" id="receptionRule">-</div>
+        </article>
+
+        <article class="context-card">
+          <div class="context-label">Department</div>
+          <label>
+            <select id="departmentSelect">
+              <option value="">Select department</option>
+              <option value="MDCZ">MDCZ</option>
+              <option value="MDCQ">MDCQ</option>
+              <option value="MPLUS">MPLUS</option>
+              <option value="BLUMV">BLUMV</option>
+            </select>
+          </label>
+          <div class="context-subvalue" id="departmentHint">User can override the default.</div>
+        </article>
+
+        <article class="context-card">
+          <div class="context-label">Clinic</div>
+          <div class="context-value" id="clinicContextValue">Not selected</div>
+          <div class="context-subvalue" id="clinicContextHint">Clinic stays explicit for extraction and reconciliation.</div>
+        </article>
+
+        <article class="context-card">
+          <div class="context-label">User</div>
+          <div class="context-value" id="userLabel">Reception User</div>
+          <div class="context-subvalue" id="userHint">Resolved from local session data when available.</div>
+        </article>
+
+        <article class="context-card">
+          <div class="context-label">Start Datetime</div>
+          <div class="context-value" id="startDateTimeDisplay">-</div>
+          <div class="context-badges">
+            <span class="status-badge morning-open hidden" id="morningOpenBadge">Morning Open Shift</span>
+            <span class="status-badge amended hidden" id="startAmendedBadge">Amended</span>
+          </div>
+          <div class="context-subvalue" id="startDateTimeHint">Default timing will load from the last EOS report for this department.</div>
+        </article>
+
+        <article class="context-card">
+          <div class="context-label">End Datetime</div>
+          <div class="context-value" id="endDateTimeDisplay">-</div>
+          <div class="context-badges">
+            <span class="status-badge amended hidden" id="endAmendedBadge">Amended</span>
+          </div>
+          <div class="context-subvalue" id="endDateTimeHint">Reception can amend either value before extraction. Amendments are audited locally for now.</div>
+        </article>
+      </div>
+
+      <div class="hint-row">
+        <div class="hint-chip" id="mappingHint">Workstation mapping is mock-backed for now.</div>
+        <div class="hint-chip" id="apiHint">Production extraction uses a mock EOS adapter.</div>
+      </div>
+
+      <section class="message info" id="activeShiftBanner">
+        <strong>Active Shift Session</strong>
+        <div id="activeShiftBannerCopy">EOS report loading requires an active shift session from the Open Shift workspace.</div>
+      </section>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Shift Session</h2>
+          <p>Opening, resume, takeover, and unresolved-shift actions now live in the standalone Open Shift workspace.</p>
+        </div>
+        <div class="panel-actions">
+          <button class="btn alt" id="btnOpenShift" type="button">Open Shift Workspace</button>
+        </div>
+      </div>
+
+      <section class="section-block">
+        <div class="section-lock-note" id="openingWorkspaceNote">
+          No active shift session is loaded yet. This workspace will redirect to Open Shift until a shift session is created or resumed.
+        </div>
+      </section>
+    </section>
+
+    <section class="panel" id="loadReportPanel">
+      <div class="panel-head">
+        <div>
+          <h2>Load EOS Report</h2>
+          <p>Load the EOS report after the shift opening is saved. Start and end times stay audited if amended.</p>
+        </div>
+        <div class="panel-actions">
+          <button class="btn" id="btnExtract" type="button">Obtain Open Dental Report</button>
+        </div>
+      </div>
+
+      <section class="section-block">
+        <div class="readout-grid">
+          <article class="readout-card">
+            <div class="readout-label">Department</div>
+            <div class="readout-value" id="loadDepartmentValue">-</div>
+            <div class="readout-subvalue">Department comes from the opening shift selection.</div>
+          </article>
+          <article class="readout-card">
+            <div class="readout-label">Clinic</div>
+            <div class="readout-value" id="loadClinicValue">-</div>
+            <div class="readout-subvalue">Clinic stays explicit and clinic separation remains strict.</div>
+          </article>
+          <article class="readout-card">
+            <div class="readout-label">Opening Session</div>
+            <div class="readout-value" id="openingSessionValue">Not created</div>
+            <div class="readout-subvalue" id="openingSessionHint">Save opening details first to create the shift session.</div>
+          </article>
+        </div>
+
+        <div class="grid three">
+          <label>Clinic
+            <select id="clinicSelect">
+              <option value="">Select clinic</option>
+              <option value="MDCZ">MDCZ</option>
+              <option value="MDCQ">MDCQ</option>
+              <option value="MPLUS">MPLUS</option>
+              <option value="BLUMV">BLUMV</option>
+            </select>
+          </label>
+
+          <label>EOS Report Start
+            <input id="fromDateTime" type="datetime-local" />
+          </label>
+
+          <label>EOS Report End
+            <input id="toDateTime" type="datetime-local" />
+          </label>
+        </div>
+
+        <div class="section-lock-note" id="loadReportLockNote">Save opening details to unlock EOS report loading.</div>
+
+        <div class="timing-note" id="timingAuditNote">
+          Report timing defaults use the last saved EOS report for the selected department. TODO: replace local browser audit storage with EOS backend persistence.
+        </div>
+      </section>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Production Results Grid</h2>
+          <p>Unchecking a row marks it as carry forward, greys it out, and moves its amount into the excluded total. Default order stays in backend visit order unless reception chooses a sort.</p>
+        </div>
+        <div class="panel-actions">
+          <label class="sort-inline">Sort Grid
+            <select id="gridSortSelect">
+              <option value="default">Default API Order</option>
+              <option value="time">Time</option>
+              <option value="provider">Provider</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <section class="section-block">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Include</th>
+                <th>Time</th>
+                <th>Patient Number</th>
+                <th>Surname</th>
+                <th>Name</th>
+                <th>Treatments</th>
+                <th>Provider</th>
+                <th>Fee Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody">
+              <tr><td colspan="9" class="muted">Run an extraction to load EOS production rows.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Reconciliation</h2>
+          <p>Keep row summary, manual inputs, system totals, and final reconciliation separate so the discrepancy stays clear.</p>
+        </div>
+      </div>
+
+      <section class="section-block">
+        <div class="stack-head">
+          <div class="stack-title">EOS Row Summary</div>
+          <div class="stack-copy">Totals recalculate immediately whenever reception includes or excludes a production row.</div>
+        </div>
+
+        <div class="summary-grid">
+          <article class="summary-card">
+            <div class="summary-label">Included Total</div>
+            <div class="summary-value" id="includedTotal">EUR0.00</div>
+          </article>
+          <article class="summary-card">
+            <div class="summary-label">Excluded Total</div>
+            <div class="summary-value" id="excludedTotal">EUR0.00</div>
+          </article>
+          <article class="summary-card">
+            <div class="summary-label">Net Total</div>
+            <div class="summary-value" id="netTotal">EUR0.00</div>
+          </article>
+          <article class="summary-card">
+            <div class="summary-label">Included Count</div>
+            <div class="summary-value" id="includedCount">0</div>
+          </article>
+          <article class="summary-card">
+            <div class="summary-label">Excluded Count</div>
+            <div class="summary-value" id="excludedCount">0</div>
+          </article>
+        </div>
+      </section>
+
+      <div class="recon-grid">
+        <section class="stack-card">
+          <div class="stack-head">
+            <div class="stack-title">Manual Inputs</div>
+            <div class="stack-copy">Payment channels stay filtered by the selected department. Cash envelope remains manual.</div>
+          </div>
+          <div class="grid two" id="paymentFieldsGrid"></div>
+          <div class="field-note" id="paymentFieldsNote">Manual inputs are session-local for now. TODO: persist EOS reconciliation inputs.</div>
+        </section>
+
+        <section class="stack-card">
+          <div class="stack-head">
+            <div class="stack-title">System Totals</div>
+            <div class="stack-copy">Cashbox expenses and sell totals are placeholder system values for now. Fee total follows the loaded EOS rows.</div>
+          </div>
+          <div class="summary-grid">
+            <article class="summary-card">
+              <div class="summary-label">Cashbox Expenses Total</div>
+              <div class="summary-value" id="cashboxExpensesTotal">EUR0.00</div>
+            </article>
+            <article class="summary-card">
+              <div class="summary-label">Sell Total</div>
+              <div class="summary-value" id="sellTotalValue">EUR0.00</div>
+            </article>
+            <article class="summary-card">
+              <div class="summary-label">Fee Total</div>
+              <div class="summary-value" id="feeTotalValue">EUR0.00</div>
+            </article>
+            <article class="summary-card">
+              <div class="summary-label">Opening Cash Used</div>
+              <div class="summary-value" id="openingCashUsedValue">EUR0.00</div>
+            </article>
+          </div>
+        </section>
+
+        <section class="stack-card">
+          <div class="stack-head">
+            <div class="stack-title">Final Reconciliation</div>
+            <div class="stack-copy">Discrepancy updates live and drives the manager-alert preview.</div>
+          </div>
+          <div class="summary-grid">
+            <article class="summary-card">
+              <div class="summary-label">Expected Total</div>
+              <div class="summary-value" id="expectedTotalValue">EUR0.00</div>
+            </article>
+            <article class="summary-card">
+              <div class="summary-label">Actual Total</div>
+              <div class="summary-value" id="actualTotalValue">EUR0.00</div>
+            </article>
+            <article class="summary-card">
+              <div class="summary-label">Discrepancy</div>
+              <div class="summary-value" id="discrepancyValue">EUR0.00</div>
+            </article>
+          </div>
+          <div class="field-note" id="reconciliationHint">Opening cash + payment channels + cash envelope - cashbox expenses.</div>
+        </section>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Exceptions</h2>
+          <p>Keep exception handling separate from the main reconciliation totals.</p>
+        </div>
+      </div>
+
+      <div class="placeholder-grid">
+        <article class="placeholder-card">
+          <div class="placeholder-title">Carry-Forward Rows</div>
+          <div class="placeholder-body" id="carryForwardBody">Excluded grouped-visit rows will be tracked here before carry-forward persistence is wired.</div>
+          <div class="placeholder-meta" id="carryForwardMeta">0 rows currently flagged</div>
+        </article>
+        <article class="placeholder-card">
+          <div class="placeholder-title">Missing Walkout Rows</div>
+          <div class="placeholder-body" id="missingWalkoutBody">Walkout exception reporting will appear here once walkout enrichment is connected to existing EOS visit rows.</div>
+          <div class="placeholder-meta" id="missingWalkoutMeta">No live walkout integration yet</div>
+        </article>
+        <article class="placeholder-card alert">
+          <div class="placeholder-title">Manager Alert Preview</div>
+          <div class="placeholder-body" id="managerAlertBody">Manager alert preview is waiting for opening and reconciliation data.</div>
+          <div class="placeholder-meta" id="managerAlertMeta">Alert status: clear</div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Submit EOS</h2>
+          <p>Save, submit, and lock the EOS report after it has been reviewed.</p>
+        </div>
+      </div>
+
+      <section class="section-block">
+        <div class="section-lock-note" id="submitStatusNote">Opening must be saved and the report must be loaded before EOS submission can continue.</div>
+        <div class="submit-actions">
+          <button class="btn alt" id="btnSaveDraft" type="button">Save Draft</button>
+          <button class="btn" id="btnSubmitEos" type="button">Submit EOS</button>
+          <button class="btn alt" id="btnLockReport" type="button">Lock Report</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div class="registration-backdrop hidden" id="registrationBackdrop" aria-hidden="true">
+    <div class="registration-modal" role="dialog" aria-modal="true" aria-labelledby="registrationTitle">
+      <div>
+        <h2 id="registrationTitle">First-Time Workstation Registration</h2>
+        <p>
+          This is the first time this PC has logged in.
+          Which Department does it belong to?
+        </p>
+      </div>
+
+      <div class="grid two">
+        <article class="context-card">
+          <div class="context-label">Detected Workstation</div>
+          <div class="context-value" id="registrationWorkstationName">Resolving...</div>
+          <div class="context-subvalue" id="registrationWorkstationSource">-</div>
+        </article>
+        <article class="context-card">
+          <div class="context-label">Detected Reception / Location</div>
+          <div class="context-value" id="registrationLocationLabel">Unknown</div>
+          <div class="context-subvalue" id="registrationLocationRule">No location hint yet.</div>
+        </article>
+      </div>
+
+      <label>Department
+        <select id="registrationDepartmentSelect">
+          <option value="">Select department</option>
+          <option value="MDCZ">MDCZ</option>
+          <option value="MDCQ">MDCQ</option>
+          <option value="MPLUS">MPLUS</option>
+          <option value="BLUMV">BLUMV</option>
+        </select>
+      </label>
+
+      <div class="registration-note" id="registrationSuggestion">
+        No temporary location suggestion is available.
+      </div>
+
+      <div class="registration-actions">
+        <button class="btn" id="btnConfirmRegistration" type="button" disabled>Confirm Department</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">EOS reception shell aligned to the shift-session, grouped-visit report snapshot, and audit flow. Live extraction uses the EOS production endpoint with mock fallback.</div>
+
+  <script src="assets/js/usage-tracker.js"></script>
+  <script src="assets/js/idle-logout.js"></script>
+  <script>
+    // EOS frontend alignment note:
+    // - dashboard/eos/open-shift.js prepares and activates the future eos_shift_session payload
+    // - runExtraction() prepares the future eos_report_header + eos_report_row[] snapshot
+    // - reconciliation values prepare the future eos_report_summary snapshot
+    // - saveDraft()/submitEosReport()/lockEosReport() prepare eos_report_audit entries
+    // See src/types/eos.ts and EOS_FLOW.md for the canonical developer-facing contract.
+    const API_ORIGIN_STORAGE_KEY = 'empinfo.api_origin.v1';
+    const AUTH_STORAGE_KEY = 'empinfo.auth.v1';
+    const WORKSTATION_CONFIGS_STORAGE_KEY = 'eos.workstation.configs.v1';
+    const NAMED_WORKSTATION_ALIAS_STORAGE_KEY = 'eos.workstation.named_alias.v1';
+    const EOS_REPORT_TIME_AUDIT_STORAGE_KEY = 'eos.report.time.audit.v1';
+    const GENERATED_WORKSTATION_ID_STORAGE_KEY = 'eos.workstation.generated_id.v1';
+    const ACTIVE_SHIFT_SESSION_STORAGE_KEY = 'eos.active_shift_session.v1';
+    const OPEN_SHIFT_NOTICE_STORAGE_KEY = 'eos.open_shift.notice.v1';
+    const DEFAULT_API_ORIGIN = window.location.port === '8055'
+      ? window.location.origin
+      : `${window.location.protocol}//${window.location.hostname}:8055`;
+    const ENABLE_MOCK_PRODUCTION_FALLBACK = true;
+    const CLINIC_NUM_BY_CODE = {
+      MDCZ: 1,
+      MDCQ: 2
+    };
+
+    const DEPARTMENT_OPTIONS = ['MDCZ', 'MDCQ', 'MPLUS', 'BLUMV'];
+    const LOCATION_DIRECTORY = {
+      ZABBAR: { code: 'ZABBAR', label: 'Zabbar Reception' },
+      QORMI: { code: 'QORMI', label: 'Qormi Reception' },
+      BLUMV: { code: 'BLUMV', label: 'BLUMV Reception' },
+      UNKNOWN: { code: 'UNKNOWN', label: 'Unknown Reception' }
+    };
+    const NAMED_WORKSTATION_OPTIONS = {
+      CHRIS_LAPTOP: {
+        option_value: 'CHRIS_LAPTOP',
+        workstation_id: 'named:chris_laptop',
+        workstation_alias: 'chris_laptop',
+        display_name: 'Chris laptop',
+        default_location_code: 'QORMI'
+      }
+    };
+
+    function createScopedId(prefix) {
+      if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return `${prefix}-${window.crypto.randomUUID()}`;
+      }
+      return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    function createReportId() {
+      return createScopedId('report');
+    }
+
+    function createAuditId() {
+      return createScopedId('audit');
+    }
+
+    function createEmptyReportWindow() {
+      return {
+        report_id: createReportId(),
+        workstation_id: '',
+        department_code: '',
+        location_code: 'UNKNOWN',
+        default_start_at: null,
+        default_end_at: null,
+        final_start_at: null,
+        final_end_at: null,
+        start_amended: false,
+        end_amended: false,
+        amended_at: null,
+        amended_by_user: null,
+        created_at: null,
+        first_report_of_day: true,
+        default_start_source: 'safe_fallback_08_00',
+        previous_report_end_at: null,
+        previous_report_id: null
+      };
+    }
+
+    const REPORT_SYSTEM_TOTAL_DEFAULTS = {
+      cashbox_expenses_total: 37.00,
+      sell_total: 335.00
+    };
+
+    const PAYMENT_FIELD_MAPPING = {
+      'EPOS Dental Zabbar': { key: 'eposDentalZabbar', label: 'EPOS Dental Zabbar' },
+      'EPOS Dental Qormi': { key: 'eposDentalQormi', label: 'EPOS Dental Qormi' },
+      'EPOS PODO': { key: 'eposPodo', label: 'EPOS PODO' },
+      'EPOS BluM': { key: 'eposBluM', label: 'EPOS BluM' },
+      EPOSBLuM: { key: 'eposBlum', label: 'EPOSBLuM' },
+      Cashlink: { key: 'eposCashlink', label: 'EPOS Cashlink' },
+      BOV: { key: 'bov', label: 'BOV' },
+      'Bank transfer': { key: 'bankTransfer', label: 'Bank transfer' },
+      Revolut: { key: 'revolut', label: 'Revolut' },
+      Cheques: { key: 'cheques', label: 'Cheques received' }
+    };
+
+    function createShiftSessionId() {
+      return createScopedId('shift');
+    }
+
+    function createEmptyPreparedEosDraft() {
+      // UI-only snapshot mirror of the prepared EOS persistence objects in src/types/eos.ts.
+      return {
+        shiftSession: null,
+        reportHeader: null,
+        reportRows: [],
+        reportSummary: null,
+        reportAudit: []
+      };
+    }
+
+    function formatLocalDateInput(date) {
+      const parsed = date instanceof Date ? new Date(date.getTime()) : new Date(date);
+      if (Number.isNaN(parsed.getTime())) return '';
+      const copy = new Date(parsed.getTime() - (parsed.getTimezoneOffset() * 60000));
+      return copy.toISOString().slice(0, 10);
+    }
+
+    function formatLocalDateTimeInput(date) {
+      const parsed = date instanceof Date ? new Date(date.getTime()) : new Date(date);
+      if (Number.isNaN(parsed.getTime())) return '';
+      const copy = new Date(parsed.getTime() - (parsed.getTimezoneOffset() * 60000));
+      return copy.toISOString().slice(0, 16);
+    }
+
+    function createDefaultOpeningShift(now = new Date()) {
+      return {
+        shift_date: formatLocalDateInput(now),
+        opening_timestamp: formatLocalDateTimeInput(now),
+        last_shift_closing_cash: '245.00',
+        opening_cash_matches: true,
+        actual_opening_cash: '',
+        override_reason: '',
+        note: '',
+        amending_from_user: '',
+        saved_at: null,
+        shift_session_id: null
+      };
+    }
+
+    function createEmptyShiftSessionUiState() {
+      return {
+        action_code: '',
+        message: '',
+        shift_session: null,
+        allowed_actions: [],
+        required_reason_fields: [],
+        required_reason_fields_by_action: {},
+        placeholder_values: {
+          takeover_reason: '',
+          abandon_reason: '',
+          supersede_reason: '',
+          temporary_close_reason: '',
+          discrepancy_note: ''
+        }
+      };
+    }
+
+    function buildOpeningShiftFromActiveSession(activeSession, fallback = createDefaultOpeningShift()) {
+      if (!activeSession || !activeSession.id) return fallback;
+      return {
+        shift_date: String(activeSession.shift_date || fallback.shift_date || '').trim(),
+        opening_timestamp: String(activeSession.opening_timestamp || '').trim()
+          || formatShiftSessionDateTimeForInput(activeSession.shift_date, activeSession.shift_start_time)
+          || fallback.opening_timestamp,
+        last_shift_closing_cash: String(activeSession.last_shift_closing_cash || fallback.last_shift_closing_cash || '').trim(),
+        opening_cash_matches: activeSession.opening_cash_matches !== false,
+        actual_opening_cash: String(activeSession.actual_opening_cash || '').trim(),
+        override_reason: String(activeSession.override_reason || '').trim(),
+        note: String(activeSession.note || '').trim(),
+        amending_from_user: String(activeSession.amending_from_user || activeSession.taken_over_from_user || '').trim(),
+        saved_at: String(activeSession.saved_at || activeSession.created_at || '').trim() || null,
+        shift_session_id: String(activeSession.shift_session_id || activeSession.id || '').trim() || null
+      };
+    }
+
+    function createDefaultPaymentValues() {
+      return {
+        eposDentalZabbar: '0.00',
+        eposDentalQormi: '0.00',
+        eposPodo: '0.00',
+        eposBluM: '0.00',
+        eposBlum: '0.00',
+        eposCashlink: '0.00',
+        bov: '0.00',
+        bankTransfer: '0.00',
+        revolut: '0.00',
+        cheques: '0.00',
+        cashEnvelope: '0.00'
+      };
+    }
+
+    const state = {
+      busy: false,
+      currentUser: 'Reception User',
+      workstation: null,
+      workstationConfig: null,
+      location: { ...LOCATION_DIRECTORY.UNKNOWN, detection_rule: 'unmapped' },
+      registeredDepartment: '',
+      selectedDepartment: '',
+      selectedClinic: '',
+      pendingRegistrationDepartment: '',
+      isRegistrationPending: false,
+      rows: [],
+      resultsState: 'idle',
+      resultsMessage: 'Run an extraction to load EOS production rows.',
+      lastExtractionSource: 'none',
+      lastApiFallbackReason: '',
+      sortMode: 'default',
+      reportWindow: createEmptyReportWindow(),
+      openingShift: createDefaultOpeningShift(),
+      activeShiftSession: null,
+      paymentValues: createDefaultPaymentValues(),
+      openingSavePending: false,
+      shiftSessionUi: createEmptyShiftSessionUiState(),
+      reportLoadedAt: null,
+      reportSubmittedAt: null,
+      reportDraftSavedAt: null,
+      reportLockedAt: null,
+      reportSavePending: false,
+      activeReportHeaderId: null,
+      persistedAccountingPeriodId: null,
+      reportAuditEntriesCreated: 0,
+      reportGeneratedAt: null,
+      preparedEosDraft: createEmptyPreparedEosDraft()
+    };
+
+    const refs = {
+      workspaceStatus: document.getElementById('workspaceStatus'),
+      errorBanner: document.getElementById('errorBanner'),
+      infoBanner: document.getElementById('infoBanner'),
+      openingStatusBadge: document.getElementById('openingStatusBadge'),
+      takeoverStatusBadge: document.getElementById('takeoverStatusBadge'),
+      takeoverOwnerBadge: document.getElementById('takeoverOwnerBadge'),
+      reportStatusBadge: document.getElementById('reportStatusBadge'),
+      discrepancyStatusBadge: document.getElementById('discrepancyStatusBadge'),
+      readyStatusBadge: document.getElementById('readyStatusBadge'),
+      workstationName: document.getElementById('workstationName'),
+      workstationKey: document.getElementById('workstationKey'),
+      receptionName: document.getElementById('receptionName'),
+      receptionRule: document.getElementById('receptionRule'),
+      departmentSelect: document.getElementById('departmentSelect'),
+      departmentHint: document.getElementById('departmentHint'),
+      clinicContextValue: document.getElementById('clinicContextValue'),
+      clinicContextHint: document.getElementById('clinicContextHint'),
+      userLabel: document.getElementById('userLabel'),
+      userHint: document.getElementById('userHint'),
+      startDateTimeDisplay: document.getElementById('startDateTimeDisplay'),
+      endDateTimeDisplay: document.getElementById('endDateTimeDisplay'),
+      startDateTimeHint: document.getElementById('startDateTimeHint'),
+      endDateTimeHint: document.getElementById('endDateTimeHint'),
+      morningOpenBadge: document.getElementById('morningOpenBadge'),
+      startAmendedBadge: document.getElementById('startAmendedBadge'),
+      endAmendedBadge: document.getElementById('endAmendedBadge'),
+      mappingHint: document.getElementById('mappingHint'),
+      apiHint: document.getElementById('apiHint'),
+      activeShiftBanner: document.getElementById('activeShiftBanner'),
+      activeShiftBannerCopy: document.getElementById('activeShiftBannerCopy'),
+      openingWorkspaceNote: document.getElementById('openingWorkspaceNote'),
+      btnOpenShift: document.getElementById('btnOpenShift'),
+      openingDepartmentSelect: document.getElementById('openingDepartmentSelect'),
+      openingClinicSelect: document.getElementById('openingClinicSelect'),
+      openingShiftDate: document.getElementById('openingShiftDate'),
+      openingTimestamp: document.getElementById('openingTimestamp'),
+      lastShiftClosingCash: document.getElementById('lastShiftClosingCash'),
+      openingCashMatches: document.getElementById('openingCashMatches'),
+      openingCashMatchesLabel: document.getElementById('openingCashMatchesLabel'),
+      openingOverrideFields: document.getElementById('openingOverrideFields'),
+      actualOpeningCash: document.getElementById('actualOpeningCash'),
+      overrideReasonSelect: document.getElementById('overrideReasonSelect'),
+      openingNote: document.getElementById('openingNote'),
+      openingMetaNote: document.getElementById('openingMetaNote'),
+      openingErrorBanner: document.getElementById('openingErrorBanner'),
+      openingResponsePanel: document.getElementById('openingResponsePanel'),
+      btnSaveOpening: document.getElementById('btnSaveOpening'),
+      loadReportPanel: document.getElementById('loadReportPanel'),
+      loadDepartmentValue: document.getElementById('loadDepartmentValue'),
+      loadClinicValue: document.getElementById('loadClinicValue'),
+      openingSessionValue: document.getElementById('openingSessionValue'),
+      openingSessionHint: document.getElementById('openingSessionHint'),
+      loadReportLockNote: document.getElementById('loadReportLockNote'),
+      clinicSelect: document.getElementById('clinicSelect'),
+      fromDateTime: document.getElementById('fromDateTime'),
+      toDateTime: document.getElementById('toDateTime'),
+      timingAuditNote: document.getElementById('timingAuditNote'),
+      gridSortSelect: document.getElementById('gridSortSelect'),
+      resultsBody: document.getElementById('resultsBody'),
+      includedTotal: document.getElementById('includedTotal'),
+      excludedTotal: document.getElementById('excludedTotal'),
+      netTotal: document.getElementById('netTotal'),
+      includedCount: document.getElementById('includedCount'),
+      excludedCount: document.getElementById('excludedCount'),
+      paymentFieldsGrid: document.getElementById('paymentFieldsGrid'),
+      paymentFieldsNote: document.getElementById('paymentFieldsNote'),
+      cashboxExpensesTotal: document.getElementById('cashboxExpensesTotal'),
+      sellTotalValue: document.getElementById('sellTotalValue'),
+      feeTotalValue: document.getElementById('feeTotalValue'),
+      openingCashUsedValue: document.getElementById('openingCashUsedValue'),
+      expectedTotalValue: document.getElementById('expectedTotalValue'),
+      actualTotalValue: document.getElementById('actualTotalValue'),
+      discrepancyValue: document.getElementById('discrepancyValue'),
+      reconciliationHint: document.getElementById('reconciliationHint'),
+      carryForwardBody: document.getElementById('carryForwardBody'),
+      carryForwardMeta: document.getElementById('carryForwardMeta'),
+      missingWalkoutBody: document.getElementById('missingWalkoutBody'),
+      missingWalkoutMeta: document.getElementById('missingWalkoutMeta'),
+      managerAlertBody: document.getElementById('managerAlertBody'),
+      managerAlertMeta: document.getElementById('managerAlertMeta'),
+      submitStatusNote: document.getElementById('submitStatusNote'),
+      btnSaveDraft: document.getElementById('btnSaveDraft'),
+      btnSubmitEos: document.getElementById('btnSubmitEos'),
+      btnLockReport: document.getElementById('btnLockReport'),
+      registrationBackdrop: document.getElementById('registrationBackdrop'),
+      registrationWorkstationName: document.getElementById('registrationWorkstationName'),
+      registrationWorkstationSource: document.getElementById('registrationWorkstationSource'),
+      registrationLocationLabel: document.getElementById('registrationLocationLabel'),
+      registrationLocationRule: document.getElementById('registrationLocationRule'),
+      registrationDepartmentSelect: document.getElementById('registrationDepartmentSelect'),
+      registrationSuggestion: document.getElementById('registrationSuggestion'),
+      btnConfirmRegistration: document.getElementById('btnConfirmRegistration'),
+      btnBack: document.getElementById('btnBack'),
+      btnSignOut: document.getElementById('btnSignOut'),
+      btnRefreshMock: document.getElementById('btnRefreshMock'),
+      btnExtract: document.getElementById('btnExtract'),
+      btnExtractTop: document.getElementById('btnExtractTop'),
+      btnResetWindow: document.getElementById('btnResetWindow')
+    };
+
+    function normalizeApiOrigin(origin) {
+      return String(origin || '').trim().replace(/\/$/, '');
+    }
+
+    function getApiOrigin() {
+      const params = new URLSearchParams(window.location.search);
+      try {
+        return (
+          normalizeApiOrigin(params.get('api_origin')) ||
+          normalizeApiOrigin(localStorage.getItem(API_ORIGIN_STORAGE_KEY)) ||
+          normalizeApiOrigin(DEFAULT_API_ORIGIN)
+        );
+      } catch {
+        return normalizeApiOrigin(DEFAULT_API_ORIGIN);
+      }
+    }
+
+    function getEosApiOrigin() {
+      const params = new URLSearchParams(window.location.search);
+      const inferredOdImporterOrigin = window.location.port === '8055'
+        ? `${window.location.protocol}//${window.location.hostname}:4020`
+        : '';
+      return (
+        normalizeApiOrigin(params.get('eos_api_origin')) ||
+        normalizeApiOrigin(params.get('od_api_origin')) ||
+        normalizeApiOrigin(inferredOdImporterOrigin) ||
+        normalizeApiOrigin(window.location.origin) ||
+        normalizeApiOrigin(getApiOrigin())
+      );
+    }
+
+    function readStoredAuth() {
+      try {
+        return JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || '{}');
+      } catch {
+        return {};
+      }
+    }
+
+    function clearAuth() {
+      try {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+      } catch {}
+    }
+
+    function redirectToLogin(reason) {
+      const apiOrigin = getApiOrigin();
+      const suffix = reason ? `&reason=${encodeURIComponent(reason)}` : '';
+      window.location.href = `./login.html?api_origin=${encodeURIComponent(apiOrigin)}${suffix}`;
+    }
+
+    // Initialise idle logout for non-admin users (EOS has no role fetch — default non-admin)
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof window.initIdleLogout === 'function') window.initIdleLogout('');
+    });
+
+    function buildOpenShiftUrl(reason) {
+      const url = new URL('./eos/open-shift.html', window.location.href);
+      const params = new URLSearchParams(window.location.search);
+      if (!params.has('view')) params.set('view', 'eos');
+      if (reason) params.set('shift_guard_reason', reason);
+      url.search = params.toString();
+      return url.toString();
+    }
+
+    function redirectToOpenShift(reason) {
+      window.location.href = buildOpenShiftUrl(reason);
+    }
+
+    function readActiveShiftSessionStorage() {
+      try {
+        const parsed = JSON.parse(sessionStorage.getItem(ACTIVE_SHIFT_SESSION_STORAGE_KEY) || '{}');
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) && parsed.id
+          ? parsed
+          : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function writeActiveShiftSessionStorage(session) {
+      try {
+        sessionStorage.setItem(ACTIVE_SHIFT_SESSION_STORAGE_KEY, JSON.stringify(session));
+      } catch {}
+    }
+
+    function consumeOpenShiftNotice() {
+      try {
+        const raw = sessionStorage.getItem(OPEN_SHIFT_NOTICE_STORAGE_KEY);
+        if (!raw) return null;
+        sessionStorage.removeItem(OPEN_SHIFT_NOTICE_STORAGE_KEY);
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function normalizeDepartmentCode(value) {
+      const normalized = String(value || '').trim().toUpperCase();
+      return DEPARTMENT_OPTIONS.includes(normalized) ? normalized : '';
+    }
+
+    function normalizeLocationCode(value) {
+      const normalized = String(value || '').trim().toUpperCase();
+      return Object.prototype.hasOwnProperty.call(LOCATION_DIRECTORY, normalized) ? normalized : 'UNKNOWN';
+    }
+
+    function getNamedWorkstationOption(value) {
+      const normalized = String(value || '').trim().toUpperCase();
+      return Object.prototype.hasOwnProperty.call(NAMED_WORKSTATION_OPTIONS, normalized)
+        ? NAMED_WORKSTATION_OPTIONS[normalized]
+        : null;
+    }
+
+    function readSavedNamedWorkstationAlias() {
+      try {
+        const savedValue = String(localStorage.getItem(NAMED_WORKSTATION_ALIAS_STORAGE_KEY) || '').trim().toUpperCase();
+        return getNamedWorkstationOption(savedValue) ? savedValue : '';
+      } catch {
+        return '';
+      }
+    }
+
+    function buildNamedWorkstation(aliasCode) {
+      const namedOption = getNamedWorkstationOption(aliasCode);
+      if (!namedOption) return null;
+      return {
+        id: namedOption.workstation_id,
+        display_name: namedOption.display_name,
+        source: 'saved_named_alias',
+        hostname: String(window.location.hostname || '').trim(),
+        identifier_probe: `${namedOption.workstation_alias} ${namedOption.display_name}`.toLowerCase(),
+        named_alias: namedOption.option_value
+      };
+    }
+
+    function normalizeIsoMinute(value) {
+      if (!value) return null;
+      const parsed = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+      if (Number.isNaN(parsed.getTime())) return null;
+      parsed.setSeconds(0, 0);
+      return parsed.toISOString();
+    }
+
+    function truncateToMinute(value) {
+      const parsed = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+      if (Number.isNaN(parsed.getTime())) return null;
+      parsed.setSeconds(0, 0);
+      return parsed;
+    }
+
+    function asCurrency(value) {
+      return `EUR${Number(value || 0).toFixed(2)}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function toLocalInputValue(value) {
+      const parsed = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+      if (Number.isNaN(parsed.getTime())) return '';
+      const copy = new Date(parsed.getTime() - (parsed.getTimezoneOffset() * 60000));
+      return copy.toISOString().slice(0, 16);
+    }
+
+    function localInputValueToIso(value) {
+      const parsed = new Date(String(value || '').trim());
+      return Number.isNaN(parsed.getTime()) ? null : normalizeIsoMinute(parsed);
+    }
+
+    function toApiDateTime(value) {
+      const localValue = toLocalInputValue(value);
+      return localValue ? `${localValue.replace('T', ' ')}:00` : '';
+    }
+
+    function extractSqlTimeFromLocalDateTime(value) {
+      const normalized = String(value || '').trim();
+      if (!normalized) return '';
+      const parts = normalized.split('T');
+      if (parts.length < 2 || !parts[1]) return '';
+      return `${parts[1].slice(0, 5)}:00`;
+    }
+
+    function formatDateTime(value) {
+      if (!value) return '-';
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toLocaleString();
+    }
+
+    function sameIsoMinute(left, right) {
+      return normalizeIsoMinute(left) === normalizeIsoMinute(right);
+    }
+
+    function isSameLocalCalendarDay(left, right) {
+      const leftDate = left instanceof Date ? new Date(left.getTime()) : new Date(left);
+      const rightDate = right instanceof Date ? new Date(right.getTime()) : new Date(right);
+      if (Number.isNaN(leftDate.getTime()) || Number.isNaN(rightDate.getTime())) return false;
+      return (
+        leftDate.getFullYear() === rightDate.getFullYear() &&
+        leftDate.getMonth() === rightDate.getMonth() &&
+        leftDate.getDate() === rightDate.getDate()
+      );
+    }
+
+    function getOptionalCurrentUser() {
+      const normalized = String(state.currentUser || '').trim();
+      return normalized && normalized !== 'Reception User' ? normalized : null;
+    }
+
+    function getCurrentActor() {
+      return getOptionalCurrentUser() || String(state.currentUser || 'Reception User');
+    }
+
+    function toAmount(value) {
+      const numeric = Number(value || 0);
+      return Number.isFinite(numeric) ? Number(numeric.toFixed(2)) : 0;
+    }
+
+    function getLocationDescriptor(locationCode, detectionRule) {
+      const code = normalizeLocationCode(locationCode);
+      return { ...LOCATION_DIRECTORY[code], detection_rule: detectionRule || 'saved_workstation_config' };
+    }
+
+    function getPreparedShiftSessionStatus() {
+      if (state.reportLockedAt) return 'locked';
+      if (state.reportSubmittedAt) return 'submitted';
+      if (state.reportLoadedAt) return 'report_in_progress';
+      return 'open';
+    }
+
+    function getPreparedReportStatus() {
+      if (state.reportLockedAt) return 'locked';
+      if (state.reportSubmittedAt) return 'submitted';
+      return 'draft';
+    }
+
+    function getPreparedReportType() {
+      return computeOperationalFlags().managerAlert ? 'management_exception' : 'standard';
+    }
+
+    function buildPreparedShiftSessionDraft() {
+      if (!isOpeningShiftSaved()) return null;
+      return {
+        id: state.openingShift.shift_session_id,
+        workstation_id: state.workstation ? state.workstation.id : '',
+        reception_code: state.location ? state.location.code : 'UNKNOWN',
+        department_code: normalizeDepartmentCode(state.selectedDepartment),
+        clinic_code: normalizeDepartmentCode(state.selectedClinic),
+        shift_date: state.openingShift.shift_date || '',
+        opening_timestamp: localInputValueToIso(state.openingShift.opening_timestamp),
+        last_shift_closing_cash: toAmount(state.openingShift.last_shift_closing_cash),
+        opening_cash_matches: Boolean(state.openingShift.opening_cash_matches),
+        actual_opening_cash: state.openingShift.opening_cash_matches ? null : toAmount(state.openingShift.actual_opening_cash),
+        opening_override_reason: state.openingShift.opening_cash_matches ? null : String(state.openingShift.override_reason || '').trim() || null,
+        opening_override_note: String(state.openingShift.note || '').trim() || null,
+        created_at: state.openingShift.saved_at,
+        created_by: getCurrentActor(),
+        status: getPreparedShiftSessionStatus()
+      };
+    }
+
+    function buildPreparedReportHeaderDraft() {
+      if (!isOpeningShiftSaved() || !state.activeReportHeaderId) return null;
+      const startAt = state.reportWindow.final_start_at || localInputValueToIso(refs.fromDateTime && refs.fromDateTime.value);
+      const endAt = state.reportWindow.final_end_at || localInputValueToIso(refs.toDateTime && refs.toDateTime.value);
+      if (!startAt || !endAt) return null;
+      return {
+        id: state.activeReportHeaderId,
+        shift_session_id: state.openingShift.shift_session_id,
+        department_code: normalizeDepartmentCode(state.selectedDepartment),
+        clinic_code: normalizeDepartmentCode(state.selectedClinic),
+        report_start_at: startAt,
+        report_end_at: endAt,
+        generated_at: state.reportLoadedAt || normalizeIsoMinute(new Date()),
+        generated_by: getCurrentActor(),
+        report_type: getPreparedReportType(),
+        status: getPreparedReportStatus()
+      };
+    }
+
+    function buildPreparedReportRowsDraft(reportHeaderId) {
+      if (!reportHeaderId) return [];
+      return state.rows.map((row, index) => ({
+        id: row.row_id,
+        report_header_id: reportHeaderId,
+        patient_visit_key: String(row.patient_visit_key || row.row_id),
+        patient_number: String(row.patient_number || ''),
+        surname: String(row.surname || ''),
+        name: String(row.name || ''),
+        provider: String(row.provider || ''),
+        treatments: String(row.treatments || ''),
+        fee_total: toAmount(row.fee_total),
+        appointment_datetime: row.appointment_datetime || null,
+        appointment_dismissed_at: row.appointment_dismissed_at || null,
+        walkout_issued_at: row.walkout_issued_at || null,
+        walkout_status: row.walkout_status || 'unknown',
+        included: Boolean(row.included),
+        carry_forward: Boolean(row.carry_forward_local),
+        display_order: Number(row.display_order ?? index)
+      }));
+    }
+
+    function buildPreparedReportSummaryDraft(reportHeaderId) {
+      if (!reportHeaderId) return null;
+      const reconciliation = computeReconciliationTotals();
+      const flags = computeOperationalFlags();
+      return {
+        id: createScopedId('summary'),
+        report_header_id: reportHeaderId,
+        opening_cash: toAmount(reconciliation.openingCashUsed),
+        payment_total: toAmount(reconciliation.paymentChannelTotal),
+        cash_envelope_total: toAmount(reconciliation.cashEnvelope),
+        cashbox_expenses_total: toAmount(reconciliation.systemTotals.cashboxExpensesTotal),
+        sell_total: toAmount(reconciliation.systemTotals.sellTotal),
+        fee_total: toAmount(reconciliation.systemTotals.feeTotal),
+        expected_total: toAmount(reconciliation.expectedTotal),
+        actual_total: toAmount(reconciliation.actualTotal),
+        discrepancy_total: toAmount(reconciliation.discrepancy),
+        manager_alert_created: Boolean(flags.managerAlert)
+      };
+    }
+
+    function buildPreparedReportAuditEntry({ reportHeaderId, action, fieldName = null, oldValue = null, newValue = null, actedAt = new Date() }) {
+      if (!reportHeaderId) return null;
+      return {
+        id: createAuditId(),
+        report_header_id: reportHeaderId,
+        action: String(action || '').trim(),
+        field_name: fieldName,
+        old_value: oldValue == null ? null : String(oldValue),
+        new_value: newValue == null ? null : String(newValue),
+        acted_at: normalizeIsoMinute(actedAt),
+        acted_by: getCurrentActor()
+      };
+    }
+
+    function refreshPreparedEosDraft(auditEntries = []) {
+      const shiftSession = buildPreparedShiftSessionDraft();
+      const reportHeader = buildPreparedReportHeaderDraft();
+      const reportHeaderId = reportHeader ? reportHeader.id : null;
+      state.preparedEosDraft = {
+        shiftSession,
+        reportHeader,
+        reportRows: reportHeaderId ? buildPreparedReportRowsDraft(reportHeaderId) : [],
+        reportSummary: reportHeaderId ? buildPreparedReportSummaryDraft(reportHeaderId) : null,
+        reportAudit: auditEntries.filter(Boolean)
+      };
+      return state.preparedEosDraft;
+    }
+
+    function setBusy(value) {
+      state.busy = Boolean(value);
+      refs.workspaceStatus.textContent = state.openingSavePending
+        ? 'Saving EOS opening details...'
+        : state.reportSavePending
+          ? 'Saving EOS report...'
+        : state.busy
+          ? 'Extracting EOS production...'
+          : 'EOS reception shell';
+      const baseDisabled = state.busy || state.isRegistrationPending || state.openingSavePending || state.reportSavePending;
+      const openingSaved = isOpeningShiftSaved();
+      const openingLocked = openingSaved;
+      const reportLoaded = isReportLoaded();
+
+      [
+        refs.btnRefreshMock,
+        refs.btnResetWindow,
+        refs.btnBack,
+        refs.btnSignOut
+      ].forEach((control) => {
+        if (control) control.disabled = baseDisabled;
+      });
+
+      [
+        refs.departmentSelect,
+        refs.openingDepartmentSelect,
+        refs.openingClinicSelect,
+        refs.openingShiftDate,
+        refs.openingTimestamp,
+        refs.lastShiftClosingCash,
+        refs.openingCashMatches,
+        refs.actualOpeningCash,
+        refs.overrideReasonSelect,
+        refs.openingNote
+      ].forEach((control) => {
+        if (control) control.disabled = baseDisabled || openingLocked;
+      });
+
+      if (refs.btnSaveOpening) {
+        refs.btnSaveOpening.disabled = baseDisabled || openingLocked || refs.btnSaveOpening.disabled;
+      }
+
+      [
+        refs.btnExtract,
+        refs.btnExtractTop
+      ].forEach((control) => {
+        if (control) control.disabled = baseDisabled;
+      });
+
+      [
+        refs.clinicSelect,
+        refs.fromDateTime,
+        refs.toDateTime
+      ].forEach((control) => {
+        if (control) control.disabled = baseDisabled || !openingSaved;
+      });
+
+      if (refs.btnSaveDraft) refs.btnSaveDraft.disabled = baseDisabled || !openingSaved;
+      if (refs.btnSubmitEos) refs.btnSubmitEos.disabled = baseDisabled || !openingSaved || !reportLoaded;
+      if (refs.btnLockReport) refs.btnLockReport.disabled = baseDisabled || !openingSaved || !reportLoaded;
+    }
+
+    function showBanner(element, message) {
+      if (!element) return;
+      element.textContent = String(message || '').trim();
+      element.classList.toggle('hidden', !element.textContent);
+    }
+
+    function showError(message) { showBanner(refs.errorBanner, message); }
+    function showInfo(message) { showBanner(refs.infoBanner, message); }
+    function showOpeningInlineError(message) { showBanner(refs.openingErrorBanner, message); }
+    function clearMessages() {
+      showError('');
+      showInfo('');
+      showOpeningInlineError('');
+    }
+
+    function clearShiftSessionUi() {
+      state.shiftSessionUi = createEmptyShiftSessionUiState();
+    }
+
+    function normalizeShiftSessionAuditPayload(rawAudit) {
+      if (!rawAudit || typeof rawAudit !== 'object' || Array.isArray(rawAudit)) return null;
+      const action = String(rawAudit.action || '').trim();
+      const actedAt = String(rawAudit.acted_at || '').trim();
+      const shiftSessionId = String(rawAudit.shift_session_id || '').trim();
+      if (!action || !actedAt || !shiftSessionId) return null;
+      return {
+        action,
+        previous_owner: String(rawAudit.previous_owner || '').trim(),
+        new_owner: String(rawAudit.new_owner || '').trim(),
+        acted_by: String(rawAudit.acted_by || '').trim(),
+        acted_at: actedAt,
+        reason: String(rawAudit.reason || '').trim(),
+        shift_session_id: shiftSessionId
+      };
+    }
+
+    function normalizeStringList(value) {
+      if (!Array.isArray(value)) return [];
+      return value.map((entry) => String(entry || '').trim()).filter(Boolean);
+    }
+
+    function normalizeRequiredReasonFieldsByAction(value) {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+      const normalized = {};
+      Object.keys(value).forEach((key) => {
+        normalized[key] = normalizeStringList(value[key]);
+      });
+      return normalized;
+    }
+
+    function normalizeShiftSessionSummary(rawSession, fallbackId, fallbackCreatedAt) {
+      if (!rawSession || typeof rawSession !== 'object' || Array.isArray(rawSession)) {
+        return fallbackId ? {
+          id: fallbackId,
+          created_at: fallbackCreatedAt || null
+        } : null;
+      }
+
+      const normalizedId = String(rawSession.id || fallbackId || '').trim();
+      if (!normalizedId) return null;
+
+      return {
+        id: normalizedId,
+        location_code: normalizeLocationCode(rawSession.location_code || state.location.code),
+        current_owner: String(rawSession.current_owner || rawSession.created_by || '').trim(),
+        status: String(rawSession.status || '').trim(),
+        clinic_code: normalizeDepartmentCode(rawSession.clinic_code || '') || '',
+        department_code: normalizeDepartmentCode(rawSession.department_code || '') || '',
+        shift_date: String(rawSession.shift_date || '').trim(),
+        shift_start_time: String(rawSession.shift_start_time || '').trim(),
+        created_at: String(rawSession.created_at || fallbackCreatedAt || '').trim() || null,
+        created_by: String(rawSession.created_by || '').trim(),
+        taken_over_from_user: String(rawSession.taken_over_from_user || '').trim() || null,
+        taken_over_at: String(rawSession.taken_over_at || '').trim() || null,
+        takeover_reason: String(rawSession.takeover_reason || '').trim() || null
+      };
+    }
+
+    function normalizeShiftSessionApiResponse(httpStatus, payload) {
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+        throw new Error('EOS shift session API returned an invalid response.');
+      }
+
+      const fallbackId = String(payload.id || '').trim();
+      const fallbackCreatedAt = String(payload.created_at || '').trim();
+      return {
+        http_status: Number(httpStatus || 0),
+        ok: payload.ok !== false,
+        action_code: String(payload.action_code || '').trim(),
+        message: String(payload.message || '').trim(),
+        error: String(payload.error || '').trim(),
+        shift_session: normalizeShiftSessionSummary(payload.shift_session, fallbackId, fallbackCreatedAt),
+        audit: normalizeShiftSessionAuditPayload(payload.audit),
+        allowed_actions: normalizeStringList(payload.allowed_actions),
+        required_reason_fields: normalizeStringList(payload.required_reason_fields),
+        required_reason_fields_by_action: normalizeRequiredReasonFieldsByAction(payload.required_reason_fields_by_action)
+      };
+    }
+
+    function storeShiftSessionUiResponse(response) {
+      state.shiftSessionUi = {
+        ...createEmptyShiftSessionUiState(),
+        action_code: response.action_code,
+        message: response.message || response.error || '',
+        shift_session: response.shift_session,
+        allowed_actions: response.allowed_actions,
+        required_reason_fields: response.required_reason_fields,
+        required_reason_fields_by_action: response.required_reason_fields_by_action
+      };
+    }
+
+    function formatShiftSessionDateTimeForInput(shiftDate, shiftStartTime) {
+      const datePart = String(shiftDate || '').trim();
+      const timePart = String(shiftStartTime || '').trim().slice(0, 5);
+      if (!datePart || !timePart) return '';
+      return `${datePart}T${timePart}`;
+    }
+
+    function applyActiveShiftSessionToState(activeSession, options = {}) {
+      if (!activeSession || !activeSession.id) return false;
+
+      state.activeShiftSession = { ...activeSession };
+      state.openingShift = buildOpeningShiftFromActiveSession(activeSession, state.openingShift);
+      state.isRegistrationPending = false;
+
+      const sessionDepartment = normalizeDepartmentCode(activeSession.department_code);
+      const sessionClinic = normalizeDepartmentCode(activeSession.clinic_code);
+      const sessionLocation = normalizeLocationCode(activeSession.location_code);
+
+      if (sessionDepartment) state.selectedDepartment = sessionDepartment;
+      if (sessionClinic) state.selectedClinic = sessionClinic;
+      if (sessionLocation && sessionLocation !== 'UNKNOWN') {
+        state.location = getLocationDescriptor(sessionLocation, 'active_shift_session');
+      }
+
+      clearShiftSessionUi();
+      if (!options.skipDraftRefresh) {
+        refreshPreparedEosDraft();
+      }
+      return true;
+    }
+
+    function activateOpeningShiftSession(shiftSession, successMessage, options = {}) {
+      if (!shiftSession || !shiftSession.id) {
+        throw new Error('EOS shift session response did not include a valid session id.');
+      }
+
+      if (shiftSession.department_code) {
+        state.selectedDepartment = shiftSession.department_code;
+      }
+      if (shiftSession.clinic_code) {
+        state.selectedClinic = shiftSession.clinic_code;
+      }
+      if (shiftSession.shift_date) {
+        state.openingShift.shift_date = shiftSession.shift_date;
+      }
+
+      const openingTimestamp = formatShiftSessionDateTimeForInput(
+        shiftSession.shift_date,
+        shiftSession.shift_start_time
+      );
+      if (openingTimestamp) {
+        state.openingShift.opening_timestamp = openingTimestamp;
+      }
+
+      state.openingShift.saved_at = shiftSession.created_at || normalizeIsoMinute(new Date());
+      state.openingShift.shift_session_id = shiftSession.id;
+      state.openingShift.amending_from_user = String(
+        options.amendingFromUser || shiftSession.taken_over_from_user || ''
+      ).trim();
+      state.activeShiftSession = {
+        id: shiftSession.id,
+        shift_session_id: shiftSession.id,
+        location_code: shiftSession.location_code || (state.location ? state.location.code : 'UNKNOWN'),
+        department_code: normalizeDepartmentCode(shiftSession.department_code || state.selectedDepartment),
+        clinic_code: normalizeDepartmentCode(shiftSession.clinic_code || state.selectedClinic),
+        shift_date: state.openingShift.shift_date,
+        shift_start_time: shiftSession.shift_start_time || extractSqlTimeFromLocalDateTime(state.openingShift.opening_timestamp),
+        opening_timestamp: state.openingShift.opening_timestamp,
+        last_shift_closing_cash: state.openingShift.last_shift_closing_cash,
+        opening_cash_matches: Boolean(state.openingShift.opening_cash_matches),
+        actual_opening_cash: state.openingShift.actual_opening_cash,
+        override_reason: state.openingShift.override_reason,
+        note: state.openingShift.note,
+        saved_at: state.openingShift.saved_at,
+        current_owner: String(shiftSession.current_owner || state.currentUser || '').trim(),
+        created_by: String(shiftSession.created_by || state.currentUser || '').trim(),
+        taken_over_from_user: String(shiftSession.taken_over_from_user || '').trim(),
+        taken_over_at: String(shiftSession.taken_over_at || '').trim(),
+        takeover_reason: String(shiftSession.takeover_reason || '').trim(),
+        status: String(shiftSession.status || 'open').trim(),
+        amending_from_user: state.openingShift.amending_from_user
+      };
+      writeActiveShiftSessionStorage(state.activeShiftSession);
+      clearShiftSessionUi();
+      markReportDirty();
+      refreshPreparedEosDraft();
+      showOpeningInlineError('');
+      showInfo(successMessage);
+    }
+
+    function getOpeningResponseOwnerName() {
+      const shiftSession = state.shiftSessionUi.shift_session;
+      return String((shiftSession && (shiftSession.current_owner || shiftSession.created_by)) || '').trim() || 'Unknown user';
+    }
+
+    function getOpeningResolutionFieldValue(fieldName) {
+      return String(state.shiftSessionUi.placeholder_values[fieldName] || '');
+    }
+
+    function setOpeningResolutionFieldValue(fieldName, value) {
+      if (!Object.prototype.hasOwnProperty.call(state.shiftSessionUi.placeholder_values, fieldName)) return;
+      state.shiftSessionUi.placeholder_values[fieldName] = String(value || '');
+    }
+
+    function getOpeningResolutionFieldLabel(fieldName) {
+      return ({
+        takeover_reason: 'Takeover Reason',
+        abandon_reason: 'Abandon Reason',
+        supersede_reason: 'Supersede Reason',
+        temporary_close_reason: 'Temporary Close Reason',
+        discrepancy_note: 'Discrepancy Note'
+      })[fieldName] || fieldName.replace(/_/g, ' ');
+    }
+
+    function renderOpeningResolutionField(fieldName, multiline) {
+      const label = escapeHtml(getOpeningResolutionFieldLabel(fieldName));
+      const value = escapeHtml(getOpeningResolutionFieldValue(fieldName));
+      if (multiline) {
+        return `
+          <label>${label}
+            <textarea data-opening-resolution-field="${escapeHtml(fieldName)}" placeholder="${label}">${value}</textarea>
+          </label>
+        `;
+      }
+      return `
+        <label>${label}
+          <input type="text" data-opening-resolution-field="${escapeHtml(fieldName)}" value="${value}" />
+        </label>
+      `;
+    }
+
+    function getRequiredReasonFieldsForOpeningAction(actionName) {
+      if (actionName === 'take_over_and_resume') {
+        return state.shiftSessionUi.required_reason_fields;
+      }
+      return state.shiftSessionUi.required_reason_fields_by_action[actionName] || [];
+    }
+
+    async function submitManagerTakeover() {
+      const shiftSession = state.shiftSessionUi.shift_session;
+      if (!shiftSession || !shiftSession.id) {
+        showOpeningInlineError('Active EOS session details are missing for takeover.');
+        return;
+      }
+
+      const takeoverReason = String(getOpeningResolutionFieldValue('takeover_reason') || '').trim();
+      if (!takeoverReason) {
+        showOpeningInlineError('Takeover Reason required before manager takeover can continue.');
+        return;
+      }
+
+      state.openingSavePending = true;
+      renderAll();
+
+      try {
+        const takeoverResponse = await takeOverShiftSessionViaApi({
+          shiftSessionId: shiftSession.id,
+          takeoverReason
+        });
+        const previousOwner =
+          String(
+            (takeoverResponse.audit && takeoverResponse.audit.previous_owner) ||
+            (takeoverResponse.shift_session && takeoverResponse.shift_session.taken_over_from_user) ||
+            getOpeningResponseOwnerName()
+          ).trim() || 'Unknown user';
+
+        activateOpeningShiftSession(
+          takeoverResponse.shift_session,
+          `Amending EOS of ${previousOwner}. Shift session ${takeoverResponse.shift_session.id} is active.`,
+          { amendingFromUser: previousOwner }
+        );
+      } catch (error) {
+        showOpeningInlineError(error instanceof Error ? error.message : 'Manager takeover failed.');
+      } finally {
+        state.openingSavePending = false;
+        renderAll();
+      }
+    }
+
+    async function submitManagerAbandonShift() {
+      const shiftSession = state.shiftSessionUi.shift_session;
+      if (!shiftSession || !shiftSession.id) {
+        showOpeningInlineError('Unresolved EOS session details are missing for abandonment.');
+        return;
+      }
+
+      const abandonReason = String(getOpeningResolutionFieldValue('abandon_reason') || '').trim();
+      if (!abandonReason) {
+        showOpeningInlineError('Abandon Reason required before this shift can be marked abandoned.');
+        return;
+      }
+
+      state.openingSavePending = true;
+      renderAll();
+
+      try {
+        const abandonResponse = await abandonShiftSessionViaApi({
+          shiftSessionId: shiftSession.id,
+          abandonReason
+        });
+        const previousOwner =
+          String(
+            (abandonResponse.audit && abandonResponse.audit.previous_owner) ||
+            getOpeningResponseOwnerName()
+          ).trim() || 'Unknown user';
+
+        clearShiftSessionUi();
+        showOpeningInlineError('');
+        showInfo(`Previous EOS of ${previousOwner} was marked abandoned. Save opening details again to create the new shift session.`);
+      } catch (error) {
+        showOpeningInlineError(error instanceof Error ? error.message : 'Shift abandonment failed.');
+      } finally {
+        state.openingSavePending = false;
+        renderAll();
+      }
+    }
+
+    async function submitManagerSupersedeShift() {
+      const shiftSession = state.shiftSessionUi.shift_session;
+      if (!shiftSession || !shiftSession.id) {
+        showOpeningInlineError('Unresolved EOS session details are missing for supersede.');
+        return;
+      }
+
+      const supersedeReason = String(getOpeningResolutionFieldValue('supersede_reason') || '').trim();
+      if (!supersedeReason) {
+        showOpeningInlineError('Supersede Reason required before a new shift can be started.');
+        return;
+      }
+
+      const openingPayload = buildOpeningShiftSessionPayload();
+      if (!openingPayload.location_code || !openingPayload.department_code || !openingPayload.clinic_code || !openingPayload.shift_date || !openingPayload.shift_start_time) {
+        showOpeningInlineError('Opening details must remain complete before the previous shift can be superseded.');
+        return;
+      }
+
+      state.openingSavePending = true;
+      renderAll();
+
+      try {
+        const supersedeResponse = await supersedeShiftSessionViaApi({
+          shiftSessionId: shiftSession.id,
+          supersedeReason,
+          openingPayload
+        });
+        const previousOwner =
+          String(
+            (supersedeResponse.audit && supersedeResponse.audit.previous_owner) ||
+            getOpeningResponseOwnerName()
+          ).trim() || 'Unknown user';
+
+        activateOpeningShiftSession(
+          supersedeResponse.shift_session,
+          `Previous EOS of ${previousOwner} was superseded. Shift session ${supersedeResponse.shift_session.id} is now active.`
+        );
+      } catch (error) {
+        showOpeningInlineError(error instanceof Error ? error.message : 'Shift supersede failed.');
+      } finally {
+        state.openingSavePending = false;
+        renderAll();
+      }
+    }
+
+    async function handleOpeningResolutionPlaceholderAction(actionName) {
+      const requiredFields = getRequiredReasonFieldsForOpeningAction(actionName);
+      const missingFields = requiredFields.filter((fieldName) => !String(getOpeningResolutionFieldValue(fieldName)).trim());
+      if (missingFields.length) {
+        showOpeningInlineError(`${missingFields.map(getOpeningResolutionFieldLabel).join(', ')} required before this placeholder action can continue.`);
+        return;
+      }
+
+      showOpeningInlineError('');
+
+      if (actionName === 'resume_existing_shift') {
+        const shiftSession = state.shiftSessionUi.shift_session;
+        activateOpeningShiftSession(
+          shiftSession,
+          `Resumed existing EOS shift session ${shiftSession.id} for ${shiftSession.location_code || state.location.code}.`
+        );
+        renderAll();
+        return;
+      }
+
+      if (actionName === 'take_over_and_resume') {
+        await submitManagerTakeover();
+        return;
+      }
+
+      if (actionName === 'mark_previous_shift_abandoned') {
+        await submitManagerAbandonShift();
+        return;
+      }
+
+      if (actionName === 'supersede_previous_shift_and_start_new') {
+        await submitManagerSupersedeShift();
+        return;
+      }
+
+      // TODO: Replace the unresolved-shift "resume previous shift" action with
+      // a dedicated backend submission once that manager path is implemented.
+      // TODO: Replace the emergency handover placeholder with the full temporary
+      // closure workflow when emergency handover persistence is implemented.
+      const ownerName = getOpeningResponseOwnerName();
+      const messages = {
+        resume_previous_shift: `Placeholder only: manager resume of ${ownerName}'s unresolved EOS is not wired yet.`,
+        emergency_handover_close_previous_and_start_new: 'Placeholder only: Emergency Handover Mode UI is acknowledged but the full form is not wired yet.'
+      };
+
+      showInfo(messages[actionName] || 'Placeholder EOS shift-session action acknowledged.');
+      renderAll();
+    }
+
+    function renderOpeningResponsePanel() {
+      if (!refs.openingResponsePanel) return;
+
+      const response = state.shiftSessionUi;
+      if (!response.action_code) {
+        refs.openingResponsePanel.classList.add('hidden');
+        refs.openingResponsePanel.innerHTML = '';
+        return;
+      }
+
+      const ownerName = escapeHtml(getOpeningResponseOwnerName());
+      const message = escapeHtml(response.message || 'EOS shift-session response received.');
+      let content = '';
+
+      if (response.action_code === 'open_shift_exists_same_owner') {
+        content = `
+          <div class="opening-response">
+            <div class="opening-response-title">Existing Active Shift Found</div>
+            <div class="opening-response-copy">${message}</div>
+            <div class="opening-response-owner">Current owner: ${ownerName}</div>
+            <div class="opening-response-actions">
+              <button class="btn" type="button" data-opening-resolution-action="resume_existing_shift">Resume Existing Shift</button>
+            </div>
+          </div>
+        `;
+      } else if (response.action_code === 'active_shift_owned_by_other_user') {
+        content = `
+          <div class="opening-response">
+            <div class="opening-response-title">EOS Already Open</div>
+            <div class="opening-response-copy">${message}</div>
+            <div class="opening-response-owner">Owned by ${ownerName}</div>
+            <div class="opening-response-note">You cannot amend another user's EOS. Same-level users are blocked while this location's active EOS remains owned by another user.</div>
+          </div>
+        `;
+      } else if (response.action_code === 'manager_takeover_available') {
+        content = `
+          <div class="opening-response">
+            <div class="opening-response-title">Manager Takeover Available</div>
+            <div class="opening-response-copy">${message}</div>
+            <div class="opening-response-owner">Amending EOS of ${ownerName}</div>
+            <div class="opening-response-fields">
+              ${renderOpeningResolutionField('takeover_reason', false)}
+            </div>
+            <div class="opening-response-actions">
+              <button class="btn" type="button" data-opening-resolution-action="take_over_and_resume">Take Over and Resume</button>
+            </div>
+            <div class="opening-response-note">Manager takeover is available from this panel. A takeover reason is required and the active session stays locked to the taken-over shift once submitted.</div>
+          </div>
+        `;
+      } else if (response.action_code === 'unresolved_shift_requires_resolution') {
+        if (!response.allowed_actions.length) {
+          content = `
+            <div class="opening-response">
+              <div class="opening-response-title">Unresolved Previous Shift</div>
+              <div class="opening-response-copy">${message}</div>
+              <div class="opening-response-owner">Current owner: ${ownerName}</div>
+              <div class="opening-response-note">This location has an unresolved previous shift. A manager must resolve it before a new operational shift can start.</div>
+            </div>
+          `;
+        } else {
+          content = `
+            <div class="opening-response">
+              <div class="opening-response-title">Manager Resolution Required</div>
+              <div class="opening-response-copy">${message}</div>
+              <div class="opening-response-owner">Amending EOS of ${ownerName}</div>
+              <div class="opening-response-fields">
+                ${response.allowed_actions.includes('resume_previous_shift') ? renderOpeningResolutionField('takeover_reason', false) : ''}
+                ${response.allowed_actions.includes('mark_previous_shift_abandoned') ? renderOpeningResolutionField('abandon_reason', false) : ''}
+                ${response.allowed_actions.includes('supersede_previous_shift_and_start_new') ? renderOpeningResolutionField('supersede_reason', false) : ''}
+              </div>
+              <div class="opening-response-actions">
+                ${response.allowed_actions.includes('resume_previous_shift') ? '<button class="btn" type="button" data-opening-resolution-action="resume_previous_shift">Resume Previous Shift</button>' : ''}
+                ${response.allowed_actions.includes('mark_previous_shift_abandoned') ? '<button class="btn alt" type="button" data-opening-resolution-action="mark_previous_shift_abandoned">Mark Previous Shift Abandoned</button>' : ''}
+                ${response.allowed_actions.includes('supersede_previous_shift_and_start_new') ? '<button class="btn alt" type="button" data-opening-resolution-action="supersede_previous_shift_and_start_new">Supersede And Start New</button>' : ''}
+              </div>
+              <div class="opening-response-note">Abandon and supersede are available from this panel with their required reason fields. Resume Previous Shift remains a placeholder until its dedicated backend action is implemented.</div>
+            </div>
+          `;
+        }
+      } else if (response.action_code === 'emergency_handover_available') {
+        content = `
+          <div class="opening-response">
+            <div class="opening-response-title">Temporary Closure Pending Manager Review</div>
+            <div class="opening-response-copy">${message}</div>
+            <div class="opening-response-owner">Previous shift owner: ${ownerName}</div>
+            <div class="opening-response-fields">
+              ${renderOpeningResolutionField('temporary_close_reason', false)}
+              ${renderOpeningResolutionField('discrepancy_note', true)}
+            </div>
+            <div class="opening-response-actions">
+              <button class="btn" type="button" data-opening-resolution-action="emergency_handover_close_previous_and_start_new">Emergency Handover Path</button>
+            </div>
+            <div class="opening-response-note">Placeholder only: the emergency handover path is surfaced in the UI, but the full emergency handover form and persistence are not implemented yet.</div>
+          </div>
+        `;
+      } else {
+        content = `
+          <div class="opening-response">
+            <div class="opening-response-title">Shift Session Response</div>
+            <div class="opening-response-copy">${message}</div>
+          </div>
+        `;
+      }
+
+      refs.openingResponsePanel.innerHTML = content;
+      refs.openingResponsePanel.classList.remove('hidden');
+    }
+
+    const workstationDetection = {
+      createGeneratedId() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+          return window.crypto.randomUUID();
+        }
+        return `ws-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      },
+
+      getOrCreateGeneratedId() {
+        try {
+          const existing = String(localStorage.getItem(GENERATED_WORKSTATION_ID_STORAGE_KEY) || '').trim();
+          if (existing) return existing;
+          const created = this.createGeneratedId();
+          localStorage.setItem(GENERATED_WORKSTATION_ID_STORAGE_KEY, created);
+          return created;
+        } catch {
+          return this.createGeneratedId();
+        }
+      },
+
+      resolveQueryWorkstation() {
+        const params = new URLSearchParams(window.location.search);
+        return String(params.get('workstation') || params.get('ws') || '').trim();
+      },
+
+      isUsableServerHost(hostname) {
+        const normalized = String(hostname || '').trim().toLowerCase();
+        return Boolean(normalized) && !['localhost', '127.0.0.1', '::1'].includes(normalized);
+      },
+
+      getLegacyServerHostId() {
+        const hostname = String(window.location.hostname || '').trim();
+        if (!this.isUsableServerHost(hostname)) return '';
+        return `host:${hostname.toLowerCase()}`;
+      },
+
+      resolve() {
+        const queryWorkstation = this.resolveQueryWorkstation();
+        const hostname = String(window.location.hostname || '').trim();
+
+        // IMPORTANT:
+        // window.location.hostname is the server URL host, not the client PC identity.
+        // Do not use it as the workstation identifier. Until a launcher/backend supplies
+        // the real workstation name, use an explicit query override or a browser-local ID.
+        // TODO: Replace this query/local fallback with real PC name, IP, or domain workstation identity.
+        if (queryWorkstation) {
+          return {
+            id: `query:${queryWorkstation.toLowerCase()}`,
+            display_name: queryWorkstation,
+            source: 'query_param',
+            hostname,
+            identifier_probe: queryWorkstation.toLowerCase()
+          };
+        }
+
+        const savedNamedAlias = readSavedNamedWorkstationAlias();
+        const namedWorkstation = buildNamedWorkstation(savedNamedAlias);
+        if (namedWorkstation) {
+          return namedWorkstation;
+        }
+
+        const generatedId = this.getOrCreateGeneratedId();
+        return {
+          id: `generated:${generatedId}`,
+          display_name: `Browser Workstation ${generatedId.slice(-6).toUpperCase()}`,
+          source: 'generated_local_id',
+          hostname,
+          identifier_probe: generatedId.toLowerCase()
+        };
+      }
+    };
+
+    function readWorkstationRegistry() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(WORKSTATION_CONFIGS_STORAGE_KEY) || '{}');
+        return {
+          version: 1,
+          workstations: parsed && typeof parsed === 'object' && parsed.workstations && typeof parsed.workstations === 'object'
+            ? parsed.workstations
+            : {}
+        };
+      } catch {
+        return { version: 1, workstations: {} };
+      }
+    }
+
+    function writeWorkstationRegistry(registry) {
+      try {
+        // TODO: Replace browser storage with EOS workstation setup records in the backend database.
+        localStorage.setItem(
+          WORKSTATION_CONFIGS_STORAGE_KEY,
+          JSON.stringify({
+            version: 1,
+            workstations: registry && typeof registry === 'object' && registry.workstations && typeof registry.workstations === 'object'
+              ? registry.workstations
+              : {}
+          })
+        );
+      } catch {}
+    }
+
+    function getWorkstationConfig(workstationId) {
+      const id = String(workstationId || '').trim();
+      if (!id) return null;
+      const registry = readWorkstationRegistry();
+      const row = registry.workstations[id];
+      return row && typeof row === 'object' ? row : null;
+    }
+
+    function saveWorkstationConfig({
+      workstation_id,
+      department_code,
+      location_code,
+      modified_by_user = null
+    }) {
+      const id = String(workstation_id || '').trim();
+      if (!id) throw new Error('workstation_id is required');
+
+      const normalizedDepartment = normalizeDepartmentCode(department_code);
+      if (!normalizedDepartment) throw new Error('department_code is required');
+
+      const normalizedLocation = normalizeLocationCode(location_code);
+      const now = normalizeIsoMinute(new Date());
+      const registry = readWorkstationRegistry();
+      const existing = registry.workstations[id] || null;
+
+      registry.workstations[id] = {
+        workstation_id: id,
+        department_code: normalizedDepartment,
+        location_code: normalizedLocation,
+        created_at: existing && existing.created_at ? existing.created_at : now,
+        updated_at: now,
+        modified_by_user: modified_by_user ? String(modified_by_user).trim() : null
+      };
+
+      writeWorkstationRegistry(registry);
+      return registry.workstations[id];
+    }
+
+    function isFirstTimeWorkstation(workstationId) {
+      return !getWorkstationConfig(workstationId);
+    }
+
+    function readReportTimeAuditRegistry() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(EOS_REPORT_TIME_AUDIT_STORAGE_KEY) || '{}');
+        return {
+          version: 1,
+          reports: parsed && typeof parsed === 'object' && parsed.reports && typeof parsed.reports === 'object'
+            ? parsed.reports
+            : {}
+        };
+      } catch {
+        return { version: 1, reports: {} };
+      }
+    }
+
+    function writeReportTimeAuditRegistry(registry) {
+      try {
+        // TODO: Replace browser storage with backend EOS report timing audit persistence.
+        localStorage.setItem(
+          EOS_REPORT_TIME_AUDIT_STORAGE_KEY,
+          JSON.stringify({
+            version: 1,
+            reports: registry && typeof registry === 'object' && registry.reports && typeof registry.reports === 'object'
+              ? registry.reports
+              : {}
+          })
+        );
+      } catch {}
+    }
+
+    function getEffectiveReportEndAt(report) {
+      return normalizeIsoMinute(report && (report.final_end_at || report.default_end_at || report.created_at));
+    }
+
+    function getLastReportForDepartment(departmentCode) {
+      const normalizedDepartment = normalizeDepartmentCode(departmentCode);
+      if (!normalizedDepartment) return null;
+
+      const registry = readReportTimeAuditRegistry();
+      const reports = Object.values(registry.reports || {})
+        .filter((report) => normalizeDepartmentCode(report.department_code) === normalizedDepartment)
+        .sort((left, right) => new Date(getEffectiveReportEndAt(right) || 0).getTime() - new Date(getEffectiveReportEndAt(left) || 0).getTime());
+
+      return reports[0] || null;
+    }
+
+    function isFirstReportRequestOfDay(departmentCode, referenceDate = new Date()) {
+      const normalizedDepartment = normalizeDepartmentCode(departmentCode);
+      if (!normalizedDepartment) return true;
+
+      const registry = readReportTimeAuditRegistry();
+      return !Object.values(registry.reports || {}).some((report) => (
+        normalizeDepartmentCode(report.department_code) === normalizedDepartment &&
+        isSameLocalCalendarDay(getEffectiveReportEndAt(report), referenceDate)
+      ));
+    }
+
+    function getSafeFallbackStart(referenceDate = new Date()) {
+      const localStart = new Date(referenceDate);
+      localStart.setHours(8, 0, 0, 0);
+      return normalizeIsoMinute(localStart);
+    }
+
+    function computeDefaultReportWindow({
+      departmentCode,
+      locationCode,
+      workstationId,
+      now = new Date()
+    }) {
+      const normalizedDepartment = normalizeDepartmentCode(departmentCode);
+      const normalizedLocation = normalizeLocationCode(locationCode);
+      const referenceDate = truncateToMinute(now) || new Date();
+      const lastReport = normalizedDepartment ? getLastReportForDepartment(normalizedDepartment) : null;
+      const previousReportEndAt = lastReport ? getEffectiveReportEndAt(lastReport) : null;
+      const defaultStartAt = normalizeIsoMinute(previousReportEndAt || getSafeFallbackStart(referenceDate));
+      const defaultEndAt = normalizeIsoMinute(referenceDate);
+
+      return {
+        report_id: createReportId(),
+        workstation_id: String(workstationId || '').trim(),
+        department_code: normalizedDepartment,
+        location_code: normalizedLocation,
+        default_start_at: defaultStartAt,
+        default_end_at: defaultEndAt,
+        final_start_at: defaultStartAt,
+        final_end_at: defaultEndAt,
+        start_amended: false,
+        end_amended: false,
+        amended_at: null,
+        amended_by_user: null,
+        created_at: defaultEndAt,
+        first_report_of_day: normalizedDepartment
+          ? isFirstReportRequestOfDay(normalizedDepartment, referenceDate)
+          : true,
+        default_start_source: previousReportEndAt ? 'previous_report_end' : 'safe_fallback_08_00',
+        previous_report_end_at: normalizeIsoMinute(previousReportEndAt),
+        previous_report_id: lastReport ? String(lastReport.report_id || '') : null
+      };
+    }
+
+    function saveReportTimeAudit({
+      report_id,
+      workstation_id,
+      department_code,
+      location_code,
+      default_start_at,
+      default_end_at,
+      final_start_at,
+      final_end_at,
+      start_amended,
+      end_amended,
+      amended_at,
+      amended_by_user,
+      created_at
+    }) {
+      const registry = readReportTimeAuditRegistry();
+      const id = String(report_id || createReportId()).trim();
+      const existing = registry.reports[id] || null;
+
+      registry.reports[id] = {
+        report_id: id,
+        workstation_id: String(workstation_id || '').trim(),
+        department_code: normalizeDepartmentCode(department_code),
+        location_code: normalizeLocationCode(location_code),
+        default_start_at: normalizeIsoMinute(default_start_at),
+        default_end_at: normalizeIsoMinute(default_end_at),
+        final_start_at: normalizeIsoMinute(final_start_at),
+        final_end_at: normalizeIsoMinute(final_end_at),
+        start_amended: Boolean(start_amended),
+        end_amended: Boolean(end_amended),
+        amended_at: amended_at ? normalizeIsoMinute(amended_at) : null,
+        amended_by_user: amended_by_user ? String(amended_by_user).trim() : null,
+        created_at: existing && existing.created_at ? existing.created_at : normalizeIsoMinute(created_at || new Date())
+      };
+
+      writeReportTimeAuditRegistry(registry);
+      return registry.reports[id];
+    }
+
+    function migrateLegacyServerHostWorkstationConfig(workstationId) {
+      const normalizedId = String(workstationId || '').trim();
+      if (!normalizedId || normalizedId.startsWith('query:')) return null;
+
+      const legacyId = workstationDetection.getLegacyServerHostId();
+      if (!legacyId || legacyId === normalizedId) return null;
+
+      const registry = readWorkstationRegistry();
+      const current = registry.workstations[normalizedId];
+      if (current && typeof current === 'object') return current;
+
+      const legacy = registry.workstations[legacyId];
+      if (!legacy || typeof legacy !== 'object') return null;
+
+      registry.workstations[normalizedId] = {
+        ...legacy,
+        workstation_id: normalizedId,
+        updated_at: normalizeIsoMinute(new Date())
+      };
+
+      writeWorkstationRegistry(registry);
+      return registry.workstations[normalizedId];
+    }
+
+    const receptionMapping = {
+      resolve(workstation) {
+        const params = new URLSearchParams(window.location.search);
+        const explicit = String(params.get('location') || params.get('reception') || '').trim().toUpperCase();
+        if (explicit && LOCATION_DIRECTORY[explicit]) {
+          return { ...LOCATION_DIRECTORY[explicit], detection_rule: 'query_param' };
+        }
+
+        const probe = [
+          workstation ? workstation.display_name : '',
+          workstation ? workstation.identifier_probe : ''
+        ].join(' ').toLowerCase();
+
+        if (probe.includes('chris laptop') || probe.includes('chris_laptop')) {
+          return { ...LOCATION_DIRECTORY.QORMI, detection_rule: 'named_workstation_alias' };
+        }
+
+        if (probe.includes('zabbar') || probe.includes('eosz')) {
+          return { ...LOCATION_DIRECTORY.ZABBAR, detection_rule: 'identifier_heuristic' };
+        }
+        if (probe.includes('qormi') || probe.includes('eosq')) {
+          return { ...LOCATION_DIRECTORY.QORMI, detection_rule: 'identifier_heuristic' };
+        }
+        if (probe.includes('blum')) {
+          return { ...LOCATION_DIRECTORY.BLUMV, detection_rule: 'identifier_heuristic' };
+        }
+
+        return { ...LOCATION_DIRECTORY.UNKNOWN, detection_rule: 'unmapped' };
+      }
+    };
+
+    const departmentDefaulting = {
+      getLocationSuggestion(location) {
+        if (!location) return '';
+        if (location.code === 'ZABBAR') return 'MDCZ';
+        if (location.code === 'QORMI') return 'MDCQ';
+        return '';
+      },
+
+      isValidDepartment(value) {
+        return Boolean(normalizeDepartmentCode(value));
+      }
+    };
+
+    function formatRowTime(value) {
+      const parsed = value ? new Date(value) : null;
+      if (!parsed || Number.isNaN(parsed.getTime())) return '08:00';
+      return parsed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    }
+
+    // Future production API contract:
+    // Input from frontend to backend:
+    // { clinicCode, startAt, endAt, departmentCode }
+    //
+    // Response from backend to frontend, one grouped row per patient visit:
+    // {
+    //   time,
+    //   patient_number,
+    //   surname,
+    //   name,
+    //   treatments,
+    //   provider,
+    //   fee_total,
+    //   clinic_code,
+    //   department_code,
+    //   patient_visit_key?,
+    //   source_proc_count?,
+    //   appointment_datetime?
+    // }
+    //
+    // Backend-owned fields:
+    // time, patient_number, surname, name, treatments, provider, fee_total, clinic_code, department_code
+    // Optional future backend fields:
+    // patient_visit_key, source_proc_count, appointment_datetime, appointment_dismissed_at
+    // Optional future enrichment-only fields:
+    // walkout_issued_at, walkout_status
+    function fetchMockProductionRows({ clinicCode, startAt, endAt, departmentCode }) {
+      // TODO: Replace this mock adapter with the real EOS/OpenDental production extraction API.
+      // TODO: Apply the specific clinic filter in the real EOS/OpenDental production API.
+      // TODO: Apply the report start/end datetime filter in the real EOS/OpenDental production API.
+      // TODO: Return one grouped row per patient visit / appointment occurrence, not one raw procedure line.
+      // TODO: Concatenate treatments into one display string for the grouped patient visit row.
+      // TODO: Show the display provider for the grouped patient visit row.
+      // TODO: Sum fee_total from the grouped production lines for the patient visit row.
+      // TODO: Replace this mock patient list with patient list extraction from Open Dental.
+      const startDate = startAt ? new Date(startAt) : new Date();
+      const baseDate = Number.isNaN(startDate.getTime()) ? new Date() : startDate;
+      const mockDirectory = {
+        MDCZ: [
+          { patient_number: '80231', surname: 'Borg', name: 'Maria', treatments: 'Exam, X-rays', provider: 'Dr Ryan', fee_total: 35.00, time_offset_minutes: 15 },
+          { patient_number: '80254', surname: 'Camilleri', name: 'Joseph', treatments: 'Scaling, Polish', provider: 'Dr Galea', fee_total: 55.00, time_offset_minutes: 42 },
+          { patient_number: '80312', surname: 'Abela', name: 'Lucia', treatments: 'Composite Filling', provider: 'Dr Xuereb', fee_total: 95.00, time_offset_minutes: 88 },
+          { patient_number: '80340', surname: 'Grech', name: 'Antoine', treatments: 'Crown Review', provider: 'Dr Grech', fee_total: 70.00, time_offset_minutes: 136 }
+        ],
+        MDCQ: [
+          { patient_number: '91003', surname: 'Mifsud', name: 'Karl', treatments: 'Exam, X-rays', provider: 'Dr Schembri', fee_total: 40.00, time_offset_minutes: 8 },
+          { patient_number: '91055', surname: 'Galea', name: 'Petra', treatments: 'Extraction', provider: 'Dr Attard', fee_total: 110.00, time_offset_minutes: 36 },
+          { patient_number: '91110', surname: 'Azzopardi', name: 'Rita', treatments: 'Bridge Review', provider: 'Dr Cilia', fee_total: 85.00, time_offset_minutes: 79 },
+          { patient_number: '91144', surname: 'Vella', name: 'Owen', treatments: 'Hygiene', provider: 'Dr Camenzuli', fee_total: 60.00, time_offset_minutes: 118 }
+        ],
+        MPLUS: [
+          { patient_number: '62001', surname: 'Pace', name: 'Elena', treatments: 'Consult, Whitening', provider: 'Dr Caruana', fee_total: 160.00, time_offset_minutes: 14 },
+          { patient_number: '62008', surname: 'Debono', name: 'Mark', treatments: 'Retainer Review', provider: 'Dr Vella', fee_total: 70.00, time_offset_minutes: 54 },
+          { patient_number: '62019', surname: 'Fenech', name: 'Lara', treatments: 'Implant Check', provider: 'Dr Zammit', fee_total: 190.00, time_offset_minutes: 101 }
+        ],
+        BLUMV: [
+          { patient_number: '70010', surname: 'Future', name: 'Patient', treatments: 'Placeholder Visit', provider: 'Dr Future', fee_total: 50.00, time_offset_minutes: 20 }
+        ]
+      };
+
+      return (mockDirectory[clinicCode] || []).map((row, index) => {
+        const timestamp = new Date(baseDate.getTime() + (row.time_offset_minutes * 60000));
+        return {
+          time: formatRowTime(timestamp),
+          patient_number: row.patient_number,
+          surname: row.surname,
+          name: row.name,
+          treatments: row.treatments,
+          provider: row.provider,
+          fee_total: row.fee_total,
+          clinic_code: clinicCode,
+          department_code: departmentCode || clinicCode
+        };
+      });
+    }
+
+    function buildProductionApiUrl({ clinicCode, startAt, endAt, departmentCode }) {
+      const origin = getEosApiOrigin();
+      const url = new URL('/api/eos/production-visits', `${origin}/`);
+      const clinicNum = CLINIC_NUM_BY_CODE[clinicCode] || null;
+
+      if (clinicNum) {
+        url.searchParams.set('clinic_num', String(clinicNum));
+      } else {
+        url.searchParams.set('clinic_code', clinicCode);
+      }
+
+      url.searchParams.set('report_start_at', toApiDateTime(startAt));
+      url.searchParams.set('report_end_at', toApiDateTime(endAt));
+      url.searchParams.set('department_code', departmentCode);
+      return url;
+    }
+
+    function buildShiftSessionsApiUrl() {
+      const origin = getEosApiOrigin();
+      return new URL('/api/eos/shift-sessions', `${origin}/`);
+    }
+
+    function buildShiftSessionTakeoverApiUrl(shiftSessionId) {
+      const origin = getEosApiOrigin();
+      return new URL(`/api/eos/shift-sessions/${encodeURIComponent(String(shiftSessionId || '').trim())}/takeover`, `${origin}/`);
+    }
+
+    function buildShiftSessionAbandonApiUrl(shiftSessionId) {
+      const origin = getEosApiOrigin();
+      return new URL(`/api/eos/shift-sessions/${encodeURIComponent(String(shiftSessionId || '').trim())}/abandon`, `${origin}/`);
+    }
+
+    function buildShiftSessionSupersedeApiUrl(shiftSessionId) {
+      const origin = getEosApiOrigin();
+      return new URL(`/api/eos/shift-sessions/${encodeURIComponent(String(shiftSessionId || '').trim())}/supersede`, `${origin}/`);
+    }
+
+    function buildReportsApiUrl() {
+      const origin = getEosApiOrigin();
+      return new URL('/api/eos/reports', `${origin}/`);
+    }
+
+    function buildOpeningShiftSessionPayload() {
+      return {
+        location_code: normalizeLocationCode(state.location && state.location.code),
+        department_code: normalizeDepartmentCode(state.selectedDepartment),
+        clinic_code: normalizeDepartmentCode(state.selectedClinic),
+        shift_date: String(state.openingShift.shift_date || '').trim(),
+        shift_start_time: extractSqlTimeFromLocalDateTime(state.openingShift.opening_timestamp),
+        opening_cash: getOpeningCashUsed(),
+        opening_cash_matches: Boolean(state.openingShift.opening_cash_matches),
+        previous_cashbox_end: String(state.openingShift.last_shift_closing_cash || '').trim()
+          ? Number(state.openingShift.last_shift_closing_cash)
+          : null,
+        corrected_opening_cash: state.openingShift.opening_cash_matches || !String(state.openingShift.actual_opening_cash || '').trim()
+          ? null
+          : Number(state.openingShift.actual_opening_cash)
+      };
+    }
+
+    async function createShiftSessionViaApi(payload) {
+      const url = buildShiftSessionsApiUrl();
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      const normalizedResponse = normalizeShiftSessionApiResponse(response.status, data);
+      if (!response.ok && !normalizedResponse.action_code) {
+        throw new Error(normalizedResponse.error || `EOS shift session request failed (${response.status}).`);
+      }
+
+      if (response.ok && !normalizedResponse.shift_session) {
+        throw new Error('EOS shift session API returned an invalid response.');
+      }
+
+      return normalizedResponse;
+    }
+
+    function buildReportPersistencePayload() {
+      const preparedDraft = refreshPreparedEosDraft();
+      const reportHeader = preparedDraft.reportHeader;
+      const reportSummary = preparedDraft.reportSummary;
+      if (!reportHeader) {
+        throw new Error('EOS report header is not ready to save yet.');
+      }
+      if (!reportSummary) {
+        throw new Error('EOS report summary is not ready to save yet.');
+      }
+
+      const locationCode = normalizeLocationCode(
+        (state.activeShiftSession && state.activeShiftSession.location_code)
+        || (state.location && state.location.code)
+      );
+      if (!locationCode || locationCode === 'UNKNOWN') {
+        throw new Error('EOS report location is not available for persistence.');
+      }
+
+      return {
+        shift_session_id: reportHeader.shift_session_id,
+        location_code: locationCode,
+        department_code: reportHeader.department_code,
+        clinic_code: reportHeader.clinic_code,
+        report_start_at: reportHeader.report_start_at,
+        report_end_at: reportHeader.report_end_at,
+        report_type: reportHeader.report_type,
+        generated_by: reportHeader.generated_by,
+        rows: preparedDraft.reportRows.map((row, index) => {
+          if (!row.appointment_datetime) {
+            throw new Error(`EOS report row ${index + 1} is missing appointment_datetime and cannot be saved yet.`);
+          }
+          return {
+            patient_visit_key: row.patient_visit_key,
+            patient_number: row.patient_number,
+            surname: row.surname,
+            name: row.name,
+            provider: row.provider,
+            treatments: row.treatments,
+            fee_total: row.fee_total,
+            appointment_datetime: row.appointment_datetime,
+            appointment_dismissed_at: row.appointment_dismissed_at,
+            walkout_issued_at: row.walkout_issued_at,
+            walkout_status: row.walkout_status,
+            included: row.included,
+            carry_forward: row.carry_forward,
+            display_order: row.display_order
+          };
+        }),
+        summary: {
+          opening_cash: reportSummary.opening_cash,
+          payment_total: reportSummary.payment_total,
+          cash_envelope_total: reportSummary.cash_envelope_total,
+          cashbox_expenses_total: reportSummary.cashbox_expenses_total,
+          sell_total: reportSummary.sell_total,
+          fee_total: reportSummary.fee_total,
+          expected_total: reportSummary.expected_total,
+          actual_total: reportSummary.actual_total,
+          discrepancy_total: reportSummary.discrepancy_total,
+          manager_alert_created: reportSummary.manager_alert_created
+        }
+      };
+    }
+
+    function normalizeCreatedReportResponse(payload) {
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+        throw new Error('EOS report API returned an invalid response.');
+      }
+      const reportHeaderId = String(payload.report_header_id || '').trim();
+      const accountingPeriodId = String(payload.accounting_period_id || '').trim();
+      const generatedAt = String(payload.generated_at || '').trim();
+      if (!reportHeaderId || !generatedAt) {
+        throw new Error('EOS report API response did not include the created report identifiers.');
+      }
+      return {
+        report_header_id: reportHeaderId,
+        accounting_period_id: accountingPeriodId || null,
+        generated_at: generatedAt,
+        rows_created: Number(payload.rows_created || 0),
+        summary_created: Number(payload.summary_created || 0),
+        audit_entries_created: Number(payload.audit_entries_created || 0)
+      };
+    }
+
+    async function createReportViaApi(payload) {
+      const url = buildReportsApiUrl();
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      if (!response.ok) {
+        throw new Error(data && data.error ? data.error : `EOS report save failed (${response.status}).`);
+      }
+
+      return normalizeCreatedReportResponse(data);
+    }
+
+    function applyPersistedReportResponse(response) {
+      state.activeReportHeaderId = response.report_header_id;
+      state.persistedAccountingPeriodId = response.accounting_period_id;
+      state.reportAuditEntriesCreated = response.audit_entries_created;
+      state.reportGeneratedAt = response.generated_at;
+    }
+
+    async function persistPreparedReportSnapshot() {
+      const payload = buildReportPersistencePayload();
+      state.reportSavePending = true;
+      renderAll();
+      try {
+        const response = await createReportViaApi(payload);
+        applyPersistedReportResponse(response);
+        return response;
+      } finally {
+        state.reportSavePending = false;
+        renderAll();
+      }
+    }
+
+    async function takeOverShiftSessionViaApi({ shiftSessionId, takeoverReason }) {
+      const url = buildShiftSessionTakeoverApiUrl(shiftSessionId);
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          takeover_reason: takeoverReason
+        })
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      const normalizedResponse = normalizeShiftSessionApiResponse(response.status, data);
+      if (!response.ok) {
+        throw new Error(normalizedResponse.error || normalizedResponse.message || `EOS shift takeover failed (${response.status}).`);
+      }
+
+      if (!normalizedResponse.shift_session) {
+        throw new Error('EOS shift takeover API returned an invalid response.');
+      }
+
+      return normalizedResponse;
+    }
+
+    async function abandonShiftSessionViaApi({ shiftSessionId, abandonReason }) {
+      const url = buildShiftSessionAbandonApiUrl(shiftSessionId);
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          abandon_reason: abandonReason
+        })
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      const normalizedResponse = normalizeShiftSessionApiResponse(response.status, data);
+      if (!response.ok) {
+        throw new Error(normalizedResponse.error || normalizedResponse.message || `EOS shift abandonment failed (${response.status}).`);
+      }
+
+      if (!normalizedResponse.shift_session) {
+        throw new Error('EOS shift abandonment API returned an invalid response.');
+      }
+
+      return normalizedResponse;
+    }
+
+    async function supersedeShiftSessionViaApi({ shiftSessionId, supersedeReason, openingPayload }) {
+      const url = buildShiftSessionSupersedeApiUrl(shiftSessionId);
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          ...openingPayload,
+          supersede_reason: supersedeReason
+        })
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      const normalizedResponse = normalizeShiftSessionApiResponse(response.status, data);
+      if (!response.ok) {
+        throw new Error(normalizedResponse.error || normalizedResponse.message || `EOS shift supersede failed (${response.status}).`);
+      }
+
+      if (!normalizedResponse.shift_session) {
+        throw new Error('EOS shift supersede API returned an invalid response.');
+      }
+
+      return normalizedResponse;
+    }
+
+    async function fetchProductionRowsFromApi({ clinicCode, startAt, endAt, departmentCode }) {
+      const url = buildProductionApiUrl({ clinicCode, startAt, endAt, departmentCode });
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      let payload = null;
+      try {
+        payload = await response.json();
+      } catch {
+        payload = null;
+      }
+
+      if (!response.ok) {
+        throw new Error(payload && payload.error ? payload.error : `EOS production API request failed (${response.status}).`);
+      }
+
+      if (!payload || payload.ok === false) {
+        throw new Error(payload && payload.error ? payload.error : 'EOS production API returned an invalid response.');
+      }
+
+      if (!Array.isArray(payload.rows)) {
+        throw new Error('EOS production API response did not contain a rows array.');
+      }
+
+      return payload.rows;
+    }
+
+    // UI-enriched row shape:
+    // Backend-provided fields:
+    // time, patient_number, surname, name, treatments, provider, fee_total, clinic_code, department_code
+    // Optional backend fields:
+    // patient_visit_key, source_proc_count, appointment_datetime, appointment_dismissed_at,
+    // walkout_issued_at, walkout_status
+    // TODO: If walkout_issued_at is missing for an existing grouped visit row, future
+    // report/export surfaces should display the literal text "NO WALK OUT PRINTED".
+    // TODO: Missing-walkout exceptions must stay attached to existing EOS visit rows only.
+    // Frontend-only fields:
+    // row_id, included, carry_forward_local, status
+    function normalizeProductionRow(rawRow, { clinicCode, rowIndex }) {
+      const normalizedClinicCode = normalizeDepartmentCode(rawRow.clinic_code || clinicCode) || clinicCode;
+      const normalizedDepartmentCode = normalizeDepartmentCode(rawRow.department_code || normalizedClinicCode) || normalizedClinicCode;
+      const patientVisitKey = String(rawRow.patient_visit_key || '').trim() || null;
+      const sourceProcCount = rawRow.source_proc_count == null ? null : Number(rawRow.source_proc_count);
+      const appointmentDateTime = rawRow.appointment_datetime ? String(rawRow.appointment_datetime).trim() : null;
+      const appointmentDismissedAt = rawRow.appointment_dismissed_at ? String(rawRow.appointment_dismissed_at).trim() : null;
+      const walkoutIssuedAt = rawRow.walkout_issued_at ? String(rawRow.walkout_issued_at).trim() : null;
+      const walkoutStatus = ['printed', 'not_printed', 'unknown'].includes(String(rawRow.walkout_status || '').trim())
+        ? String(rawRow.walkout_status || '').trim()
+        : walkoutIssuedAt
+          ? 'printed'
+          : 'unknown';
+      const rowId = patientVisitKey || `${normalizedClinicCode}-${normalizedDepartmentCode}-${String(rawRow.patient_number || rowIndex + 1).trim()}-${rowIndex + 1}`;
+      const included = true;
+      return {
+        row_id: rowId,
+        included,
+        // TODO: Persist excluded rows for carry-forward to the next shift instead of keeping them browser-local.
+        carry_forward_local: false,
+        time: String(rawRow.time || '').trim() || formatRowTime(appointmentDateTime),
+        patient_number: String(rawRow.patient_number || '').trim(),
+        surname: String(rawRow.surname || '').trim(),
+        name: String(rawRow.name || '').trim(),
+        treatments: String(rawRow.treatments || '').trim(),
+        provider: String(rawRow.provider || '').trim(),
+        fee_total: Number(rawRow.fee_total || 0),
+        clinic_code: normalizedClinicCode,
+        department_code: normalizedDepartmentCode,
+        patient_visit_key: patientVisitKey,
+        source_proc_count: Number.isNaN(sourceProcCount) ? null : sourceProcCount,
+        appointment_datetime: appointmentDateTime,
+        appointment_dismissed_at: appointmentDismissedAt,
+        walkout_issued_at: walkoutIssuedAt,
+        walkout_status: walkoutStatus,
+        default_order_index: rowIndex,
+        display_order: rowIndex,
+        status: included ? 'Included' : 'Carry Forward'
+      };
+    }
+
+    function preserveClinicSeparation(rows, clinicCode) {
+      const normalizedClinicCode = normalizeDepartmentCode(clinicCode);
+      const separatedRows = rows.filter((row) => row.clinic_code === normalizedClinicCode);
+
+      if (separatedRows.length !== rows.length) {
+        console.warn('EOS clinic separation ignored rows that did not belong to the selected clinic.', {
+          selectedClinic: normalizedClinicCode,
+          returnedRows: rows.length,
+          keptRows: separatedRows.length
+        });
+      }
+
+      return separatedRows;
+    }
+
+    function getRowPrimaryTimeValue(row) {
+      // Future walkout/securitylog enrichment must only annotate existing visit rows.
+      // It must never create new rows, and unmatched walkout rows must be ignored.
+      // TODO: If no walkout timestamp exists for a matched visit row, the future
+      // walkout-aware report view should show "NO WALK OUT PRINTED".
+      return row.walkout_issued_at || row.appointment_datetime || '';
+    }
+
+    function compareRowsByDefaultOrder(left, right) {
+      return Number(left.default_order_index || 0) - Number(right.default_order_index || 0);
+    }
+
+    function compareRowsByTime(left, right) {
+      const leftPrimary = getRowPrimaryTimeValue(left);
+      const rightPrimary = getRowPrimaryTimeValue(right);
+      const leftDate = leftPrimary ? new Date(leftPrimary) : null;
+      const rightDate = rightPrimary ? new Date(rightPrimary) : null;
+      const leftTime = leftDate && !Number.isNaN(leftDate.getTime()) ? leftDate.getTime() : null;
+      const rightTime = rightDate && !Number.isNaN(rightDate.getTime()) ? rightDate.getTime() : null;
+
+      if (leftTime != null && rightTime != null && leftTime !== rightTime) {
+        return leftTime - rightTime;
+      }
+
+      if (leftTime != null && rightTime == null) return -1;
+      if (leftTime == null && rightTime != null) return 1;
+
+      const leftFallback = String(left.time || '').trim();
+      const rightFallback = String(right.time || '').trim();
+      const fallbackCompare = leftFallback.localeCompare(rightFallback, undefined, { sensitivity: 'base' });
+      return fallbackCompare || compareRowsByDefaultOrder(left, right);
+    }
+
+    function compareRowsByProvider(left, right) {
+      const providerCompare = String(left.provider || '').localeCompare(String(right.provider || ''), undefined, { sensitivity: 'base' });
+      return providerCompare || compareRowsByTime(left, right);
+    }
+
+    function getDisplayRows(rows) {
+      const rowsCopy = rows.slice();
+      if (state.sortMode === 'provider') {
+        return rowsCopy.sort(compareRowsByProvider);
+      }
+      if (state.sortMode === 'time') {
+        return rowsCopy.sort(compareRowsByTime);
+      }
+      return rowsCopy.sort(compareRowsByDefaultOrder);
+    }
+
+    async function getProductionRowsFromAdapter({ clinicCode, startAt, endAt, departmentCode }) {
+      try {
+        const rawRows = await fetchProductionRowsFromApi({ clinicCode, startAt, endAt, departmentCode });
+        const normalizedRows = rawRows.map((row, index) => normalizeProductionRow(row, { clinicCode, rowIndex: index }));
+        return {
+          rows: preserveClinicSeparation(normalizedRows, clinicCode),
+          source: 'api',
+          usedFallback: false
+        };
+      } catch (apiError) {
+        const warningMessage = apiError instanceof Error ? apiError.message : 'Unknown EOS API failure.';
+        console.warn('EOS production API failed, falling back to mock data.', {
+          clinicCode,
+          departmentCode,
+          startAt,
+          endAt,
+          error: warningMessage
+        });
+
+        if (!ENABLE_MOCK_PRODUCTION_FALLBACK) {
+          throw apiError;
+        }
+
+        const rawRows = fetchMockProductionRows({ clinicCode, startAt, endAt, departmentCode });
+        await new Promise((resolve) => window.setTimeout(resolve, 180));
+        const normalizedRows = rawRows.map((row, index) => normalizeProductionRow(row, { clinicCode, rowIndex: index }));
+
+        return {
+          rows: preserveClinicSeparation(normalizedRows, clinicCode),
+          source: 'mock',
+          usedFallback: true,
+          fallbackReason: warningMessage
+        };
+      }
+    }
+
+    function isOpeningShiftSaved() {
+      return Boolean(state.openingShift.saved_at && state.openingShift.shift_session_id);
+    }
+
+    function isReportLoaded() {
+      return Boolean(state.reportLoadedAt);
+    }
+
+    function markReportDirty(options = {}) {
+      state.reportLoadedAt = null;
+      state.reportSubmittedAt = null;
+      state.reportDraftSavedAt = null;
+      state.reportLockedAt = null;
+      state.reportSavePending = false;
+      state.activeReportHeaderId = null;
+      state.persistedAccountingPeriodId = null;
+      state.reportAuditEntriesCreated = 0;
+      state.reportGeneratedAt = null;
+      state.preparedEosDraft = {
+        ...createEmptyPreparedEosDraft(),
+        shiftSession: buildPreparedShiftSessionDraft()
+      };
+
+      if (options.clearRows !== false) {
+        state.rows = [];
+        state.resultsState = 'idle';
+        state.resultsMessage = 'Run an extraction to load EOS production rows.';
+        state.lastExtractionSource = 'none';
+        state.lastApiFallbackReason = '';
+      }
+    }
+
+    function markOpeningDirty(options = {}) {
+      state.openingShift.saved_at = null;
+      state.openingShift.shift_session_id = null;
+      state.openingShift.amending_from_user = '';
+      clearShiftSessionUi();
+      state.preparedEosDraft = createEmptyPreparedEosDraft();
+      markReportDirty(options);
+    }
+
+    function getVisiblePaymentFields() {
+      const departmentCode = resolveActiveDepartmentCode();
+      const channelNames = ({
+        MDCZ: ['EPOS Dental Zabbar', 'Cashlink', 'BOV', 'Bank transfer', 'Revolut', 'Cheques'],
+        MDCQ: ['EPOS Dental Qormi', 'BOV', 'Bank transfer', 'Revolut', 'Cheques'],
+        MPLUS: ['EPOS BluM', 'EPOSBLuM', 'Cashlink', 'BOV', 'Bank transfer', 'Revolut', 'Cheques'],
+        BLUMV: ['EPOS BluM', 'EPOSBLuM', 'Cashlink', 'BOV', 'Bank transfer', 'Revolut', 'Cheques']
+      })[departmentCode] || [];
+      return channelNames.map((name) => PAYMENT_FIELD_MAPPING[name]).filter(Boolean);
+    }
+
+    function getOpeningCashUsed() {
+      return state.openingShift.opening_cash_matches
+        ? Number(state.openingShift.last_shift_closing_cash || 0)
+        : Number(state.openingShift.actual_opening_cash || 0);
+    }
+
+    function computeSystemTotals() {
+      return {
+        cashboxExpensesTotal: REPORT_SYSTEM_TOTAL_DEFAULTS.cashbox_expenses_total,
+        sellTotal: REPORT_SYSTEM_TOTAL_DEFAULTS.sell_total,
+        feeTotal: state.rows.reduce((sum, row) => sum + Number(row.fee_total || 0), 0)
+      };
+    }
+
+    function computeReconciliationTotals() {
+      const visiblePaymentFields = getVisiblePaymentFields();
+      const paymentChannelTotal = visiblePaymentFields.reduce((sum, field) => {
+        return sum + Number(state.paymentValues[field.key] || 0);
+      }, 0);
+      const cashEnvelope = Number(state.paymentValues.cashEnvelope || 0);
+      const openingCashUsed = getOpeningCashUsed();
+      const systemTotals = computeSystemTotals();
+      const expectedTotal = Number((systemTotals.sellTotal + systemTotals.feeTotal).toFixed(2));
+      const actualTotal = Number((openingCashUsed + paymentChannelTotal + cashEnvelope - systemTotals.cashboxExpensesTotal).toFixed(2));
+      const discrepancy = Number((actualTotal - expectedTotal).toFixed(2));
+
+      return {
+        paymentChannelTotal,
+        cashEnvelope,
+        openingCashUsed,
+        expectedTotal,
+        actualTotal,
+        discrepancy,
+        systemTotals
+      };
+    }
+
+    function computeOperationalFlags() {
+      const reconciliation = computeReconciliationTotals();
+      const managerAlert = !state.openingShift.opening_cash_matches || reconciliation.discrepancy !== 0;
+      return {
+        openingSaved: isOpeningShiftSaved(),
+        reportLoaded: isReportLoaded(),
+        discrepancyFound: reconciliation.discrepancy !== 0,
+        managerAlert,
+        readyToSubmit: isOpeningShiftSaved() && isReportLoaded() && !managerAlert
+      };
+    }
+
+    function getActiveTakeoverOwner() {
+      if (state.reportSubmittedAt || state.reportLockedAt) return '';
+      return String(state.openingShift.amending_from_user || '').trim();
+    }
+
+    function setStatusBadgeAppearance(element, options) {
+      if (!element) return;
+      const mode = options.mode || 'neutral';
+      element.textContent = options.label || '';
+      element.className = `status-badge ${mode}`;
+    }
+
+    function renderPaymentFields() {
+      const fields = getVisiblePaymentFields();
+      refs.paymentFieldsGrid.innerHTML = fields.concat([{ key: 'cashEnvelope', label: 'Cash envelope' }]).map((field) => {
+        const value = escapeHtml(state.paymentValues[field.key] || '0.00');
+        return `
+          <label>${escapeHtml(field.label)}
+            <input type="number" step="0.01" min="0" inputmode="decimal" data-payment-key="${escapeHtml(field.key)}" value="${value}" />
+          </label>
+        `;
+      }).join('');
+    }
+
+    function renderOperationalPanels() {
+      const openingSaved = isOpeningShiftSaved();
+      const reportLoaded = isReportLoaded();
+      const flags = computeOperationalFlags();
+      const reconciliation = computeReconciliationTotals();
+      const carryForwardCount = state.rows.filter((row) => !row.included).length;
+      const clinicLabel = state.selectedClinic || 'Not selected';
+      const takeoverOwner = getActiveTakeoverOwner();
+
+      if (refs.activeShiftBanner) {
+        refs.activeShiftBanner.classList.toggle('hidden', !openingSaved);
+      }
+      if (refs.activeShiftBannerCopy) {
+        refs.activeShiftBannerCopy.textContent = openingSaved
+          ? `Location ${state.activeShiftSession && state.activeShiftSession.location_code ? state.activeShiftSession.location_code : (state.location ? state.location.code : 'UNKNOWN')} | Department ${state.activeShiftSession && state.activeShiftSession.department_code ? state.activeShiftSession.department_code : state.selectedDepartment || '-'} | Shift ${state.openingShift.shift_session_id || '-'} | Owner ${(state.activeShiftSession && (state.activeShiftSession.current_owner || state.activeShiftSession.created_by)) || state.currentUser}${takeoverOwner ? ` | Manager takeover active: ${takeoverOwner}` : ''}`
+          : 'No active shift session is loaded. Redirect to the Open Shift workspace to create or resume one.';
+      }
+      if (refs.openingWorkspaceNote) {
+        refs.openingWorkspaceNote.textContent = openingSaved
+          ? `Active shift session ${state.openingShift.shift_session_id} is loaded from the standalone Open Shift workspace. Opening ownership and takeover state remain tied to that session.`
+          : 'No active shift session is loaded yet. This workspace will redirect to Open Shift until a shift session is created or resumed.';
+      }
+
+      refs.loadReportPanel.classList.toggle('is-locked', !openingSaved);
+      refs.loadDepartmentValue.textContent = state.selectedDepartment || 'Not selected';
+      refs.loadClinicValue.textContent = clinicLabel;
+      refs.openingSessionValue.textContent = openingSaved ? state.openingShift.shift_session_id : 'Not created';
+      refs.openingSessionHint.textContent = openingSaved
+        ? 'Opening session is active. EOS report loading is enabled and will prepare the report snapshot linked to this shift session.'
+        : 'Open Shift must be completed first to create the shift session.';
+      refs.loadReportLockNote.textContent = openingSaved
+        ? 'Opening saved. EOS report loading is available, start/end amendments remain audited, and extraction prepares the grouped visit report snapshot.'
+        : 'Complete Open Shift to unlock EOS report loading.';
+
+      renderPaymentFields();
+      refs.paymentFieldsNote.textContent = `Manual inputs are filtered for ${state.selectedDepartment || 'the selected department'} and remain session-local for now. TODO: persist them into eos_report_summary with the final reconciliation snapshot.`;
+
+      refs.cashboxExpensesTotal.textContent = asCurrency(reconciliation.systemTotals.cashboxExpensesTotal);
+      refs.sellTotalValue.textContent = asCurrency(reconciliation.systemTotals.sellTotal);
+      refs.feeTotalValue.textContent = asCurrency(reconciliation.systemTotals.feeTotal);
+      refs.openingCashUsedValue.textContent = asCurrency(reconciliation.openingCashUsed);
+      refs.expectedTotalValue.textContent = asCurrency(reconciliation.expectedTotal);
+      refs.actualTotalValue.textContent = asCurrency(reconciliation.actualTotal);
+      refs.discrepancyValue.textContent = asCurrency(reconciliation.discrepancy);
+      refs.discrepancyValue.style.color = reconciliation.discrepancy !== 0 ? '#8d2032' : '#162033';
+      refs.reconciliationHint.textContent = `Opening cash + payment channels (${asCurrency(reconciliation.paymentChannelTotal)}) + cash envelope (${asCurrency(reconciliation.cashEnvelope)}) - cashbox expenses.`;
+
+      refs.carryForwardBody.textContent = carryForwardCount
+        ? `${carryForwardCount} grouped visit row(s) are currently excluded and would carry forward to the next shift as saved EOS report row flags.`
+        : 'Excluded grouped-visit rows will be tracked here before carry-forward persistence is wired.';
+      refs.carryForwardMeta.textContent = carryForwardCount === 1
+        ? '1 row currently flagged'
+        : `${carryForwardCount} rows currently flagged`;
+      refs.missingWalkoutBody.textContent = 'Walkout exception reporting will appear here once walkout enrichment is connected to existing EOS visit rows only. It must never create new EOS rows.';
+      refs.missingWalkoutMeta.textContent = 'No live walkout integration yet; unmatched walkout rows will be ignored';
+      refs.managerAlertBody.textContent = flags.managerAlert
+        ? 'Manager alert would be raised because the opening cash required an override or the reconciliation is not balanced.'
+        : 'No manager alert would be raised from the current opening and reconciliation state.';
+      refs.managerAlertMeta.textContent = flags.managerAlert ? 'Alert status: flagged' : 'Alert status: clear';
+
+      if (state.reportSubmittedAt && state.activeReportHeaderId) {
+        refs.submitStatusNote.textContent = `EOS report submitted in the workspace. Header ${state.activeReportHeaderId}${state.persistedAccountingPeriodId ? ` | Period ${state.persistedAccountingPeriodId}` : ''}${state.reportAuditEntriesCreated ? ` | Audit entries ${state.reportAuditEntriesCreated}` : ''}.`;
+      } else if (state.reportDraftSavedAt && state.activeReportHeaderId) {
+        refs.submitStatusNote.textContent = `EOS report saved. Header ${state.activeReportHeaderId}${state.persistedAccountingPeriodId ? ` | Period ${state.persistedAccountingPeriodId}` : ''}${state.reportAuditEntriesCreated ? ` | Audit entries ${state.reportAuditEntriesCreated}` : ''}.`;
+      } else if (flags.readyToSubmit) {
+        refs.submitStatusNote.textContent = 'Opening is saved, the report is loaded, and the reconciliation is balanced. Submit will persist the EOS report header, rows, summary, and first audit entry.';
+      } else {
+        refs.submitStatusNote.textContent = 'Opening must be saved and the report must be loaded before EOS submission can continue.';
+      }
+      refs.btnSaveDraft.disabled = state.reportSavePending || !openingSaved;
+      refs.btnSubmitEos.disabled = state.reportSavePending || !openingSaved || !reportLoaded;
+      refs.btnLockReport.disabled = state.reportSavePending || !openingSaved || !reportLoaded;
+
+      setStatusBadgeAppearance(refs.openingStatusBadge, {
+        label: openingSaved ? 'Opening Saved' : 'Opening Not Saved',
+        mode: openingSaved ? 'good' : 'pending'
+      });
+      setStatusBadgeAppearance(refs.takeoverStatusBadge, {
+        label: 'Manager takeover active',
+        mode: 'alert'
+      });
+      if (refs.takeoverStatusBadge) {
+        refs.takeoverStatusBadge.classList.toggle('hidden', !takeoverOwner);
+      }
+      setStatusBadgeAppearance(refs.takeoverOwnerBadge, {
+        label: takeoverOwner ? `Amending EOS of ${takeoverOwner}` : 'Amending EOS of -',
+        mode: 'alert'
+      });
+      if (refs.takeoverOwnerBadge) {
+        refs.takeoverOwnerBadge.classList.toggle('hidden', !takeoverOwner);
+      }
+      setStatusBadgeAppearance(refs.reportStatusBadge, {
+        label: state.reportSubmittedAt
+          ? 'Report Submitted'
+          : state.reportDraftSavedAt
+            ? 'Report Saved'
+            : reportLoaded
+              ? 'Report Loaded'
+              : 'Report Not Loaded',
+        mode: state.reportSubmittedAt || state.reportDraftSavedAt || reportLoaded ? 'good' : 'neutral'
+      });
+      setStatusBadgeAppearance(refs.discrepancyStatusBadge, {
+        label: flags.discrepancyFound ? 'Discrepancy Found' : 'Balanced',
+        mode: flags.discrepancyFound ? 'alert' : 'good'
+      });
+      setStatusBadgeAppearance(refs.readyStatusBadge, {
+        label: flags.readyToSubmit ? 'Ready to Submit' : 'Not Ready',
+        mode: flags.readyToSubmit ? 'good' : 'neutral'
+      });
+    }
+
+    function computeProductionTotals(rows) {
+      return rows.reduce((acc, row) => {
+        if (row.included) {
+          acc.includedTotal += Number(row.fee_total || 0);
+          acc.includedCount += 1;
+        } else {
+          acc.excludedTotal += Number(row.fee_total || 0);
+          acc.excludedCount += 1;
+        }
+        return acc;
+      }, { includedTotal: 0, excludedTotal: 0, netTotal: 0, includedCount: 0, excludedCount: 0 });
+    }
+
+    function renderGridStateRow(message, stateClass) {
+      refs.resultsBody.innerHTML = `<tr><td colspan="9" class="table-feedback ${escapeHtml(stateClass)}">${escapeHtml(message)}</td></tr>`;
+    }
+
+    function renderProductionGrid() {
+      if (state.resultsState === 'loading') {
+        renderGridStateRow(state.resultsMessage || 'Loading EOS production rows...', 'loading');
+        return;
+      }
+
+      if (state.resultsState === 'error') {
+        renderGridStateRow(state.resultsMessage || 'EOS production extraction failed.', 'error');
+        return;
+      }
+
+      if (!state.rows.length) {
+        renderGridStateRow(
+          state.resultsMessage || 'No production rows found for the selected clinic and report window.',
+          'muted'
+        );
+        return;
+      }
+
+      refs.resultsBody.innerHTML = getDisplayRows(state.rows).map((row) => {
+        const statusClass = row.included ? 'included' : 'carry-forward';
+        const statusLabel = row.included ? 'Included' : 'Carry Forward';
+        return `
+          <tr class="${row.included ? '' : 'is-excluded'}" data-row-id="${escapeHtml(row.row_id)}">
+            <td><input type="checkbox" data-row-toggle="${escapeHtml(row.row_id)}" ${row.included ? 'checked' : ''} /></td>
+            <td>${escapeHtml(row.time)}</td>
+            <td>${escapeHtml(row.patient_number)}</td>
+            <td>${escapeHtml(row.surname)}</td>
+            <td>${escapeHtml(row.name)}</td>
+            <td>${escapeHtml(row.treatments)}</td>
+            <td>${escapeHtml(row.provider)}</td>
+            <td>${escapeHtml(asCurrency(row.fee_total))}</td>
+            <td><span class="row-status ${statusClass}">${escapeHtml(statusLabel)}</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function updateProductionSummary() {
+      const totals = computeProductionTotals(state.rows);
+      totals.netTotal = totals.includedTotal;
+      refs.includedTotal.textContent = asCurrency(totals.includedTotal);
+      refs.excludedTotal.textContent = asCurrency(totals.excludedTotal);
+      refs.netTotal.textContent = asCurrency(totals.netTotal);
+      refs.includedCount.textContent = String(totals.includedCount);
+      refs.excludedCount.textContent = String(totals.excludedCount);
+    }
+
+    function handleProductionIncludeToggle(rowId, included) {
+      const row = state.rows.find((entry) => entry.row_id === rowId);
+      if (!row) return;
+      row.included = included;
+      row.carry_forward_local = !included;
+      row.status = included ? 'Included' : 'Carry Forward';
+      if (state.activeReportHeaderId) {
+        refreshPreparedEosDraft();
+      }
+      renderProductionGrid();
+      updateProductionSummary();
+      renderOperationalPanels();
+    }
+
+    function setRegistrationModalVisible(visible) {
+      refs.registrationBackdrop.classList.toggle('hidden', !visible);
+      refs.registrationBackdrop.setAttribute('aria-hidden', visible ? 'false' : 'true');
+      document.body.classList.toggle('modal-open', visible);
+    }
+
+    function renderSummary() {
+      updateProductionSummary();
+    }
+
+    function renderContext() {
+      const workstation = state.workstation;
+      const location = state.location || LOCATION_DIRECTORY.UNKNOWN;
+      const suggestion = departmentDefaulting.getLocationSuggestion(location);
+      const reportWindow = state.reportWindow || createEmptyReportWindow();
+      const openingSaved = isOpeningShiftSaved();
+      refs.workstationName.textContent = workstation ? workstation.display_name : 'Unknown workstation';
+      refs.workstationKey.textContent = workstation ? `${workstation.id} (${workstation.source})` : '-';
+      refs.receptionName.textContent = location.label;
+      refs.receptionRule.textContent = location.detection_rule === 'saved_workstation_config'
+        ? 'Loaded from saved workstation configuration.'
+        : location.detection_rule === 'unmapped'
+          ? 'No temporary location rule matched.'
+          : `Detected via ${location.detection_rule}`;
+      refs.departmentSelect.value = state.selectedDepartment || '';
+      refs.clinicContextValue.textContent = state.selectedClinic || 'Not selected';
+      refs.clinicContextHint.textContent = state.selectedClinic
+        ? `Clinic ${state.selectedClinic} is active for extraction and reconciliation.`
+        : 'Clinic stays explicit for extraction and reconciliation.';
+      refs.clinicSelect.value = state.selectedClinic || '';
+      refs.departmentSelect.disabled = true;
+      refs.clinicSelect.disabled = true;
+      refs.gridSortSelect.value = state.sortMode || 'default';
+      refs.userLabel.textContent = state.currentUser;
+      refs.userHint.textContent = 'User label comes from local session storage for now.';
+      refs.startDateTimeDisplay.textContent = formatDateTime(reportWindow.final_start_at);
+      refs.endDateTimeDisplay.textContent = formatDateTime(reportWindow.final_end_at);
+      refs.startDateTimeHint.textContent = buildStartTimingHint(reportWindow);
+      refs.endDateTimeHint.textContent = buildEndTimingHint(reportWindow);
+      refs.timingAuditNote.textContent = buildTimingAuditNote(reportWindow);
+      refs.morningOpenBadge.classList.toggle('hidden', !reportWindow.first_report_of_day);
+      refs.startAmendedBadge.classList.toggle('hidden', !reportWindow.start_amended);
+      refs.endAmendedBadge.classList.toggle('hidden', !reportWindow.end_amended);
+
+      const fromInputValue = toLocalInputValue(reportWindow.final_start_at);
+      const toInputValue = toLocalInputValue(reportWindow.final_end_at);
+      if (refs.fromDateTime.value !== fromInputValue) refs.fromDateTime.value = fromInputValue;
+      if (refs.toDateTime.value !== toInputValue) refs.toDateTime.value = toInputValue;
+      refs.fromDateTime.classList.toggle('is-amended', reportWindow.start_amended);
+      refs.toDateTime.classList.toggle('is-amended', reportWindow.end_amended);
+
+      if (openingSaved) {
+        refs.departmentHint.textContent = `Active shift session controls department ${state.selectedDepartment || '-'}. Use Open Shift to create or change the session.`;
+        refs.mappingHint.textContent = 'Report workspace is reading the active shift session from browser state. TODO: replace this with persisted EOS shift-session retrieval.';
+      } else if (state.registeredDepartment) {
+        refs.departmentHint.textContent = state.selectedDepartment && state.selectedDepartment !== state.registeredDepartment
+          ? `Saved mapping: ${state.registeredDepartment}. Current session override: ${state.selectedDepartment} (not saved).`
+          : `Saved workstation mapping: ${state.registeredDepartment}.`;
+        refs.mappingHint.textContent = 'Workstation configuration is loaded from local browser storage. TODO: move this to backend workstation setup.';
+      } else if (suggestion) {
+        refs.departmentHint.textContent = `Temporary location suggestion: ${suggestion}. Registration is still required before use.`;
+        refs.mappingHint.textContent = 'This workstation is not registered yet. Location-based defaulting is temporary until workstation setup is stored centrally.';
+      } else {
+        refs.departmentHint.textContent = 'No saved workstation mapping exists yet. Registration is required before extraction.';
+        refs.mappingHint.textContent = 'Workstation identity currently uses an explicit workstation parameter or a browser-local workstation ID and is stored locally for now.';
+      }
+
+      refs.apiHint.textContent = state.selectedClinic
+        ? state.lastExtractionSource === 'api'
+          ? `Live EOS production API active for clinic ${state.selectedClinic}.`
+          : state.lastExtractionSource === 'mock' && state.lastApiFallbackReason
+            ? `Live EOS production API fallback active for clinic ${state.selectedClinic}. Mock data loaded after API failure.`
+            : 'EOS extraction will try the live production API first and fall back to the mock adapter if needed.'
+        : 'Select a clinic after workstation registration. EOS extraction will try the live production API first and fall back to the mock adapter if needed.';
+    }
+
+    function renderRegistrationModal() {
+      if (!state.isRegistrationPending) {
+        setRegistrationModalVisible(false);
+        return;
+      }
+
+      const suggestion = departmentDefaulting.getLocationSuggestion(state.location);
+      refs.registrationWorkstationName.textContent = state.workstation ? state.workstation.display_name : 'Unknown workstation';
+      refs.registrationWorkstationSource.textContent = state.workstation
+        ? `${state.workstation.id} (${state.workstation.source})`
+        : 'No workstation identifier available';
+      refs.registrationLocationLabel.textContent = state.location ? state.location.label : 'Unknown Reception';
+      refs.registrationLocationRule.textContent = state.location && state.location.detection_rule !== 'unmapped'
+        ? `Detected via ${state.location.detection_rule}`
+        : 'No temporary location rule matched.';
+      refs.registrationDepartmentSelect.value = state.pendingRegistrationDepartment || '';
+      refs.registrationSuggestion.textContent = suggestion
+        ? `Suggested default based on location: ${suggestion}. This mapping will be stored locally for now and later moved to database storage.`
+        : 'No temporary location suggestion is available. Choose the correct department manually. This mapping will be stored locally for now.';
+      refs.btnConfirmRegistration.disabled = !departmentDefaulting.isValidDepartment(refs.registrationDepartmentSelect.value);
+      setRegistrationModalVisible(true);
+    }
+
+    function renderAll() {
+      renderContext();
+      renderOperationalPanels();
+      renderRegistrationModal();
+      renderProductionGrid();
+      updateProductionSummary();
+      setBusy(state.busy);
+    }
+
+    function resolveCurrentUserLabel() {
+      const auth = readStoredAuth();
+      const candidates = [
+        auth && auth.user && auth.user.first_name && auth.user.last_name ? `${auth.user.first_name} ${auth.user.last_name}` : '',
+        auth && auth.user ? auth.user.email : '',
+        auth ? auth.email : '',
+        auth && auth.first_name && auth.last_name ? `${auth.first_name} ${auth.last_name}` : '',
+        auth ? auth.first_name : '',
+        new URLSearchParams(window.location.search).get('user')
+      ].filter(Boolean);
+
+      return candidates.length ? String(candidates[0]) : 'Reception User';
+    }
+
+    function resolveActiveDepartmentCode() {
+      return (
+        normalizeDepartmentCode(state.selectedDepartment) ||
+        normalizeDepartmentCode(state.registeredDepartment) ||
+        normalizeDepartmentCode(state.selectedClinic) ||
+        normalizeDepartmentCode(departmentDefaulting.getLocationSuggestion(state.location))
+      );
+    }
+
+    function applyReportWindowFinals({ finalStartAt, finalEndAt }) {
+      state.reportWindow.final_start_at = normalizeIsoMinute(finalStartAt);
+      state.reportWindow.final_end_at = normalizeIsoMinute(finalEndAt);
+      state.reportWindow.start_amended = !sameIsoMinute(state.reportWindow.final_start_at, state.reportWindow.default_start_at);
+      state.reportWindow.end_amended = !sameIsoMinute(state.reportWindow.final_end_at, state.reportWindow.default_end_at);
+
+      if (state.reportWindow.start_amended || state.reportWindow.end_amended) {
+        state.reportWindow.amended_at = normalizeIsoMinute(new Date());
+        state.reportWindow.amended_by_user = getOptionalCurrentUser();
+      } else {
+        state.reportWindow.amended_at = null;
+        state.reportWindow.amended_by_user = null;
+      }
+    }
+
+    function syncReportWindowFromInputs() {
+      const previousStart = state.reportWindow.final_start_at;
+      const previousEnd = state.reportWindow.final_end_at;
+      applyReportWindowFinals({
+        finalStartAt: localInputValueToIso(refs.fromDateTime.value),
+        finalEndAt: localInputValueToIso(refs.toDateTime.value)
+      });
+      if (!sameIsoMinute(previousStart, state.reportWindow.final_start_at) || !sameIsoMinute(previousEnd, state.reportWindow.final_end_at)) {
+        markReportDirty();
+      }
+    }
+
+    function resetReportWindowToDefaults(options = {}) {
+      markReportDirty();
+      const departmentCode = resolveActiveDepartmentCode();
+      state.reportWindow = computeDefaultReportWindow({
+        departmentCode,
+        locationCode: state.location ? state.location.code : 'UNKNOWN',
+        workstationId: state.workstation ? state.workstation.id : '',
+        now: new Date()
+      });
+
+      if (departmentCode && !departmentDefaulting.isValidDepartment(state.selectedDepartment)) {
+        state.selectedDepartment = departmentCode;
+      }
+      if (departmentCode && !departmentDefaulting.isValidDepartment(state.selectedClinic)) {
+        state.selectedClinic = departmentCode;
+      }
+
+      renderAll();
+
+      if (options.announce) {
+        if (state.reportWindow.default_start_source === 'safe_fallback_08_00') {
+          showInfo('Report window reset. No previous EOS report was found for this department, so a safe local fallback of 08:00 is in use.');
+        } else {
+          showInfo('Report window reset from the previous EOS report end time for the selected department.');
+        }
+      }
+    }
+
+    function buildStartTimingHint(reportWindow) {
+      const sourceText = reportWindow.default_start_source === 'safe_fallback_08_00'
+        ? 'Safe fallback 08:00 local time is in use until backend report history is connected.'
+        : 'Default start came from the previous EOS report end time.';
+
+      if (reportWindow.start_amended) {
+        return `Default: ${formatDateTime(reportWindow.default_start_at)}. Final: ${formatDateTime(reportWindow.final_start_at)}. ${sourceText}`;
+      }
+
+      return `Default: ${formatDateTime(reportWindow.default_start_at)}. ${sourceText}`;
+    }
+
+    function buildEndTimingHint(reportWindow) {
+      if (reportWindow.end_amended) {
+        return `Default: ${formatDateTime(reportWindow.default_end_at)}. Final: ${formatDateTime(reportWindow.final_end_at)}. End-time amendment is tracked locally for now.`;
+      }
+
+      return `Default: ${formatDateTime(reportWindow.default_end_at)}. End time defaults to now until the real EOS backend is connected.`;
+    }
+
+    function buildTimingAuditNote(reportWindow) {
+      if (reportWindow.default_start_source === 'safe_fallback_08_00') {
+        return 'No previous EOS report was found for this department. Safe fallback start of 08:00 local time is active. TODO: replace local timing history with EOS backend report history.';
+      }
+
+      return 'Report timing defaults use the previous EOS report end time for the selected department. Amendments are tracked locally for now. TODO: replace local audit storage with EOS backend persistence.';
+    }
+
+    function syncDepartmentSelection(value, sourceLabel, announce) {
+      const normalized = normalizeDepartmentCode(value);
+      if (!departmentDefaulting.isValidDepartment(normalized)) return;
+
+      const previousDepartment = state.selectedDepartment;
+      state.selectedDepartment = normalized;
+      if (!departmentDefaulting.isValidDepartment(state.selectedClinic) || state.selectedClinic === previousDepartment) {
+        state.selectedClinic = normalized;
+      }
+
+      resetReportWindowToDefaults();
+
+      if (announce) {
+        if (state.registeredDepartment && state.registeredDepartment !== normalized) {
+          showInfo(`Department changed to ${normalized} for this session only. Saved workstation mapping remains ${state.registeredDepartment}.`);
+        } else {
+          showInfo(`Department set to ${normalized}${sourceLabel ? ` (${sourceLabel})` : ''}.`);
+        }
+      }
+    }
+
+    function syncClinicSelection(value, announce) {
+      const normalized = normalizeDepartmentCode(value);
+      if (!departmentDefaulting.isValidDepartment(normalized)) return;
+      state.selectedClinic = normalized;
+      renderAll();
+      if (announce) {
+        showInfo(`Clinic set to ${normalized} for extraction.`);
+      }
+    }
+
+    function resetExtractionWindow() {
+      resetReportWindowToDefaults({ announce: true });
+    }
+
+    function applyWorkstationContext(announce) {
+      state.workstation = workstationDetection.resolve();
+      state.workstationConfig = getWorkstationConfig(state.workstation.id) || migrateLegacyServerHostWorkstationConfig(state.workstation.id);
+
+      const detectedLocation = receptionMapping.resolve(state.workstation);
+      state.location = state.workstationConfig
+        ? getLocationDescriptor(state.workstationConfig.location_code, 'saved_workstation_config')
+        : detectedLocation;
+      state.registeredDepartment = state.workstationConfig
+        ? normalizeDepartmentCode(state.workstationConfig.department_code)
+        : '';
+
+      if (!isFirstTimeWorkstation(state.workstation.id) && state.registeredDepartment) {
+        state.isRegistrationPending = false;
+        state.pendingRegistrationDepartment = '';
+        state.selectedDepartment = state.registeredDepartment;
+        if (!departmentDefaulting.isValidDepartment(state.selectedClinic)) {
+          state.selectedClinic = state.registeredDepartment;
+        }
+      } else {
+        const suggestion = departmentDefaulting.getLocationSuggestion(state.location);
+        state.isRegistrationPending = true;
+        state.pendingRegistrationDepartment = suggestion || '';
+        if (!departmentDefaulting.isValidDepartment(state.selectedDepartment)) {
+          state.selectedDepartment = suggestion || '';
+        }
+        if (!departmentDefaulting.isValidDepartment(state.selectedClinic)) {
+          state.selectedClinic = suggestion || '';
+        }
+      }
+
+      resetReportWindowToDefaults();
+
+      if (announce) {
+        showInfo(state.registeredDepartment
+          ? `Loaded workstation mapping for ${state.registeredDepartment}.`
+          : 'This workstation is not registered yet. Please confirm its department.');
+      }
+    }
+
+    function seedState() {
+      state.currentUser = resolveCurrentUserLabel();
+      applyWorkstationContext(false);
+      const activeShiftSession = readActiveShiftSessionStorage();
+      if (!applyActiveShiftSessionToState(activeShiftSession, { skipDraftRefresh: true })) {
+        redirectToOpenShift('active_shift_required');
+        return false;
+      }
+      return true;
+    }
+
+    function validateExtractionWindow() {
+      if (state.isRegistrationPending) {
+        throw new Error('This workstation must be registered before EOS extraction can continue.');
+      }
+
+      if (!isOpeningShiftSaved()) {
+        redirectToOpenShift('missing_active_shift_session');
+        throw new Error('Active shift session required. Redirecting to Open Shift.');
+      }
+
+      const department = normalizeDepartmentCode(state.selectedDepartment);
+      if (!department) {
+        throw new Error('A valid department is required before extraction.');
+      }
+
+      const clinic = normalizeDepartmentCode(refs.clinicSelect.value);
+      if (!departmentDefaulting.isValidDepartment(clinic)) {
+        throw new Error('A clinic selection is required.');
+      }
+
+      syncReportWindowFromInputs();
+
+      const from = state.reportWindow.final_start_at;
+      const to = state.reportWindow.final_end_at;
+      if (!from || !to) throw new Error('Both Start Datetime and End Datetime are required.');
+
+      const fromDate = new Date(from);
+      const toDate = new Date(to);
+      if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) {
+        throw new Error('Invalid report timing window.');
+      }
+      if (toDate < fromDate) {
+        throw new Error('End Datetime must be after Start Datetime.');
+      }
+
+      state.selectedClinic = clinic;
+      return { clinic, department, from, to };
+    }
+
+    async function runExtraction() {
+      clearMessages();
+      if (!isOpeningShiftSaved()) {
+        showError('Active shift session required. Redirecting to Open Shift.');
+        redirectToOpenShift('missing_active_shift_session');
+        return;
+      }
+      setBusy(true);
+      state.rows = [];
+      state.resultsState = 'loading';
+      state.resultsMessage = 'Loading EOS production rows...';
+      renderAll();
+
+      try {
+        const windowValues = validateExtractionWindow();
+        const activeReportHeaderId = state.reportWindow.report_id;
+        const extraction = await getProductionRowsFromAdapter({
+          clinicCode: windowValues.clinic,
+          startAt: windowValues.from,
+          endAt: windowValues.to,
+          departmentCode: windowValues.department
+        });
+
+        state.rows = extraction.rows;
+        state.resultsState = extraction.rows.length ? 'ready' : 'empty';
+        state.resultsMessage = extraction.rows.length
+          ? ''
+          : `No production rows were returned for ${windowValues.clinic} in the selected report window.`;
+        state.lastExtractionSource = extraction.source;
+        state.lastApiFallbackReason = extraction.fallbackReason || '';
+        state.reportLoadedAt = normalizeIsoMinute(new Date());
+        state.reportSubmittedAt = null;
+        state.reportDraftSavedAt = null;
+        state.reportLockedAt = null;
+        state.reportSavePending = false;
+        state.activeReportHeaderId = activeReportHeaderId;
+        state.persistedAccountingPeriodId = null;
+        state.reportAuditEntriesCreated = 0;
+        state.reportGeneratedAt = null;
+        const savedAudit = saveReportTimeAudit({
+          report_id: state.reportWindow.report_id,
+          workstation_id: state.workstation ? state.workstation.id : '',
+          department_code: windowValues.department,
+          location_code: state.location ? state.location.code : 'UNKNOWN',
+          default_start_at: state.reportWindow.default_start_at,
+          default_end_at: state.reportWindow.default_end_at,
+          final_start_at: state.reportWindow.final_start_at,
+          final_end_at: state.reportWindow.final_end_at,
+          start_amended: state.reportWindow.start_amended,
+          end_amended: state.reportWindow.end_amended,
+          amended_at: state.reportWindow.amended_at,
+          amended_by_user: state.reportWindow.amended_by_user,
+          created_at: new Date()
+        });
+        refreshPreparedEosDraft([
+          buildPreparedReportAuditEntry({
+            reportHeaderId: activeReportHeaderId,
+            action: 'report_loaded',
+            newValue: `${windowValues.clinic} ${windowValues.from} -> ${windowValues.to}`
+          })
+        ]);
+        state.reportWindow.report_id = createReportId();
+        renderAll();
+        if (extraction.source === 'api') {
+          showInfo(`Loaded ${extraction.rows.length} production row(s) from /api/eos/production-visits for ${windowValues.clinic}. Timing audit saved locally for department ${savedAudit.department_code}.`);
+        } else {
+          showInfo(`Live EOS production API failed, so ${extraction.rows.length} mock production row(s) were loaded for ${windowValues.clinic}. Timing audit saved locally for department ${savedAudit.department_code}.`);
+        }
+      } catch (error) {
+        state.rows = [];
+        state.resultsState = 'error';
+        state.resultsMessage = error instanceof Error ? error.message : 'Extraction failed.';
+        state.lastExtractionSource = 'none';
+        state.lastApiFallbackReason = '';
+        state.reportLoadedAt = null;
+        state.reportSubmittedAt = null;
+        state.reportDraftSavedAt = null;
+        state.reportLockedAt = null;
+        state.reportSavePending = false;
+        state.activeReportHeaderId = null;
+        state.persistedAccountingPeriodId = null;
+        state.reportAuditEntriesCreated = 0;
+        state.reportGeneratedAt = null;
+        state.preparedEosDraft = {
+          ...createEmptyPreparedEosDraft(),
+          shiftSession: buildPreparedShiftSessionDraft()
+        };
+        renderAll();
+        showError(error instanceof Error ? error.message : 'Extraction failed.');
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function toggleRowInclusion(rowId, included) {
+      handleProductionIncludeToggle(rowId, included);
+    }
+
+    function confirmWorkstationRegistration() {
+      const department = normalizeDepartmentCode(refs.registrationDepartmentSelect.value);
+      if (!departmentDefaulting.isValidDepartment(department) || !state.workstation) return;
+
+      const savedConfig = saveWorkstationConfig({
+        workstation_id: state.workstation.id,
+        department_code: department,
+        location_code: state.location ? state.location.code : 'UNKNOWN',
+        modified_by_user: getOptionalCurrentUser()
+      });
+
+      state.workstationConfig = savedConfig;
+      state.registeredDepartment = savedConfig.department_code;
+      state.selectedDepartment = savedConfig.department_code;
+      state.selectedClinic = savedConfig.department_code;
+      state.location = getLocationDescriptor(savedConfig.location_code, 'saved_workstation_config');
+      state.pendingRegistrationDepartment = '';
+      state.isRegistrationPending = false;
+      resetReportWindowToDefaults();
+      showInfo(`Workstation registered to ${savedConfig.department_code}. This local mapping will be replaced by backend storage later.`);
+    }
+
+    async function saveOpeningDetails() {
+      clearMessages();
+      clearShiftSessionUi();
+
+      if (state.isRegistrationPending) {
+        showOpeningInlineError('This workstation must be registered before opening details can be saved.');
+        return;
+      }
+
+      if (!state.selectedDepartment || !state.selectedClinic) {
+        showOpeningInlineError('Department and clinic are required before the shift can be opened.');
+        return;
+      }
+
+      if (!String(state.openingShift.shift_date || '').trim() || !String(state.openingShift.opening_timestamp || '').trim()) {
+        showOpeningInlineError('Shift date and opening timestamp are required before the shift can be opened.');
+        return;
+      }
+
+      if (!String(state.openingShift.last_shift_closing_cash || '').trim()) {
+        showOpeningInlineError('Last shift closing cash is required before the shift can be opened.');
+        return;
+      }
+
+      if (!state.openingShift.opening_cash_matches) {
+        if (!String(state.openingShift.actual_opening_cash || '').trim()) {
+          showOpeningInlineError('Actual opening cash is required when the opening does not match the previous closing cash.');
+          return;
+        }
+        if (!String(state.openingShift.override_reason || '').trim()) {
+          showOpeningInlineError('Override reason is required when the opening does not match the previous closing cash.');
+          return;
+        }
+      }
+
+      const payload = buildOpeningShiftSessionPayload();
+      if (!payload.shift_start_time) {
+        showOpeningInlineError('Opening timestamp must include a valid time before the shift can be opened.');
+        return;
+      }
+
+      state.openingSavePending = true;
+      renderAll();
+
+      try {
+        const shiftSessionResponse = await createShiftSessionViaApi(payload);
+
+        if (shiftSessionResponse.action_code === 'open_shift_exists_same_owner') {
+          storeShiftSessionUiResponse(shiftSessionResponse);
+          showOpeningInlineError('');
+          showInfo('An active EOS already exists for this location under your name. Use Resume Existing Shift to continue.');
+        } else if (shiftSessionResponse.action_code === 'active_shift_owned_by_other_user') {
+          storeShiftSessionUiResponse(shiftSessionResponse);
+          showOpeningInlineError('');
+        } else if (shiftSessionResponse.action_code === 'manager_takeover_available') {
+          storeShiftSessionUiResponse(shiftSessionResponse);
+          showOpeningInlineError('');
+        } else if (shiftSessionResponse.action_code === 'unresolved_shift_requires_resolution') {
+          storeShiftSessionUiResponse(shiftSessionResponse);
+          showOpeningInlineError('');
+        } else if (shiftSessionResponse.action_code === 'emergency_handover_available') {
+          storeShiftSessionUiResponse(shiftSessionResponse);
+          showOpeningInlineError('');
+        } else {
+          activateOpeningShiftSession(
+            shiftSessionResponse.shift_session,
+            `Opening details saved for ${state.selectedClinic}. Shift session ${shiftSessionResponse.shift_session.id} is active.`
+          );
+        }
+      } catch (error) {
+        clearShiftSessionUi();
+        showOpeningInlineError(error instanceof Error ? error.message : 'Failed to save opening details.');
+      } finally {
+        state.openingSavePending = false;
+        renderAll();
+      }
+    }
+
+    function saveDraft() {
+      clearMessages();
+      if (!isOpeningShiftSaved()) {
+        showError('Opening details must be saved before an EOS draft can be saved.');
+        return;
+      }
+      if (!isReportLoaded()) {
+        showError('Load the EOS report before saving a draft.');
+        return;
+      }
+
+      persistPreparedReportSnapshot()
+        .then((response) => {
+          state.reportDraftSavedAt = response.generated_at || normalizeIsoMinute(new Date());
+          refreshPreparedEosDraft([
+            buildPreparedReportAuditEntry({
+              reportHeaderId: state.activeReportHeaderId,
+              action: 'draft_saved'
+            })
+          ]);
+          renderAll();
+          showInfo(`EOS draft saved. Header ${response.report_header_id}${response.accounting_period_id ? ` | Period ${response.accounting_period_id}` : ''}.`);
+        })
+        .catch((error) => {
+          showError(error instanceof Error ? error.message : 'Failed to save EOS draft.');
+        });
+    }
+
+    function submitEosReport() {
+      clearMessages();
+      if (!isOpeningShiftSaved() || !isReportLoaded()) {
+        showError('Opening details must be saved and the report must be loaded before EOS submission.');
+        return;
+      }
+      persistPreparedReportSnapshot()
+        .then((response) => {
+          state.reportSubmittedAt = normalizeIsoMinute(new Date());
+          state.reportDraftSavedAt = state.reportDraftSavedAt || response.generated_at || normalizeIsoMinute(new Date());
+          state.openingShift.amending_from_user = '';
+          if (state.activeShiftSession) {
+            state.activeShiftSession.amending_from_user = '';
+            state.activeShiftSession.taken_over_from_user = '';
+            writeActiveShiftSessionStorage(state.activeShiftSession);
+          }
+          refreshPreparedEosDraft([
+            buildPreparedReportAuditEntry({
+              reportHeaderId: state.activeReportHeaderId,
+              action: 'submitted'
+            })
+          ]);
+          renderAll();
+          showInfo(`EOS report submitted. Header ${response.report_header_id}${response.accounting_period_id ? ` | Period ${response.accounting_period_id}` : ''}.`);
+        })
+        .catch((error) => {
+          showError(error instanceof Error ? error.message : 'Failed to submit EOS report.');
+        });
+    }
+
+    function lockEosReport() {
+      clearMessages();
+      if (!isOpeningShiftSaved() || !isReportLoaded()) {
+        showError('Opening details must be saved and the report must be loaded before the report can be locked.');
+        return;
+      }
+      // TODO: Replace this UI-only lock action with persisted eos_report_header locking.
+      state.reportLockedAt = normalizeIsoMinute(new Date());
+      state.openingShift.amending_from_user = '';
+      if (state.activeShiftSession) {
+        state.activeShiftSession.amending_from_user = '';
+        state.activeShiftSession.taken_over_from_user = '';
+        writeActiveShiftSessionStorage(state.activeShiftSession);
+      }
+      refreshPreparedEosDraft([
+        buildPreparedReportAuditEntry({
+          reportHeaderId: state.activeReportHeaderId,
+          action: 'locked'
+        })
+      ]);
+      renderAll();
+      showInfo('Lock report is UI-only for now. TODO: connect persisted EOS report locking.');
+    }
+
+    function bindEvents() {
+      refs.btnBack.addEventListener('click', () => {
+        const apiOrigin = getApiOrigin();
+        window.location.href = `./app-hub.html?api_origin=${encodeURIComponent(apiOrigin)}`;
+      });
+
+      refs.btnSignOut.addEventListener('click', () => {
+        clearAuth();
+        redirectToLogin('signed_out');
+      });
+
+      refs.btnRefreshMock.addEventListener('click', () => {
+        applyWorkstationContext(true);
+      });
+
+      refs.btnExtract.addEventListener('click', runExtraction);
+      refs.btnExtractTop.addEventListener('click', runExtraction);
+      refs.gridSortSelect.addEventListener('change', () => {
+        state.sortMode = ['default', 'time', 'provider'].includes(refs.gridSortSelect.value)
+          ? refs.gridSortSelect.value
+          : 'default';
+        renderProductionGrid();
+      });
+
+      refs.btnResetWindow.addEventListener('click', () => {
+        resetExtractionWindow();
+      });
+
+      if (refs.btnOpenShift) {
+        refs.btnOpenShift.addEventListener('click', () => {
+          window.location.href = buildOpenShiftUrl('manual_open_shift');
+        });
+      }
+
+      refs.registrationDepartmentSelect.addEventListener('change', () => {
+        state.pendingRegistrationDepartment = normalizeDepartmentCode(refs.registrationDepartmentSelect.value);
+        renderRegistrationModal();
+      });
+
+      refs.btnConfirmRegistration.addEventListener('click', confirmWorkstationRegistration);
+
+      [refs.fromDateTime, refs.toDateTime].forEach((input) => {
+        input.addEventListener('change', () => {
+          syncReportWindowFromInputs();
+          renderAll();
+        });
+      });
+      refs.btnSaveDraft.addEventListener('click', saveDraft);
+      refs.btnSubmitEos.addEventListener('click', submitEosReport);
+      refs.btnLockReport.addEventListener('click', lockEosReport);
+
+      refs.paymentFieldsGrid.addEventListener('input', (event) => {
+        const target = event.target instanceof HTMLInputElement ? event.target : null;
+        if (!target) return;
+        const paymentKey = String(target.dataset.paymentKey || '').trim();
+        if (!paymentKey || !Object.prototype.hasOwnProperty.call(state.paymentValues, paymentKey)) return;
+        state.paymentValues[paymentKey] = target.value;
+        if (state.activeReportHeaderId) {
+          refreshPreparedEosDraft();
+        }
+        renderOperationalPanels();
+      });
+
+      refs.resultsBody.addEventListener('change', (event) => {
+        const target = event.target instanceof HTMLInputElement ? event.target : null;
+        if (!target || target.type !== 'checkbox') return;
+        const rowId = String(target.dataset.rowToggle || '').trim();
+        if (!rowId) return;
+        toggleRowInclusion(rowId, target.checked);
+      });
+    }
+
+    const eosSeeded = seedState();
+    if (eosSeeded) {
+      bindEvents();
+      renderAll();
+      const openShiftNotice = consumeOpenShiftNotice();
+      if (openShiftNotice && openShiftNotice.message) {
+        showInfo(String(openShiftNotice.message));
+      }
+    }
+  </script>
+</body>
+</html>

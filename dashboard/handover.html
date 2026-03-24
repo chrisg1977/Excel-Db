@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M-CodeZ - Handover</title>
+  <link rel="icon" type="image/png" href="/dashboard/assets/logos/database-logo.png" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: linear-gradient(160deg, #eaf3ff 0%, #f7f9fd 52%, #eef4ff 100%);
+      color: #1b2230;
+    }
+    .wrap { max-width: 1360px; margin: 0 auto; padding: 18px; }
+    .card, .status, .modal-card {
+      border: 1px solid #d8e2f1;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 10px 28px rgba(24, 43, 78, 0.12);
+    }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+    }
+    .actions { display: flex; flex-direction: column; gap: 10px; min-width: 180px; }
+    .eyebrow {
+      display: inline-flex;
+      padding: 6px 10px;
+      border: 1px solid #cad7ec;
+      border-radius: 999px;
+      background: #eef4ff;
+      color: #2e5090;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+    h1, h2 { margin: 0; color: #2e5090; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 20px; }
+    .subtle, .copy, .muted { color: #617089; }
+    .subtle { margin: 8px 0 0; font-size: 14px; line-height: 1.45; }
+    .copy { margin: 6px 0 0; font-size: 13px; line-height: 1.45; }
+    .status { padding: 12px 14px; margin-bottom: 14px; font-size: 13px; }
+    .status.ok { background: #eef9f1; border-color: #bde1ca; color: #156c43; }
+    .status.err { background: #fff1f4; border-color: #f0c1cc; color: #9d2235; }
+    .btn, .btn-link, select, input, textarea {
+      min-height: 40px;
+      border-radius: 10px;
+      font: inherit;
+    }
+    .btn, .btn-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border: 1px solid transparent;
+      background: #2e5090;
+      color: #fff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn.secondary, .btn-link.secondary {
+      background: #fff;
+      color: #2e5090;
+      border-color: #bfd0ea;
+    }
+    .btn.add { background: #1f6fd6; }
+    .section { padding: 16px; margin-bottom: 14px; }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .metric {
+      border: 1px solid #d8e2f1;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      padding: 14px;
+    }
+    .metric small {
+      display: block;
+      color: #617089;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+    .metric strong {
+      display: block;
+      color: #2e5090;
+      font-size: 24px;
+      font-weight: 800;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      gap: 14px;
+    }
+    .filters, .choice-row, .group-list, .inline-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .field {
+      display: grid;
+      gap: 6px;
+      flex: 1 1 220px;
+      min-width: 180px;
+    }
+    .field.full { flex-basis: 100%; }
+    .field label, .choice-label {
+      font-size: 12px;
+      font-weight: 800;
+      color: #41526b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    select, input, textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #bfd0ea;
+      background: #fff;
+      color: #1b2230;
+    }
+    textarea { min-height: 130px; resize: vertical; }
+    .choice-row {
+      border: 1px solid #d8e2f1;
+      border-radius: 12px;
+      background: #f8fbff;
+      padding: 10px;
+      align-items: center;
+    }
+    .choice-row label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid #cad7ec;
+      border-radius: 999px;
+      background: #eef4ff;
+      color: #2e5090;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge.warn { background: #fff8e8; border-color: #f0d4a2; color: #8a5b10; }
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid #d8e2f1;
+      border-radius: 14px;
+      background: #fff;
+    }
+    table { width: 100%; min-width: 1080px; border-collapse: collapse; font-size: 13px; }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e7edf8;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f3f7ff;
+      color: #35527d;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .done-cell { display: inline-flex; align-items: center; gap: 8px; color: #617089; }
+    .done-cell input { width: 18px; height: 18px; min-height: 18px; }
+    .hidden { display: none !important; }
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(17, 28, 46, 0.42);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 1000;
+    }
+    .modal-card {
+      width: min(760px, 100%);
+      padding: 18px;
+      max-height: calc(100vh - 36px);
+      overflow: auto;
+    }
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid #d8e2f1;
+      background: #f6f9ff;
+      color: #2e5090;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    @media (max-width: 1100px) {
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 760px) {
+      .head { flex-direction: column; }
+      .actions { width: 100%; }
+      .btn, .btn-link { width: 100%; }
+      .metrics { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="card head">
+      <div>
+        <div class="eyebrow">Handover</div>
+        <h1>Handover and To Do</h1>
+        <p class="subtle">Create handover notes or to-do items for a user, yourself, or the combined Assistants / Reception group. Items disappear automatically once they are completed.</p>
+      </div>
+      <div class="actions">
+        <button class="btn secondary" id="btnRefresh" type="button">Refresh</button>
+        <a class="btn-link secondary" id="btnBackHub" href="./app-hub.html">Back to App Hub</a>
+        <button class="btn add" id="btnAdd" type="button">Add</button>
+      </div>
+    </header>
+
+    <div class="status" id="statusLine">Checking session...</div>
+
+    <section class="card section">
+      <div class="section-head">
+        <div>
+          <h2>Summary</h2>
+          <p class="copy">These counts reflect the items visible to the signed-in user. Admins see all open items.</p>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><small>Handover</small><strong id="handoverCountValue">0</strong><span class="copy" id="handoverCountMeta">Open handover items</span></div>
+        <div class="metric"><small>To Do</small><strong id="todoCountValue">0</strong><span class="copy" id="todoCountMeta">Open to-do items</span></div>
+        <div class="metric"><small>Group Progress</small><strong id="claimedByOthersValue">0</strong><span class="copy" id="claimedByOthersMeta">Group items partly done by others</span></div>
+        <div class="metric"><small>Visible Items</small><strong id="visibleItemsValue">0</strong><span class="copy" id="visibleItemsMeta">Rows currently shown below</span></div>
+      </div>
+    </section>
+
+    <div class="grid-2">
+      <section class="card section">
+        <div class="section-head">
+          <div>
+            <h2>Relevant Items</h2>
+            <p class="copy">Filter by source, recipient type, or note content. User items disappear immediately when ticked done.</p>
+          </div>
+        </div>
+        <div class="filters">
+          <div class="field">
+            <label for="filterSource">Source</label>
+            <select id="filterSource">
+              <option value="">All sources</option>
+              <option value="handover">Handover</option>
+              <option value="todo">To Do</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="filterRecipient">Recipient</label>
+            <select id="filterRecipient">
+              <option value="">All recipients</option>
+              <option value="user">User</option>
+              <option value="group">Group</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="filterSearch">Search</label>
+            <input id="filterSearch" type="text" placeholder="Search note or recipient" />
+          </div>
+          <div class="field">
+            <label for="btnApplyFilters">Apply</label>
+            <button class="btn" id="btnApplyFilters" type="button">Refresh View</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card section">
+        <div class="section-head">
+          <div>
+            <h2>Recipient Groups</h2>
+            <p class="copy">Group items use the combined Assistants / Reception group. Choose whether one person can close it, or everyone in the group must tick it done.</p>
+          </div>
+        </div>
+        <div class="group-list" id="groupList"></div>
+      </section>
+    </div>
+
+    <section class="card section">
+      <div class="section-head">
+        <div>
+          <h2>Items</h2>
+          <p class="copy">Tick Done when the item is completed. Group items stay visible until the required completion rule is satisfied.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Source</th>
+              <th>Note</th>
+              <th>Recipient</th>
+              <th>Due</th>
+              <th>Created</th>
+              <th>Created By</th>
+              <th>Progress</th>
+              <th>Done</th>
+            </tr>
+          </thead>
+          <tbody id="itemsBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal hidden" id="entryModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">Add Entry</div>
+          <h2>Create Handover / To Do</h2>
+          <p class="copy">Created date and time are automatic. Due date and time are optional.</p>
+        </div>
+        <button class="btn secondary" id="btnCloseModal" type="button">Close</button>
+      </div>
+
+      <div class="field full">
+        <span class="choice-label">Type</span>
+        <div class="choice-row">
+          <label><input type="radio" name="entrySource" value="handover" checked /> Handover</label>
+          <label><input type="radio" name="entrySource" value="todo" /> To Do</label>
+        </div>
+      </div>
+
+      <div class="field full" style="margin-top: 12px;">
+        <span class="choice-label">Recipient</span>
+        <div class="choice-row">
+          <label><input type="radio" name="recipientMode" value="user" checked /> User</label>
+          <label><input type="radio" name="recipientMode" value="group" /> Group</label>
+          <label><input type="radio" name="recipientMode" value="self" /> Self</label>
+        </div>
+      </div>
+
+      <div class="filters" style="margin-top: 12px;">
+        <div class="field" id="userRecipientField">
+          <label for="targetUser">Intended Recipient User</label>
+          <select id="targetUser"></select>
+          <div class="muted" id="targetUserRoleHint" style="margin-top:6px;">Role: -</div>
+        </div>
+        <div class="field hidden" id="groupRecipientField">
+          <label for="targetGroup">Recipient Group</label>
+          <select id="targetGroup"></select>
+        </div>
+        <div class="field hidden" id="groupModeField">
+          <label for="groupCompletionMode">Group Completion Rule</label>
+          <select id="groupCompletionMode">
+            <option value="first">First One Marks It Done</option>
+            <option value="all">All Must Mark Done</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="createdAtDisplay">Created At</label>
+          <div class="meta-chip" id="createdAtDisplay">-</div>
+        </div>
+        <div class="field">
+          <label for="dueAt">Needs To Be Done By</label>
+          <input id="dueAt" type="datetime-local" />
+        </div>
+      </div>
+
+      <div class="field full" style="margin-top: 12px;">
+        <label for="entryNote">Note</label>
+        <textarea id="entryNote" placeholder="Write the handover or to-do note here"></textarea>
+      </div>
+
+      <div class="inline-actions" style="margin-top: 16px;">
+        <button class="btn add" id="btnSaveEntry" type="button">Save Entry</button>
+        <button class="btn secondary" id="btnCancelEntry" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const AUTH_STORAGE_KEY = "empinfo.auth.v1";
+    const API_ORIGIN_STORAGE_KEY = "empinfo.api_origin.v1";
+    const DEFAULT_API_ORIGIN = window.location.port === "8055" ? window.location.origin : `${window.location.protocol}//${window.location.hostname}:8055`;
+    const PAGE_QUERY = new URLSearchParams(window.location.search);
+
+    const refs = {
+      statusLine: document.getElementById("statusLine"),
+      btnRefresh: document.getElementById("btnRefresh"),
+      btnBackHub: document.getElementById("btnBackHub"),
+      btnAdd: document.getElementById("btnAdd"),
+      btnApplyFilters: document.getElementById("btnApplyFilters"),
+      handoverCountValue: document.getElementById("handoverCountValue"),
+      handoverCountMeta: document.getElementById("handoverCountMeta"),
+      todoCountValue: document.getElementById("todoCountValue"),
+      todoCountMeta: document.getElementById("todoCountMeta"),
+      claimedByOthersValue: document.getElementById("claimedByOthersValue"),
+      claimedByOthersMeta: document.getElementById("claimedByOthersMeta"),
+      visibleItemsValue: document.getElementById("visibleItemsValue"),
+      visibleItemsMeta: document.getElementById("visibleItemsMeta"),
+      filterSource: document.getElementById("filterSource"),
+      filterRecipient: document.getElementById("filterRecipient"),
+      filterSearch: document.getElementById("filterSearch"),
+      groupList: document.getElementById("groupList"),
+      itemsBody: document.getElementById("itemsBody"),
+      entryModal: document.getElementById("entryModal"),
+      btnCloseModal: document.getElementById("btnCloseModal"),
+      btnCancelEntry: document.getElementById("btnCancelEntry"),
+      btnSaveEntry: document.getElementById("btnSaveEntry"),
+      createdAtDisplay: document.getElementById("createdAtDisplay"),
+      dueAt: document.getElementById("dueAt"),
+      entryNote: document.getElementById("entryNote"),
+      targetUser: document.getElementById("targetUser"),
+      targetGroup: document.getElementById("targetGroup"),
+      groupCompletionMode: document.getElementById("groupCompletionMode"),
+      userRecipientField: document.getElementById("userRecipientField"),
+      groupRecipientField: document.getElementById("groupRecipientField"),
+      groupModeField: document.getElementById("groupModeField"),
+      targetUserRoleHint: document.getElementById("targetUserRoleHint"),
+      entrySourceRadios: Array.from(document.querySelectorAll('input[name="entrySource"]')),
+      recipientModeRadios: Array.from(document.querySelectorAll('input[name="recipientMode"]'))
+    };
+
+    const state = { apiOrigin: "", token: "", busy: false, bootstrap: null, selectableUsers: [] };
+
+    function normalizeApiOrigin(value) { return String(value || "").trim().replace(/\/$/, ""); }
+    function getApiOrigin() {
+      const queryOrigin = normalizeApiOrigin(PAGE_QUERY.get("api_origin"));
+      if (queryOrigin) return queryOrigin;
+      try {
+        const stored = normalizeApiOrigin(localStorage.getItem(API_ORIGIN_STORAGE_KEY));
+        if (stored) return stored;
+      } catch {}
+      return DEFAULT_API_ORIGIN;
+    }
+    function persistApiOrigin(value) {
+      state.apiOrigin = normalizeApiOrigin(value);
+      try { localStorage.setItem(API_ORIGIN_STORAGE_KEY, state.apiOrigin); } catch {}
+    }
+    function getAuthToken() {
+      try {
+        const record = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || "{}");
+        return String(record?.access_token || "").trim();
+      } catch {
+        return "";
+      }
+    }
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+    function formatDateTime(value) {
+      if (!value) return "-";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
+      return date.toLocaleString("en-MT");
+    }
+    function setStatus(message, tone) {
+      refs.statusLine.textContent = message;
+      refs.statusLine.classList.remove("ok", "err");
+      if (tone) refs.statusLine.classList.add(tone);
+    }
+    function setBusy(value, message) {
+      state.busy = Boolean(value);
+      document.querySelectorAll("button, input, select, textarea").forEach((node) => {
+        node.disabled = state.busy;
+      });
+      if (message) setStatus(message);
+    }
+    function getHeaders(hasBody) {
+      const headers = { Accept: "application/json" };
+      if (state.token) headers.Authorization = `Bearer ${state.token}`;
+      if (hasBody) headers["Content-Type"] = "application/json";
+      return headers;
+    }
+    async function fetchJson(path, options) {
+      const opts = options || {};
+      const hasBody = Object.prototype.hasOwnProperty.call(opts, "body");
+      const response = await fetch(`${state.apiOrigin}${path}`, {
+        method: opts.method || "GET",
+        headers: getHeaders(hasBody),
+        body: hasBody ? JSON.stringify(opts.body) : undefined,
+        cache: "no-store"
+      });
+      const text = await response.text();
+      let data = {};
+      try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+      if (!response.ok) {
+        const message = data?.errors?.[0]?.message || data?.error || data?.message || data?.raw || `Request failed (${response.status})`;
+        const error = new Error(message);
+        error.status = response.status;
+        throw error;
+      }
+      return data;
+    }
+    function getSelectedValue(name) {
+      const selected = document.querySelector(`input[name="${name}"]:checked`);
+      return String(selected?.value || "").trim().toLowerCase();
+    }
+    function getVisibleItems() {
+      const items = Array.isArray(state.bootstrap?.items) ? state.bootstrap.items : [];
+      const sourceFilter = String(refs.filterSource.value || "").trim().toLowerCase();
+      const recipientFilter = String(refs.filterRecipient.value || "").trim().toLowerCase();
+      const search = String(refs.filterSearch.value || "").trim().toLowerCase();
+      return items.filter((item) => {
+        const haystack = `${String(item.title || "")} ${String(item.details || "")} ${String(item.target_label || "")}`.toLowerCase();
+        if (sourceFilter && String(item.source || "").toLowerCase() !== sourceFilter) return false;
+        if (recipientFilter && String(item.target_type || "").toLowerCase() !== recipientFilter) return false;
+        if (search && !haystack.includes(search)) return false;
+        return true;
+      });
+    }
+    function renderSummary() {
+      const summary = state.bootstrap?.summary || {};
+      refs.handoverCountValue.textContent = String(Number(summary.handover_count || 0));
+      refs.todoCountValue.textContent = String(Number(summary.todo_count || 0));
+      refs.claimedByOthersValue.textContent = String(Number(summary.group_claimed_by_others || 0));
+      refs.handoverCountMeta.textContent = "Open handover items";
+      refs.todoCountMeta.textContent = "Open to-do items";
+      refs.claimedByOthersMeta.textContent = "Group items partly done by others";
+    }
+    function renderGroups() {
+      const groups = Array.isArray(state.bootstrap?.available_groups) ? state.bootstrap.available_groups : [];
+      refs.groupList.innerHTML = groups.length
+        ? groups.map((group) => {
+            const suffix = Number(group.member_count || 0) > 0 ? `${group.member_count} active user(s)` : "no active app users";
+            return `<span class="badge">${escapeHtml(group.label)} - ${escapeHtml(suffix)}</span>`;
+          }).join("")
+        : "<span class=\"muted\">No recipient groups available.</span>";
+    }
+    function renderItems() {
+      const items = getVisibleItems();
+      refs.visibleItemsValue.textContent = String(items.length);
+      refs.visibleItemsMeta.textContent = items.length ? "Rows currently shown below" : "No rows match the current filters";
+      if (!items.length) {
+        refs.itemsBody.innerHTML = "<tr><td colspan=\"9\" class=\"muted\">No handover or to-do items are available for this view.</td></tr>";
+        return;
+      }
+      refs.itemsBody.innerHTML = items.map((item) => {
+        const noteText = String(item.details || "").trim() || String(item.title || "").trim() || "-";
+        const progressClass = String(item.status || "").toLowerCase() === "in progress" ? "badge warn" : "badge";
+        return `
+          <tr>
+            <td>${escapeHtml(String(item.id || "-"))}</td>
+            <td><span class="badge">${escapeHtml(String(item.source || "").toLowerCase() === "todo" ? "To Do" : "Handover")}</span></td>
+            <td>${escapeHtml(noteText)}</td>
+            <td>${escapeHtml(String(item.target_label || "-"))}</td>
+            <td>${escapeHtml(formatDateTime(item.due_at))}</td>
+            <td>${escapeHtml(formatDateTime(item.created_at))}</td>
+            <td>${escapeHtml(String(item.created_by_label || "-"))}</td>
+            <td><span class="${progressClass}">${escapeHtml(String(item.completion_progress_label || "Open"))}</span></td>
+            <td>
+              <label class="done-cell">
+                <input type="checkbox" data-complete-id="${escapeHtml(String(item.id || ""))}" ${item.current_user_completed ? "checked" : ""} ${!item.current_user_can_complete || item.current_user_completed ? "disabled" : ""} />
+                <span>${item.current_user_completed ? "Done" : "Mark done"}</span>
+              </label>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+    function renderAll() {
+      refs.btnBackHub.href = `./app-hub.html?api_origin=${encodeURIComponent(state.apiOrigin)}`;
+      renderSummary();
+      renderGroups();
+      renderItems();
+    }
+    function updateTargetUserRoleHint() {
+      if (!refs.targetUserRoleHint) return;
+      const selectedEmail = String(refs.targetUser.value || "").trim().toLowerCase();
+      const selectedUser = (state.selectableUsers || []).find((user) => String(user.email || "").trim().toLowerCase() === selectedEmail);
+      const role = String(selectedUser?.job_label || selectedUser?.role_name || "").trim();
+      refs.targetUserRoleHint.textContent = `Role: ${role || '-'}`;
+    }
+
+    function populateSelects() {
+      const users = Array.isArray(state.bootstrap?.available_users) ? state.bootstrap.available_users : [];
+      const mode = getSelectedValue("recipientMode");
+      const currentEmail = String(state.bootstrap?.current_user?.email || "").trim().toLowerCase();
+      const hideSelf = mode !== "self";
+
+      state.selectableUsers = users.filter((user) => {
+        const email = String(user.email || "").trim().toLowerCase();
+        if (!email) return false;
+        if (hideSelf && email === currentEmail) return false;
+        if (String(user.label || "").trim().toLowerCase() === 'hr user') return false;
+        return true;
+      });
+
+      refs.targetUser.innerHTML = state.selectableUsers.map((user) => {
+        return `<option value="${escapeHtml(user.email)}">${escapeHtml(String(user.label || ""))}</option>`;
+      }).join("");
+
+      const groups = Array.isArray(state.bootstrap?.available_groups) ? state.bootstrap.available_groups : [];
+      refs.targetGroup.innerHTML = groups.map((group) => {
+        const suffix = ` (${Number(group.member_count || 0)})`;
+        return `<option value="${escapeHtml(group.key)}">${escapeHtml(String(group.label || "") + suffix)}</option>`;
+      }).join("");
+
+      updateTargetUserRoleHint();
+    }
+    function syncModalState() {
+      const source = getSelectedValue("entrySource");
+      const selfRadio = refs.recipientModeRadios.find((node) => String(node.value) === "self");
+      if (selfRadio) {
+        selfRadio.disabled = source !== "todo";
+        if (source !== "todo" && selfRadio.checked) {
+          const userRadio = refs.recipientModeRadios.find((node) => String(node.value) === "user");
+          if (userRadio) userRadio.checked = true;
+        }
+      }
+      const mode = getSelectedValue("recipientMode");
+      refs.userRecipientField.classList.toggle("hidden", mode !== "user");
+      refs.groupRecipientField.classList.toggle("hidden", mode !== "group");
+      refs.groupModeField.classList.toggle("hidden", mode !== "group");
+      populateSelects();
+    }
+    function openModal() {
+      refs.createdAtDisplay.textContent = formatDateTime(new Date().toISOString());
+      refs.dueAt.value = "";
+      refs.entryNote.value = "";
+      const handoverRadio = refs.entrySourceRadios.find((node) => String(node.value) === "handover");
+      const userRadio = refs.recipientModeRadios.find((node) => String(node.value) === "user");
+      if (handoverRadio) handoverRadio.checked = true;
+      if (userRadio) userRadio.checked = true;
+      syncModalState();
+      refs.entryModal.classList.remove("hidden");
+      refs.entryNote.focus();
+    }
+    function closeModal() { refs.entryModal.classList.add("hidden"); }
+    async function refreshData() {
+      setBusy(true, "Loading handover data...");
+      try {
+        state.bootstrap = await fetchJson("/handover/bootstrap");
+        populateSelects();
+        renderAll();
+        const name = String(state.bootstrap?.current_user?.label || "User");
+        const count = Array.isArray(state.bootstrap?.items) ? state.bootstrap.items.length : 0;
+        setStatus(`Signed in as ${name}. Loaded ${count} open handover / to-do item(s).`, "ok");
+      } finally {
+        setBusy(false);
+      }
+    }
+    async function saveEntry() {
+      const note = String(refs.entryNote.value || "").trim();
+      if (!note) {
+        setStatus("Write a note before saving.", "err");
+        refs.entryNote.focus();
+        return;
+      }
+      const mode = getSelectedValue("recipientMode");
+      const payload = {
+        source: getSelectedValue("entrySource"),
+        recipient_mode: mode,
+        target_user_email: mode === "user" ? refs.targetUser.value : null,
+        group_key: mode === "group" ? refs.targetGroup.value : null,
+        group_completion_mode: mode === "group" ? refs.groupCompletionMode.value : null,
+        due_at: refs.dueAt.value ? new Date(refs.dueAt.value).toISOString() : null,
+        note
+      };
+      setBusy(true, "Saving handover entry...");
+      try {
+        await fetchJson("/handover/items", { method: "POST", body: payload });
+        closeModal();
+        await refreshData();
+        setStatus("Handover / To Do item added.", "ok");
+      } catch (error) {
+        setStatus(error instanceof Error ? error.message : "Failed to save handover entry.", "err");
+      } finally {
+        setBusy(false);
+      }
+    }
+    async function completeItem(itemId) {
+      setBusy(true, "Updating handover item...");
+      try {
+        await fetchJson(`/handover/items/${encodeURIComponent(itemId)}/complete`, { method: "POST", body: {} });
+        await refreshData();
+        setStatus("Item marked done.", "ok");
+      } catch (error) {
+        setStatus(error instanceof Error ? error.message : "Failed to update item.", "err");
+      } finally {
+        setBusy(false);
+      }
+    }
+    function bindEvents() {
+      refs.btnRefresh.addEventListener("click", () => { void refreshData(); });
+      refs.btnApplyFilters.addEventListener("click", () => {
+        renderAll();
+        setStatus("Updated the handover view filters.", "ok");
+      });
+      refs.btnAdd.addEventListener("click", openModal);
+      refs.btnCloseModal.addEventListener("click", closeModal);
+      refs.btnCancelEntry.addEventListener("click", closeModal);
+      refs.btnSaveEntry.addEventListener("click", () => { void saveEntry(); });
+      refs.entrySourceRadios.forEach((node) => node.addEventListener("change", syncModalState));
+      refs.recipientModeRadios.forEach((node) => node.addEventListener("change", syncModalState));
+      refs.targetUser.addEventListener("change", updateTargetUserRoleHint);
+      refs.entryModal.addEventListener("click", (event) => {
+        if (event.target === refs.entryModal) closeModal();
+      });
+      refs.itemsBody.addEventListener("change", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement)) return;
+        const itemId = String(target.dataset.completeId || "").trim();
+        if (!itemId || !target.checked) return;
+        void completeItem(itemId);
+      });
+    }
+    async function bootstrap() {
+      persistApiOrigin(getApiOrigin());
+      state.token = getAuthToken();
+      bindEvents();
+      if (!state.token) {
+        setStatus("No active Directus session found. Log in again to open Handover.", "err");
+        return;
+      }
+      try {
+        await refreshData();
+      } catch (error) {
+        setStatus(error instanceof Error ? error.message : "Failed to initialise the handover page.", "err");
+      }
+    }
+    bootstrap();
+  </script>
+  <script src="assets/js/idle-logout.js"></script>
+  <script>if (typeof window.initIdleLogout === 'function') window.initIdleLogout('');</script>
+</body>
+</html>
