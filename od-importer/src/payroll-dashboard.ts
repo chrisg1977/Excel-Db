@@ -544,31 +544,54 @@ const getExcelPayslipYearView = async (pg: PgPool, payroll: PayrollKind, empId: 
       : (weeklyWage != null && toNumber(hoursPerWeek) !== 0)
         ? roundMoney(toNumber(weeklyWage) / toNumber(hoursPerWeek))
       : null;
+    const dbEmploymentType = cleanText(dbRow?.employment_type).toUpperCase();
+    const ftLike = dbEmploymentType.startsWith('FT') || dbEmploymentType.includes('FULL');
+    const dbBasicWage = dbRow
+      ? ftLike
+        ? roundMoney(toNumber(dbRow.contracted_weekly_hours) * toNumber(dbRow.hourly_rate) * 52 / 12)
+        : roundMoney(toNumber(dbRow.hours_worked) * toNumber(dbRow.hourly_rate))
+      : null;
+    const monthBonus = roundMoney(toNumber(monthData?.bonus));
+    const monthPerfBonus = roundMoney(toNumber(monthData?.performance_bonus));
+    const monthSupBonus = roundMoney(toNumber(monthData?.supervisor_bonus));
+    const monthExtraDue = monthData?.extra_under_amount == null ? null : roundMoney(toNumber(monthData.extra_under_amount));
+    const monthOther = monthData?.other_amount == null ? null : roundMoney(toNumber(monthData.other_amount));
+    const computedBonusTotal = roundMoney(monthBonus + monthPerfBonus + monthSupBonus);
+    const dbGrossTotal = dbRow
+      ? roundMoney(toNumber(dbRow.gross_total))
+      : dbBasicWage != null
+      ? roundMoney(
+          dbBasicWage
+          + (monthExtraDue ?? 0)
+          + computedBonusTotal
+          + (monthOther ?? 0)
+        )
+      : null;
     rows.push({
       month: key,
       weeks_value: weeksValue,
       contracted_hours: contractedHours,
       hourly_rate: hourlyRate,
       weekly_wage: weeklyWage,
-      gross_total: monthData?.gross_total ?? null,
-      basic_wage: monthData?.basic_wage ?? null,
+      gross_total: dbGrossTotal ?? monthData?.gross_total ?? null,
+      basic_wage: dbBasicWage ?? monthData?.basic_wage ?? null,
       extra_under_hours: monthData ? parseHoursText(monthData.extra_under_hours_text) : null,
-      extra_due: monthData?.extra_under_amount ?? null,
+      extra_due: monthExtraDue,
       bonus: monthData?.bonus ?? null,
       performance_bonus: monthData?.performance_bonus ?? null,
       supervisor_bonus: monthData?.supervisor_bonus ?? null,
-      bonus_total: (monthData?.bonus ?? 0) + (monthData?.performance_bonus ?? 0) + (monthData?.supervisor_bonus ?? 0),
-      tax: monthData?.tax_on_gross ?? null,
+      bonus_total: computedBonusTotal,
+      tax: dbRow ? roundMoney(toNumber(dbRow.tax_deduction)) : monthData?.tax_on_gross ?? null,
       overtime_hours: monthData ? parseHoursText(monthData.overtime_hours_text) : null,
       overtime_tax: monthData?.overtime_tax ?? null,
-      ssc_employer: monthData?.ssc_employer ?? null,
-      ssc_employee: monthData?.ssc_employee ?? null,
-      ssc_total: monthData?.ssc_total ?? null,
-      mlf: monthData?.mlf ?? null,
-      other_amount: monthData?.other_amount ?? null,
-      net_wage: monthData?.net_wage ?? null,
+      ssc_employer: dbRow ? roundMoney(toNumber(dbRow.ss_employer_contribution)) : monthData?.ssc_employer ?? null,
+      ssc_employee: dbRow ? roundMoney(toNumber(dbRow.ss_employee_contribution)) : monthData?.ssc_employee ?? null,
+      ssc_total: dbRow ? roundMoney(toNumber(dbRow.ss_employer_contribution) + toNumber(dbRow.ss_employee_contribution)) : monthData?.ssc_total ?? null,
+      mlf: dbRow ? roundMoney(toNumber(dbRow.mlf_contribution)) : monthData?.mlf ?? null,
+      other_amount: monthOther,
+      net_wage: dbRow ? roundMoney(toNumber(dbRow.net_payment)) : monthData?.net_wage ?? null,
       leave_balance_end: monthData?.leave_balance_end ?? null,
-      banked_hours_since_last_month: monthData?.banked_hours_since_last_month ?? null,
+      banked_hours_since_last_month: dbRow ? roundMoney(toNumber(dbRow.banked_hours_balance)) : monthData?.banked_hours_since_last_month ?? null,
       transaction_id_text: String(monthData?.transaction_id_text || '').trim(),
       payslip_status: statusByMonth.get(key) || ''
     });

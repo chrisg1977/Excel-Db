@@ -2228,11 +2228,11 @@
           </div>
           <div class="issue-tile-grid">
             <div class="issue-tile">
-              <strong>Gross</strong>
+              <strong>Gross</strong><br>
               <span id="issueTileGross">EUR 0.00</span>
             </div>
             <div class="issue-tile">
-              <strong>Net</strong>
+              <strong>Net</strong><br>
               <span id="issueTileNet">EUR 0.00</span>
             </div>
             <div class="issue-tile">
@@ -3363,7 +3363,7 @@
             [employee.id_label || 'ID', employee.id_value || '-'],
             ['Designation', employee.designation || '-'],
             ['Date of Birth', employee.dob || '-'],
-            ['FS4 / SSC Class', `${employee.fs_status || '-'} / ${calc.ssc_class || '-'}`],
+            ['FS4 / SSC Class', `${formatTaxStatusLabel(employee.fs_status || employee.fs4_status || '-') } / ${calc.ssc_class || '-'}`],
             ['Hrs/Wk', String(calc.contracted_weekly_hours ?? '-')],
             ['Basic Wage', fmtMoney(calc.gross_before_bonuses)],
             ['Gross Total', fmtMoney(calc.gross_total)],
@@ -3919,7 +3919,7 @@
         [employee.id_label || 'ID', employee.id_value || '-'],
         ['Designation', employee.designation || '-'],
         ['Date of Birth', employee.dob || '-'],
-        ['FS4 / SSC Class', `${employee.fs_status || '-'} / ${calc.ssc_class || '-'}`],
+        ['FS4 / SSC Class', `${formatTaxStatusLabel(employee.fs_status || employee.fs4_status || '-') } / ${calc.ssc_class || '-'}`],
         ['Hrs/Wk', String(calc.contracted_weekly_hours ?? '-')],
         ['Basic Wage', fmtMoney(calc.gross_before_bonuses)],
         ['Gross Total', fmtMoney(calc.gross_total)],

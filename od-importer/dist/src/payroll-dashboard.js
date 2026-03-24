@@ -295,20 +295,39 @@ const getExcelPayslipYearView = async (pg, payroll, empId, periodRaw) => {
             : (weeklyWage != null && toNumber(hoursPerWeek) !== 0)
                 ? roundMoney(toNumber(weeklyWage) / toNumber(hoursPerWeek))
                 : null;
+        const dbEmploymentType = cleanText(dbRow?.employment_type).toUpperCase();
+        const ftLike = dbEmploymentType.startsWith('FT') || dbEmploymentType.includes('FULL');
+        const dbBasicWage = dbRow
+            ? ftLike
+                ? roundMoney(toNumber(dbRow.contracted_weekly_hours) * toNumber(dbRow.hourly_rate) * 52 / 12)
+                : roundMoney(toNumber(dbRow.hours_worked) * toNumber(dbRow.hourly_rate))
+            : null;
+        const monthBonus = roundMoney(toNumber(monthData?.bonus));
+        const monthPerfBonus = roundMoney(toNumber(monthData?.performance_bonus));
+        const monthSupBonus = roundMoney(toNumber(monthData?.supervisor_bonus));
+        const monthExtraDue = monthData?.extra_under_amount == null ? null : roundMoney(toNumber(monthData.extra_under_amount));
+        const monthOther = monthData?.other_amount == null ? null : roundMoney(toNumber(monthData.other_amount));
+        const computedBonusTotal = roundMoney(monthBonus + monthPerfBonus + monthSupBonus);
+        const dbGrossTotal = dbBasicWage != null
+            ? roundMoney(dbBasicWage
+                + (monthExtraDue ?? 0)
+                + computedBonusTotal
+                + (monthOther ?? 0))
+            : null;
         rows.push({
             month: key,
             weeks_value: weeksValue,
             contracted_hours: contractedHours,
             hourly_rate: hourlyRate,
             weekly_wage: weeklyWage,
-            gross_total: monthData?.gross_total ?? null,
-            basic_wage: monthData?.basic_wage ?? null,
+            gross_total: dbGrossTotal ?? monthData?.gross_total ?? null,
+            basic_wage: dbBasicWage ?? monthData?.basic_wage ?? null,
             extra_under_hours: monthData ? parseHoursText(monthData.extra_under_hours_text) : null,
-            extra_due: monthData?.extra_under_amount ?? null,
+            extra_due: monthExtraDue,
             bonus: monthData?.bonus ?? null,
             performance_bonus: monthData?.performance_bonus ?? null,
             supervisor_bonus: monthData?.supervisor_bonus ?? null,
-            bonus_total: (monthData?.bonus ?? 0) + (monthData?.performance_bonus ?? 0) + (monthData?.supervisor_bonus ?? 0),
+            bonus_total: computedBonusTotal,
             tax: monthData?.tax_on_gross ?? null,
             overtime_hours: monthData ? parseHoursText(monthData.overtime_hours_text) : null,
             overtime_tax: monthData?.overtime_tax ?? null,
