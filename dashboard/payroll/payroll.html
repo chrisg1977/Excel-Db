@@ -2561,7 +2561,11 @@
             </div>
             <div class="issue-year-card issue-year-shell">
               <div class="preview-frame-title">
-                <span>Year View</span>
+                <span style="display:flex; align-items:center; gap:8px;">
+                  <span>Year View</span>
+                  <button class="btn" id="btnIssueUndo" type="button">Undo</button>
+                  <button class="btn" id="btnIssueRedo" type="button">Redo</button>
+                </span>
                 <span id="issuePrevYearSummary">Previous year summary pending</span>
               </div>
               <div class="muted">January starts with prior-year carry-forward, then this year runs to the current payroll month.</div>
@@ -2728,6 +2732,8 @@
       issueIndex: 0,
       issuePeriod: '',
       issueEdits: {},
+      issueHistory: {},
+      issueFuture: {},
       issueDetails: {},
       issueManualNoteOpen: false,
       toolMode: '',
@@ -2774,6 +2780,8 @@
       issuePeriodPill: document.getElementById('issuePeriodPill'),
       issueTimesheetAction: document.getElementById('btnIssueTimesheetAction'),
       issueProgress: document.getElementById('issueProgress'),
+      btnIssueUndo: document.getElementById('btnIssueUndo'),
+      btnIssueRedo: document.getElementById('btnIssueRedo'),
       issueYearRows: document.getElementById('issueYearRows'),
       issueYearTotals: document.getElementById('issueYearTotals'),
       issuePrevYearSummary: document.getElementById('issuePrevYearSummary'),
@@ -3930,6 +3938,87 @@
     const getCurrentIssuePeriod = () => String(state.issuePeriod || el.period.value || '').trim();
 
     const currentIssueEdits = () => state.issueEdits[String(getCurrentIssueEmpId())] || {};
+    const formatTaxStatusLabel = (value) => {
+      const raw = String(value || '').trim().toUpperCase();
+      if (!raw) return 'Single';
+      if (raw === 'SING' || raw === 'SIN' || raw === 'SNG' || raw === 'SINGLE') return 'Single';
+      if (raw === 'MAR' || raw === 'MARRIED') return 'Married';
+      if (raw === 'MAR1' || raw === 'MARRIED1') return 'Married1';
+      if (raw === 'MAR2' || raw === 'MARRIED2') return 'Married2';
+      if (raw === 'PAR' || raw === 'PARENT') return 'Parent';
+      if (raw === 'PAR1' || raw === 'PARENT1') return 'Parent1';
+      if (raw === 'PAR2' || raw === 'PARENT2') return 'Parent2';
+      return String(value || '').trim() || 'Single';
+    };
+    const cloneIssueState = (value) => JSON.parse(JSON.stringify(value || {}));
+    const issueSnapshotKey = (value) => JSON.stringify(value || {});
+    const getIssueHistoryKey = (empId = getCurrentIssueEmpId()) => String(empId || '');
+    const updateIssueHistoryButtons = () => {
+      const key = getIssueHistoryKey();
+      const history = Array.isArray(state.issueHistory[key]) ? state.issueHistory[key] : [];
+      const future = Array.isArray(state.issueFuture[key]) ? state.issueFuture[key] : [];
+      if (el.btnIssueUndo) el.btnIssueUndo.disabled = history.length <= 1;
+      if (el.btnIssueRedo) el.btnIssueRedo.disabled = future.length === 0;
+    };
+    const ensureIssueHistoryState = (empId, snapshot) => {
+      const key = getIssueHistoryKey(empId);
+      if (!key) return;
+      if (!Array.isArray(state.issueHistory[key]) || !state.issueHistory[key].length) {
+        state.issueHistory[key] = [cloneIssueState(snapshot)];
+      }
+      if (!Array.isArray(state.issueFuture[key])) {
+        state.issueFuture[key] = [];
+      }
+      updateIssueHistoryButtons();
+    };
+    const pushIssueHistorySnapshot = (empId, snapshot) => {
+      const key = getIssueHistoryKey(empId);
+      if (!key) return;
+      ensureIssueHistoryState(empId, snapshot);
+      const history = state.issueHistory[key];
+      const next = cloneIssueState(snapshot);
+      if (issueSnapshotKey(history[history.length - 1]) === issueSnapshotKey(next)) {
+        updateIssueHistoryButtons();
+        return;
+      }
+      history.push(next);
+      state.issueFuture[key] = [];
+      updateIssueHistoryButtons();
+    };
+    const applyIssueHistorySnapshot = (snapshot) => {
+      const empId = getCurrentIssueEmpId();
+      if (!empId) return;
+      state.issueEdits[String(empId)] = cloneIssueState(snapshot);
+      const detail = state.issueDetails[String(empId)] || {};
+      if (detail && Object.keys(detail).length) {
+        renderIssueEmployee(detail);
+      } else {
+        updateIssueHistoryButtons();
+      }
+    };
+    const undoIssueEdits = () => {
+      const key = getIssueHistoryKey();
+      const history = Array.isArray(state.issueHistory[key]) ? state.issueHistory[key] : [];
+      if (history.length <= 1) {
+        updateIssueHistoryButtons();
+        return;
+      }
+      const current = history.pop();
+      state.issueFuture[key] = [cloneIssueState(current), ...(Array.isArray(state.issueFuture[key]) ? state.issueFuture[key] : [])];
+      applyIssueHistorySnapshot(history[history.length - 1]);
+    };
+    const redoIssueEdits = () => {
+      const key = getIssueHistoryKey();
+      const future = Array.isArray(state.issueFuture[key]) ? state.issueFuture[key] : [];
+      if (!future.length) {
+        updateIssueHistoryButtons();
+        return;
+      }
+      const next = future.shift();
+      ensureIssueHistoryState(key, next);
+      state.issueHistory[key].push(cloneIssueState(next));
+      applyIssueHistorySnapshot(next);
+    };
     const isRealActionableNumber = (value) => {
       if (value === null || value === undefined) return false;
       if (typeof value === 'string' && value.trim() === '') return false;
@@ -4308,6 +4397,7 @@
       };
       const detail = state.issueDetails[String(empId)] || {};
       setIssueNoteCardVisibility(detail, state.issueEdits[String(empId)]);
+      updateIssueHistoryButtons();
     };
 
     const recalcIssueTotals = () => {
@@ -4417,10 +4507,10 @@
       }
       if (el.issuePreviewEmployment) el.issuePreviewEmployment.textContent = String(employee.employment_type || '-');
       if (el.issuePreviewRunRef) el.issuePreviewRunRef.textContent = `${el.payroll.value} ${String(getCurrentIssuePeriod() || '').replace('-', '')}`;
-      if (el.issuePreviewFsStatus) el.issuePreviewFsStatus.textContent = String(employee.fs_status || employee.fs4_status || '-');
+      if (el.issuePreviewFsStatus) el.issuePreviewFsStatus.textContent = formatTaxStatusLabel(employee.fs_status || employee.fs4_status || '-');
       if (el.issuePreviewSscClass) el.issuePreviewSscClass.textContent = String(calculation.ssc_class || '-');
       if (el.issuePreviewFsSsc) {
-        const fsValue = String(employee.fs_status || employee.fs4_status || '').trim();
+        const fsValue = formatTaxStatusLabel(employee.fs_status || employee.fs4_status || '');
         const sscValue = String(calculation.ssc_class || '').trim();
         el.issuePreviewFsSsc.textContent = [fsValue, sscValue].filter(Boolean).join(' / ') || '-';
       }
@@ -4638,6 +4728,7 @@
         review_adjustments: issue.review_adjustments || buildDefaultIssueAdjustments(data)
       };
       state.issueEdits[empId] = edits;
+      ensureIssueHistoryState(empId, edits);
 
       const firstName = String(employee.first_name || '').trim() || String(employee.name || '').trim().split(/\s+/).filter(Boolean).slice(0, -1).join(' ') || String(employee.name || '').trim() || 'Name';
       const surname = String(employee.surname || '').trim() || String(employee.name || '').trim().split(/\s+/).filter(Boolean).slice(-1).join(' ') || 'Surname';
@@ -4875,6 +4966,7 @@
       el.btnIssueNext.disabled = state.issueIndex >= (state.issueQueue.length - 1);
       el.issueOverlay.classList.add('open');
       el.issueOverlay.setAttribute('aria-hidden', 'false');
+      updateIssueHistoryButtons();
     };
 
     const loadIssueEmployee = async () => {
@@ -4920,11 +5012,14 @@
           hourly_rate: hourlyRate
         })
       });
-      if (result?.detail) {
-        renderIssueEmployee(result.detail);
-      } else {
-        await loadIssueEmployee();
-      }
+      const serverRate = Number(result?.detail?.calculation?.hourly_rate || result?.detail?.calculation?.derived_hourly_rate || hourlyRate) || hourlyRate;
+      const key = String(empId);
+      const currentEdits = cloneIssueState(state.issueEdits[key] || {});
+      currentEdits.hourly_rate_override = serverRate;
+      state.issueEdits[key] = currentEdits;
+      state.issueHistory[key] = [cloneIssueState(currentEdits)];
+      state.issueFuture[key] = [];
+      await loadIssueEmployee();
       showOk(result?.message || 'Hourly rate updated.');
       return true;
     };
@@ -4934,6 +5029,8 @@
       state.issueIndex = 0;
       state.issuePeriod = String(el.period.value || '').trim();
       state.issueEdits = {};
+      state.issueHistory = {};
+      state.issueFuture = {};
       state.issueDetails = {};
       await loadIssueEmployee();
     };
@@ -5508,10 +5605,16 @@
     el.issueHourlyRate?.addEventListener('input', () => {
       saveCurrentIssueEdits();
     });
+    el.issueHourlyRate?.addEventListener('change', () => {
+      saveCurrentIssueEdits();
+      pushIssueHistorySnapshot(getCurrentIssueEmpId(), currentIssueEdits());
+    });
     el.issueHourlyRate?.addEventListener('keydown', async (event) => {
       if (event.key !== 'Enter') return;
       event.preventDefault();
       try {
+        saveCurrentIssueEdits();
+        pushIssueHistorySnapshot(getCurrentIssueEmpId(), currentIssueEdits());
         await saveIssueHourlyRate();
       } catch (error) {
         showErr(error instanceof Error ? error.message : String(error));
@@ -5520,12 +5623,20 @@
     el.issueTransactionNumber.addEventListener('input', () => {
       saveCurrentIssueEdits();
     });
+    el.issueTransactionNumber.addEventListener('change', () => {
+      saveCurrentIssueEdits();
+      pushIssueHistorySnapshot(getCurrentIssueEmpId(), currentIssueEdits());
+    });
     el.issueTransactionNumber.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {
         event.preventDefault();
       }
     });
     el.issueSourceFunds.addEventListener('input', saveCurrentIssueEdits);
+    el.issueSourceFunds.addEventListener('change', () => {
+      saveCurrentIssueEdits();
+      pushIssueHistorySnapshot(getCurrentIssueEmpId(), currentIssueEdits());
+    });
     if (el.btnAddIssueNote) {
       el.btnAddIssueNote.addEventListener('click', () => {
         const empId = getCurrentIssueEmpId();
@@ -5571,6 +5682,7 @@
           el.issueLoanAmount.select?.();
         }
         saveCurrentIssueEdits();
+        pushIssueHistorySnapshot(getCurrentIssueEmpId(), currentIssueEdits());
         refreshIssueAdjustmentVisibility(detail);
         recalcIssueTotals();
       });
@@ -5595,6 +5707,7 @@
         edits.review_adjustments.deductions.under_rows = normalized;
       }
       state.issueEdits[String(getCurrentIssueEmpId())] = edits;
+      pushIssueHistorySnapshot(getCurrentIssueEmpId(), edits);
       renderCurrentAllocations(detail);
       refreshIssueAdjustmentVisibility(detail);
       recalcIssueTotals();
@@ -5630,11 +5743,14 @@
       });
       control.addEventListener('change', () => {
         saveCurrentIssueEdits();
+        pushIssueHistorySnapshot(getCurrentIssueEmpId(), currentIssueEdits());
         const detail = state.issueDetails[String(getCurrentIssueEmpId())] || {};
         refreshIssueAdjustmentVisibility(detail);
         recalcIssueTotals();
       });
     });
+    el.btnIssueUndo?.addEventListener('click', undoIssueEdits);
+    el.btnIssueRedo?.addEventListener('click', redoIssueEdits);
     const handleConfirmCurrentPayslip = async () => {
       try {
         saveCurrentIssueEdits();

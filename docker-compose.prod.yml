@@ -47,7 +47,7 @@ services:
       WATCHER_SMS_QUEUE_DIR: /mnt/watcher-queue
     volumes:
       - ./directus-uploads:/directus/uploads
-      - C:\watcher-sms-queue:/mnt/watcher-queue
+      - C:/watcher-sms-queue:/mnt/watcher-queue
 
   dashboard_static:
     image: nginx:1.27-alpine

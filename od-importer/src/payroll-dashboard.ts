@@ -53,6 +53,7 @@ type PayrollRow = {
   mlf_contribution: number;
   total_deductions: number;
   email: string;
+  tax_status?: string;
 };
 
 type PayrollRateSource = {
@@ -292,17 +293,18 @@ const upsertMainHourlyRateOverride = async (
   hourlyRate: number
 ) => {
   if (!Number.isFinite(hourlyRate) || hourlyRate <= 0) return;
+  const rateNote = `Hourly rate amended in payslip popup for ${period.raw}`;
   const existing = await pg.query(
     `SELECT id
      FROM employee_payroll_terms
      WHERE emp_id = $1
        AND payroll_type = 'MAIN'
-       AND effective_from <= $3::date
-       AND (effective_to IS NULL OR effective_to >= $2::date)
+       AND effective_from <= DATE '${period.periodTo}'
+       AND (effective_to IS NULL OR effective_to >= DATE '${period.periodFrom}')
        AND is_active = TRUE
      ORDER BY effective_from DESC, id DESC
      LIMIT 1`,
-    [empId, period.periodFrom, period.periodTo]
+    [empId]
   );
 
   if (existing.rows[0]?.id) {
@@ -313,9 +315,9 @@ const upsertMainHourlyRateOverride = async (
            hourly_rate_main = $2,
            updated_at = NOW(),
            updated_by = 'issue_flow',
-           notes = CONCAT(COALESCE(notes, ''), CASE WHEN COALESCE(notes, '') = '' THEN '' ELSE ' | ' END, 'Hourly rate amended in payslip popup for ', $3)
+           notes = CONCAT(COALESCE(notes, ''), CASE WHEN COALESCE(notes, '') = '' THEN '' ELSE ' | ' END, $3::text)
        WHERE id = $1`,
-      [Number(existing.rows[0].id), hourlyRate, period.raw]
+      [Number(existing.rows[0].id), hourlyRate, rateNote]
     );
     return;
   }
@@ -350,7 +352,7 @@ const upsertMainHourlyRateOverride = async (
         ? 'PART_TIME'
         : rawType
           ? 'FULL_TIME'
-          : null;
+          : 'FULL_TIME';
 
   await pg.query(
     `INSERT INTO employee_payroll_terms (
@@ -359,8 +361,8 @@ const upsertMainHourlyRateOverride = async (
        timesheet_required, student_flag, tax_status, created_by, updated_by, notes
      ) VALUES (
        $1, 'MAIN', $2::date, NULL, TRUE,
-       $3, $4, 'HOURLY', $5, $5,
-       $6, FALSE, $7, 'issue_flow', 'issue_flow', $8
+       $3::text, $4, 'HOURLY', $5, $5,
+       $6, FALSE, $7::text, 'issue_flow', 'issue_flow', $8::text
      )`,
     [
       empId,
@@ -370,7 +372,7 @@ const upsertMainHourlyRateOverride = async (
       hourlyRate,
       employmentRow.timesheet_required === null || employmentRow.timesheet_required === undefined ? true : !!employmentRow.timesheet_required,
       cleanText(employmentRow.fs4_status) || 'Single',
-      `Hourly rate amended in payslip popup for ${period.raw}`
+      rateNote
     ]
   );
 };
@@ -1144,6 +1146,19 @@ const safeTaxCategory = (status: string | null | undefined) => {
   return raw || 'Single';
 };
 
+const formatTaxStatusLabel = (value: unknown) => {
+  const raw = cleanText(value).toUpperCase();
+  if (!raw) return 'Single';
+  if (raw === 'SING' || raw === 'SIN' || raw === 'SNG' || raw === 'SINGLE') return 'Single';
+  if (raw === 'MAR' || raw === 'MARRIED') return 'Married';
+  if (raw === 'MAR1' || raw === 'MARRIED1') return 'Married1';
+  if (raw === 'MAR2' || raw === 'MARRIED2') return 'Married2';
+  if (raw === 'PAR' || raw === 'PARENT') return 'Parent';
+  if (raw === 'PAR1' || raw === 'PARENT1') return 'Parent1';
+  if (raw === 'PAR2' || raw === 'PARENT2') return 'Parent2';
+  return cleanText(value) || 'Single';
+};
+
 const scheduledEmailAtForPeriod = (period: NonNullable<ReturnType<typeof parsePeriod>>) =>
   `${lastFridayOfMonth(period.year, period.month)} 18:30`;
 
@@ -1554,7 +1569,8 @@ const buildRows = async (
       ss_employer_contribution: ssEmployerContribution,
       mlf_contribution: mlfContribution,
       total_deductions: totalDeductions,
-      email: cleanText(record.email)
+      email: cleanText(record.email),
+      tax_status: cleanText(record.tax_status) || 'Single'
     });
   }
 
@@ -1678,6 +1694,7 @@ const getPayrollDashboardDetail = async (
        COALESCE(NULLIF(TRIM(ec.city), ''), NULLIF(TRIM(e.city), ''), '') AS city,
        COALESCE(NULLIF(TRIM(ec.postcode), ''), NULLIF(TRIM(e.postcode), ''), '') AS postcode,
        COALESCE(NULLIF(TRIM(ec.fs_status), ''), '') AS fs_status,
+       COALESCE(NULLIF(TRIM(efp.fs4_status), ''), '') AS fs4_status,
        COALESCE(NULLIF(TRIM(ec.employment_type), ''), '') AS employment_type,
        COALESCE(ec.weekly_hours, 0) AS weekly_hours
      FROM vw_employee_current ec
@@ -1753,7 +1770,7 @@ const getPayrollDashboardDetail = async (
   const excelMonth = await getExcelPayslipMonthWithFallback(pg, empId, period.raw);
   const rawYearView = await getExcelPayslipYearView(pg, payroll, empId, period.raw);
   const providerEmployee = row.provider_subscription_exists === true;
-  const yearView = providerEmployee
+  let yearView = providerEmployee
     ? {
         rows: (Array.isArray(rawYearView.rows) ? rawYearView.rows : []).map((entry) => ({
           ...entry,
@@ -1815,12 +1832,119 @@ const getPayrollDashboardDetail = async (
   const transactionNumber = cleanText(savedLine.bank_transaction_number);
   const sourceFundsLabel = cleanText(currentMonthResult?.source_funds_label) || cleanText(savedLine.source_funds_label);
   const paidPreviouslyAmount = roundMoney(toNumber(currentMonthResult?.paid_previously_amount) || toNumber(savedLine.paid_previously_amount));
+  const displayFsStatus = formatTaxStatusLabel(
+    cleanText(currentMonthResult?.tax_status)
+      || cleanText(excelMonth?.fs4_status)
+      || cleanText(row.tax_status)
+      || cleanText((employee as Record<string, unknown>).fs4_status)
+      || cleanText(employee.fs_status)
+      || 'Single'
+  );
+  const currentYearRowSeed = (Array.isArray(yearView.rows) ? yearView.rows : []).find((entry) => String(entry?.month) === period.raw) || null;
   const currentYearRow = (Array.isArray(yearView.rows) ? yearView.rows : []).find((entry) => String(entry?.month) === period.raw) || null;
   const hasSavedLine = Number(savedLine.id) > 0;
+  let previewRecalc: null | {
+    basicWage: number;
+    grossTotal: number;
+    weeklyWage: number;
+    taxDeduction: number;
+    ssClass: string;
+    ssEmployee: number;
+    ssEmployer: number;
+    ssTotal: number;
+    mlf: number;
+    netPayment: number;
+    payslipValue: number;
+  } = null;
+
+  if (payroll === 'MAIN') {
+    const weeklyWage = roundMoney(contractedWeeklyHours * row.hourly_rate);
+    const ftLike = employmentType.startsWith('FT');
+    const currentYearRowData = (currentYearRowSeed || {}) as Record<string, unknown>;
+    const previewBonusTotal = roundMoney(
+      toNumber(currentYearRowData.bonus_total)
+      || toNumber(currentYearRowData.bonus)
+      || toNumber(excelMonth?.bonus)
+      || bonusTotal
+    );
+    const previewOtherPayments = roundMoney(toNumber(currentYearRowData.other_amount) || otherPayments);
+    const previewExtraUnderAmount = roundMoney(toNumber(currentYearRowData.extra_due) || extraUnderAmount);
+    const previewUnpaidLeaveAmount = roundMoney(toNumber(currentYearRowData.unpaid_leave_amount) || unpaidLeaveAmount);
+    const basicWagePreview = ftLike
+      ? roundMoney(contractedWeeklyHours * row.hourly_rate * 52 / 12)
+      : roundMoney(payableHours * row.hourly_rate);
+    const grossTotalPreview = roundMoney(basicWagePreview + previewBonusTotal + previewOtherPayments + previewExtraUnderAmount - previewUnpaidLeaveAmount);
+    let previewTax = 0;
+    let previewTaxRate = 0;
+    try {
+      const bracket = await lookupTaxBracket(pg, grossTotalPreview * 12, safeTaxCategory(displayFsStatus));
+      previewTaxRate = toNumber(bracket.rate);
+      previewTax = roundMoney(calculateTax(grossTotalPreview, previewTaxRate / 100, toNumber(bracket.subtract) / 12));
+    } catch {
+      previewTax = roundMoney(row.tax_deduction);
+    }
+
+    let previewSsClass = ssClass;
+    let previewSsEmployee = ssEmployee;
+    let previewSsEmployer = ssEmployer;
+    let previewMlf = mlf;
+    try {
+      const employeeDob = toIsoDate(employee.dob) || null;
+      const previewSs = await lookupSocialSecurityContribution(pg, period.year, weeklyWage, employeeDob);
+      if (previewSs) {
+        previewSsClass = cleanText(previewSs.class_code) || previewSsClass;
+        previewSsEmployee = roundMoney(previewSs.employee_contribution);
+        previewSsEmployer = roundMoney(previewSs.employer_contribution);
+        previewMlf = roundMoney(previewSs.mlf_contribution);
+      }
+    } catch {
+      // fall back to existing preview values
+    }
+
+    const previewSsTotal = roundMoney(previewSsEmployee + previewSsEmployer);
+    const previewNet = roundMoney(grossTotalPreview - previewTax - previewSsEmployee);
+    const previewCost = roundMoney(grossTotalPreview + previewSsEmployer + previewMlf);
+    previewRecalc = {
+      basicWage: basicWagePreview,
+      grossTotal: grossTotalPreview,
+      weeklyWage,
+      taxDeduction: previewTax,
+      ssClass: previewSsClass,
+      ssEmployee: previewSsEmployee,
+      ssEmployer: previewSsEmployer,
+      ssTotal: previewSsTotal,
+      mlf: previewMlf,
+      netPayment: previewNet,
+      payslipValue: previewCost
+    };
+
+    yearView = {
+      ...yearView,
+      rows: (Array.isArray(yearView.rows) ? yearView.rows : []).map((entry) => {
+        if (String(entry?.month) !== period.raw) return entry;
+        return {
+          ...entry,
+          hourly_rate: row.hourly_rate,
+          weekly_wage: weeklyWage,
+          basic_wage: basicWagePreview,
+          gross_total: grossTotalPreview,
+          tax: previewTax,
+          ssc_employer: previewSsEmployer,
+          ssc_employee: previewSsEmployee,
+          ssc_total: previewSsTotal,
+          mlf: previewMlf,
+          net_wage: previewNet
+        };
+      })
+    };
+  }
+
   const displayExtraUnderHours = !hasSavedLine && currentYearRow?.extra_under_hours != null
     ? roundMoney(toNumber(currentYearRow.extra_under_hours))
     : extraUnderHours;
-  const displayGrossBeforeBonuses = !hasSavedLine && currentYearRow?.basic_wage != null
+  const displayGrossBeforeBonuses = previewRecalc
+    ? previewRecalc.basicWage
+    : !hasSavedLine && currentYearRow?.basic_wage != null
     ? roundMoney(toNumber(currentYearRow.basic_wage))
     : grossBeforeBonuses;
   const displayBonusTotal = !hasSavedLine && currentYearRow?.bonus_total != null
@@ -1835,29 +1959,43 @@ const getPayrollDashboardDetail = async (
   const displayExtraUnderAmount = !hasSavedLine && currentYearRow?.extra_due != null
     ? roundMoney(toNumber(currentYearRow.extra_due))
     : extraUnderAmount;
-  const displaySSEmployer = !hasSavedLine && currentYearRow?.ssc_employer != null
+  const displaySSEmployer = previewRecalc
+    ? previewRecalc.ssEmployer
+    : !hasSavedLine && currentYearRow?.ssc_employer != null
     ? roundMoney(toNumber(currentYearRow.ssc_employer))
     : ssEmployer;
-  const displaySSEmployee = !hasSavedLine && currentYearRow?.ssc_employee != null
+  const displaySSEmployee = previewRecalc
+    ? previewRecalc.ssEmployee
+    : !hasSavedLine && currentYearRow?.ssc_employee != null
     ? roundMoney(toNumber(currentYearRow.ssc_employee))
     : ssEmployee;
-  const displaySSTotal = !hasSavedLine && currentYearRow?.ssc_total != null
+  const displaySSTotal = previewRecalc
+    ? previewRecalc.ssTotal
+    : !hasSavedLine && currentYearRow?.ssc_total != null
     ? roundMoney(toNumber(currentYearRow.ssc_total))
     : ssTotal;
-  const displayMlf = !hasSavedLine && currentYearRow?.mlf != null
+  const displayMlf = previewRecalc
+    ? previewRecalc.mlf
+    : !hasSavedLine && currentYearRow?.mlf != null
     ? roundMoney(toNumber(currentYearRow.mlf))
     : mlf;
-  const displayTaxDeduction = toNumber(currentMonthResult?.tax_on_gross) > 0
+  const displayTaxDeduction = previewRecalc
+    ? previewRecalc.taxDeduction
+    : toNumber(currentMonthResult?.tax_on_gross) > 0
     ? roundMoney(toNumber(currentMonthResult?.tax_on_gross))
     : !hasSavedLine && currentYearRow?.tax != null
     ? roundMoney(toNumber(currentYearRow.tax))
     : roundMoney(row.tax_deduction);
-  const displayGrossIncludingAdjustments = toNumber(currentMonthResult?.gross_total) > 0
+  const displayGrossIncludingAdjustments = previewRecalc
+    ? previewRecalc.grossTotal
+    : toNumber(currentMonthResult?.gross_total) > 0
     ? roundMoney(toNumber(currentMonthResult?.gross_total))
     : !hasSavedLine && currentYearRow?.gross_total != null
     ? roundMoney(toNumber(currentYearRow.gross_total))
     : grossIncludingAdjustments;
-  const baseNetWage = toNumber(currentMonthResult?.net_wage) > 0
+  const baseNetWage = previewRecalc
+    ? previewRecalc.netPayment
+    : toNumber(currentMonthResult?.net_wage) > 0
     ? roundMoney(toNumber(currentMonthResult?.net_wage))
     : !hasSavedLine && currentYearRow?.net_wage != null
     ? roundMoney(toNumber(currentYearRow.net_wage))
@@ -1869,10 +2007,12 @@ const getPayrollDashboardDetail = async (
     ? roundMoney(toNumber(currentYearRow.banked_hours_since_last_month))
     : bankedSinceLastMonth;
   const transactionAmount = roundMoney(baseNetWage - paidPreviouslyAmount);
-  const payslipValue = roundMoney(displayGrossIncludingAdjustments + displaySSEmployer + displayMlf);
+  const payslipValue = previewRecalc
+    ? previewRecalc.payslipValue
+    : roundMoney(displayGrossIncludingAdjustments + displaySSEmployer + displayMlf);
 
   const monthGrid = [
-    { row_key: 'r19', left_label: identifierLabel, left_value: identifierValue || '-', right_label: 'Gross Total', right_value: displayGrossIncludingAdjustments, far_label: 'SS / Type / Class', far_value: `${cleanText(employee.fs_status) || 'Single'} / ${employmentType || '-'} / ${ssClass || '-'}` },
+    { row_key: 'r19', left_label: identifierLabel, left_value: identifierValue || '-', right_label: 'Gross Total', right_value: displayGrossIncludingAdjustments, far_label: 'SS / Type / Class', far_value: `${displayFsStatus} / ${employmentType || '-'} / ${previewRecalc?.ssClass || ssClass || '-'}` },
     { row_key: 'r20', left_label: useContractedWeeklyHours ? 'Hrs/Wk' : 'Hours Worked', left_value: grossBasisHours, right_label: 'Basic Pay', right_value: displayGrossBeforeBonuses, far_label: 'SSC Tot / Employer / Employee', far_value: `${displaySSTotal.toFixed(2)} / ${displaySSEmployer.toFixed(2)} / ${displaySSEmployee.toFixed(2)}` },
     { row_key: 'r21', left_label: 'Month', left_value: `${monthShort(period.month)}-${String(period.year).slice(-2)}`, right_label: 'Extra/Under Hours', right_value: `${displayExtraUnderHours.toFixed(2)} hrs / ${displayExtraUnderAmount.toFixed(2)}`, far_label: 'MLF', far_value: displayMlf },
     { row_key: 'r22', left_label: 'Payer P.E. Number', left_value: cleanText(employee.pe_number), right_label: 'Unpaid Leave', right_value: `${unpaidLeaveHours.toFixed(2)} hrs / ${unpaidLeaveAmount.toFixed(2)}`, far_label: 'Tax on Gross', far_value: displayTaxDeduction },
@@ -1899,7 +2039,7 @@ const getPayrollDashboardDetail = async (
       id_label: identifierLabel,
       id_value: identifierValue,
       iban: cleanIban(employee.iban),
-      fs_status: cleanText(employee.fs_status) || 'Single',
+      fs_status: displayFsStatus,
       email: cleanText(employee.email) || row.email,
       middle_name: cleanText(employee.middle_name),
       phone_primary: cleanText(employee.phone_primary),
@@ -1942,7 +2082,7 @@ const getPayrollDashboardDetail = async (
       extra_under_amount: displayExtraUnderAmount,
       unpaid_leave_hours: unpaidLeaveHours,
       unpaid_leave_amount: unpaidLeaveAmount,
-      ssc_class: ssClass,
+      ssc_class: previewRecalc?.ssClass || ssClass,
       ssc_total: displaySSTotal,
       ssc_employee: displaySSEmployee,
       ssc_employer: displaySSEmployer,
@@ -1963,10 +2103,10 @@ const getPayrollDashboardDetail = async (
       signature_image_url: signatureImageUrl || null,
       payslip_value: payslipValue,
       source_debug: {
-        gross_total: hasSavedLine ? 'db.calculated.gross_total' : 'year_view.month.gross_total_fallback',
-        net_wage: hasSavedLine ? 'db.payroll_line.net_payment' : 'year_view.month.net_wage_fallback',
+        gross_total: previewRecalc ? 'main.preview.recalculated_from_saved_rate' : hasSavedLine ? 'db.calculated.gross_total' : 'year_view.month.gross_total_fallback',
+        net_wage: previewRecalc ? 'main.preview.recalculated_from_saved_rate' : hasSavedLine ? 'db.payroll_line.net_payment' : 'year_view.month.net_wage_fallback',
         transaction_amount: 'net_wage - paid_previously_amount',
-        payslip_value: 'gross_total + ssc_employer + mlf'
+        payslip_value: previewRecalc ? 'main.preview.recalculated_from_saved_rate' : 'gross_total + ssc_employer + mlf'
       },
       rate_effective_from: rateSource?.effective_from || null,
       rate_notes: rateSource?.notes || ''
@@ -1993,7 +2133,7 @@ const getPayrollDashboardDetail = async (
 
   if (excelMonth) {
     const rowLabels = [
-      ['r19', identifierLabel, excelMonth.id_card, 'Gross Total', excelMonth.gross_total, 'FS / Type / SSC Class', `${excelMonth.fs4_status} / ${excelMonth.employment_type} / ${excelMonth.ssc_class}`],
+      ['r19', identifierLabel, excelMonth.id_card, 'Gross Total', excelMonth.gross_total, 'FS / Type / SSC Class', `${displayFsStatus} / ${excelMonth.employment_type} / ${excelMonth.ssc_class}`],
       ['r20', 'Hrs/Wk', excelMonth.hours_per_week, 'Basic Wage', excelMonth.basic_wage, 'SSC Tot / Employer / Employee', `${(excelMonth.ssc_total ?? 0).toFixed(2)} / ${(excelMonth.ssc_employer ?? 0).toFixed(2)} / ${(excelMonth.ssc_employee ?? 0).toFixed(2)}`],
       ['r21', excelMonth.extra_under_label || 'Extra/ under Hours', excelMonth.extra_under_hours_text, '', excelMonth.extra_under_amount, 'SSC / Employer / Employee', `${excelMonth.ssc_total ?? 0} / ${excelMonth.ssc_employer ?? 0} / ${excelMonth.ssc_employee ?? 0}`],
       ['r22', 'Payer P.E. Number', cleanText(excelMonth.payer_pe_text).replace(/^Payer P\.E\. Number\s*/i, ''), 'Unpaid Leave', excelMonth.unpaid_leave_hours_text, 'MLF', excelMonth.mlf],
