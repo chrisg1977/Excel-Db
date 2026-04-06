@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
-    "smoke": "node dist/scripts/smoke.js"
+    "smoke": "node dist/scripts/smoke.js",
+    "test:provider-feb26": "node dist/scripts/test-provider-feb26.js --provider-id 2018001 --year 2026 --month 2"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
