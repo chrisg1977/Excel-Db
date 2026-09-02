@@ -40,6 +40,12 @@ services:
       ADMIN_PASSWORD: Crz6@6@6@!
       KEY: change-me-32-chars-minimum-xxxxxxxxxxxx
       SECRET: change-me-32-chars-minimum-xxxxxxxxx
+      # Email account management (see EMAIL_ACCOUNTS.md). Generate with:
+      #   openssl rand -base64 32
+      EMAIL_ACCOUNTS_ENCRYPTION_KEY: change-me-base64-32-bytes-xxxxxxxxxxxxxxxxxxxxxxxx
+      GOOGLE_OAUTH_CLIENT_ID: change-me.apps.googleusercontent.com
+      GOOGLE_OAUTH_CLIENT_SECRET: change-me-google-oauth-client-secret
+      GOOGLE_OAUTH_REDIRECT_URI: http://localhost:8055/email-accounts/oauth/callback
     volumes:
       - ./directus-uploads:/directus/uploads
 

@@ -10,6 +10,8 @@ import PayrollSubscriptionsEndpoint from './endpoints/payroll-subscriptions';
 import PayrollSubscriptionsPanel from './panels/payroll-subscriptions';
 import WageCalculatorEndpoint from './endpoints/wage-calculator';
 import FormGeneratorEndpoint from './endpoints/forms-generator';
+import EmailAccountsEndpoint from './endpoints/email-accounts';
+import EmailAccountsPanel from './panels/email-accounts';
 
 export default [
   SyncPreviewEndpoint,
@@ -23,5 +25,7 @@ export default [
   PayrollSubscriptionsEndpoint,
   PayrollSubscriptionsPanel,
   WageCalculatorEndpoint,
-  FormGeneratorEndpoint
+  FormGeneratorEndpoint,
+  EmailAccountsEndpoint,
+  EmailAccountsPanel
 ];

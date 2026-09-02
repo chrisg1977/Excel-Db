@@ -77,6 +77,16 @@
         "type": "endpoint",
         "name": "payslip",
         "source": "src/endpoints/payslip.ts"
+      },
+      {
+        "type": "endpoint",
+        "name": "email-accounts",
+        "source": "src/endpoints/email-accounts.ts"
+      },
+      {
+        "type": "panel",
+        "name": "email-accounts-panel",
+        "source": "src/panels/email-accounts.ts"
       }
     ]
   },
