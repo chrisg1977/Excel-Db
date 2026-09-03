@@ -1725,8 +1725,15 @@
       return normalized && normalized !== 'Reception User' ? normalized : null;
     }
 
+    function getShiftOwnerActor() {
+      const owner = state.openingShift ? String(state.openingShift.current_owner || '').trim() : '';
+      return owner || null;
+    }
+
     function getCurrentActor() {
-      return getOptionalCurrentUser() || String(state.currentUser || 'Reception User');
+      // The shift session's tracked current_owner reflects handovers/takeovers server-side and
+      // must win over the browser's cached login, which can go stale on a shared reception device.
+      return getShiftOwnerActor() || getOptionalCurrentUser() || String(state.currentUser || 'Reception User');
     }
 
     function toAmount(value) {
@@ -2950,13 +2957,19 @@
       };
     }
 
+    function buildActorHeaders() {
+      const actor = String(state.currentUser || '').trim();
+      return actor ? { 'x-user': actor, 'x-auth-user': actor } : {};
+    }
+
     async function createShiftSessionViaApi(payload) {
       const url = buildShiftSessionsApiUrl();
       const response = await fetch(url.toString(), {
         method: 'POST',
         headers: {
           Accept: 'application/json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...buildActorHeaders()
         },
         credentials: 'include',
         body: JSON.stringify(payload)
@@ -3118,7 +3131,8 @@
         method: 'POST',
         headers: {
           Accept: 'application/json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...buildActorHeaders()
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -3151,7 +3165,8 @@
         method: 'POST',
         headers: {
           Accept: 'application/json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...buildActorHeaders()
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -3184,7 +3199,8 @@
         method: 'POST',
         headers: {
           Accept: 'application/json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...buildActorHeaders()
         },
         credentials: 'include',
         body: JSON.stringify({

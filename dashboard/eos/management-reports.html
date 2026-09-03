@@ -235,6 +235,11 @@
       border-color: rgba(46, 80, 144, 0.10);
       color: var(--muted);
     }
+    .flag-badge.superseded {
+      background: #f0f2f5;
+      border-color: #d3d9e3;
+      color: #4a5468;
+    }
     .filters-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
@@ -249,6 +254,18 @@
       color: #34425c;
       text-transform: uppercase;
       letter-spacing: 0.04em;
+    }
+    .field-label.checkbox-label {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      text-transform: none;
+      font-weight: 700;
+      align-self: end;
+    }
+    .field-label.checkbox-label input {
+      width: auto;
     }
     input, select {
       width: 100%;
@@ -560,6 +577,10 @@
           <label class="field-label">
             Report start to
             <input id="filterDateTo" type="datetime-local" />
+          </label>
+          <label class="field-label checkbox-label">
+            <input id="filterIncludeAllSnapshots" type="checkbox" />
+            Show every save (history), not just the latest per shift
           </label>
         </div>
         <div class="filter-actions">

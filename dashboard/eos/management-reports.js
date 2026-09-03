@@ -65,6 +65,7 @@
     filterStatus: document.getElementById('filterStatus'),
     filterDateFrom: document.getElementById('filterDateFrom'),
     filterDateTo: document.getElementById('filterDateTo'),
+    filterIncludeAllSnapshots: document.getElementById('filterIncludeAllSnapshots'),
     btnResetFilters: document.getElementById('btnResetFilters'),
     btnApplyFilters: document.getElementById('btnApplyFilters'),
     reportCountBadge: document.getElementById('reportCountBadge'),
@@ -98,7 +99,8 @@
       report_type: '',
       status: '',
       report_start_at_from: '',
-      report_start_at_to: ''
+      report_start_at_to: '',
+      include_all_snapshots: false
     };
   }
 
@@ -373,7 +375,8 @@
       report_type: String(refs.filterReportType.value || '').trim(),
       status: String(refs.filterStatus.value || '').trim(),
       report_start_at_from: String(refs.filterDateFrom.value || '').trim(),
-      report_start_at_to: String(refs.filterDateTo.value || '').trim()
+      report_start_at_to: String(refs.filterDateTo.value || '').trim(),
+      include_all_snapshots: Boolean(refs.filterIncludeAllSnapshots && refs.filterIncludeAllSnapshots.checked)
     };
   }
 
@@ -387,6 +390,9 @@
     refs.filterStatus.value = state.filters.status;
     refs.filterDateFrom.value = state.filters.report_start_at_from;
     refs.filterDateTo.value = state.filters.report_start_at_to;
+    if (refs.filterIncludeAllSnapshots) {
+      refs.filterIncludeAllSnapshots.checked = Boolean(state.filters.include_all_snapshots);
+    }
   }
 
   function buildListUrl() {
@@ -401,6 +407,7 @@
     if (filters.generated_by) url.searchParams.set('generated_by', filters.generated_by);
     if (filters.report_type) url.searchParams.set('report_type', filters.report_type);
     if (filters.status) url.searchParams.set('status', filters.status);
+    if (filters.include_all_snapshots) url.searchParams.set('include_all_snapshots', 'true');
 
     const fromIso = datetimeLocalToIso(filters.report_start_at_from);
     const toIso = datetimeLocalToIso(filters.report_start_at_to);
@@ -417,7 +424,9 @@
   }
 
   function countActiveFilters(filters) {
-    return Object.values(filters).filter((value) => String(value || '').trim()).length;
+    return Object.entries(filters).filter(([key, value]) => (
+      key === 'include_all_snapshots' ? Boolean(value) : String(value || '').trim()
+    )).length;
   }
 
   function updateFilterSummary() {
@@ -465,7 +474,9 @@
       return;
     }
 
-    refs.listStateNote.textContent = 'Click a saved report row to open its full snapshot detail.';
+    refs.listStateNote.textContent = state.filters.include_all_snapshots
+      ? 'Showing every saved snapshot, including superseded drafts. Click a row to open its full snapshot detail.'
+      : 'Showing only the latest saved snapshot per shift. Click a row to open its full snapshot detail.';
     refs.reportTableBody.innerHTML = state.reports.map((row) => `
       <tr data-report-id="${escapeHtml(row.report_header_id)}"${row.report_header_id === state.selectedReportId ? ' class="active"' : ''}>
         <td>${escapeHtml(formatDateTime(row.generated_at))}</td>
@@ -508,6 +519,9 @@
   function renderExceptionFlags(row) {
     const flags = [];
 
+    if (row && row.is_latest_for_shift === false) {
+      flags.push(buildFlagBadge('Superseded', 'superseded'));
+    }
     if (row && row.discrepancy_present) {
       flags.push(buildFlagBadge('Discrepancy', 'discrepancy'));
     }

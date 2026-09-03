@@ -81,6 +81,7 @@ type ReportListFilters = {
   status: string | null;
   report_start_at_from: string | null;
   report_start_at_to: string | null;
+  include_all_snapshots: boolean;
   limit: number;
   offset: number;
 };
@@ -102,6 +103,7 @@ type ReportListRow = {
   manager_alert_created: boolean;
   temporary_closed_pending_review: boolean;
   unresolved_review_pending: boolean;
+  is_latest_for_shift: boolean;
 };
 
 type ReportListResponse = {
@@ -294,6 +296,11 @@ const normalizeOptionalCode = (value: unknown): string | null => {
   return normalized ? normalized.toUpperCase() : null;
 };
 
+const normalizeOptionalFlag = (value: unknown): boolean => {
+  const normalized = normalizeOptionalText(value)?.toLowerCase() || '';
+  return normalized === 'true' || normalized === '1' || normalized === 'yes';
+};
+
 const normalizeRequiredNumber = (value: unknown, key: string): number => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) {
@@ -477,6 +484,7 @@ const parseReportListFilters = (req: Request): ReportListFilters => {
     status: normalizeOptionalText(query.status)?.toLowerCase() || null,
     report_start_at_from: normalizeOptionalDateTime(query.report_start_at_from, 'report_start_at_from'),
     report_start_at_to: normalizeOptionalDateTime(query.report_start_at_to, 'report_start_at_to'),
+    include_all_snapshots: normalizeOptionalFlag(query.include_all_snapshots),
     limit: normalizeOptionalNonNegativeInteger(query.limit, 'limit', 100, 500),
     offset: normalizeOptionalNonNegativeInteger(query.offset, 'offset', 0, 100000)
   };
@@ -541,41 +549,68 @@ const listReportHeaders = async (
 
   const result = await client.query<ReportListRow>(
     `
+      WITH filtered AS (
+        SELECT
+          h.id::text AS report_header_id,
+          h.shift_session_id::text AS shift_session_id,
+          h.location_code,
+          h.clinic_code,
+          h.department_code,
+          h.report_start_at::text AS report_start_at,
+          h.report_end_at::text AS report_end_at,
+          h.generated_at,
+          h.generated_by,
+          h.report_type,
+          h.status,
+          h.accounting_period_id::text AS accounting_period_id,
+          COALESCE(ABS(rs.discrepancy_total) > 0.00001, FALSE) AS discrepancy_present,
+          COALESCE(rs.manager_alert_created, FALSE) AS manager_alert_created,
+          COALESCE(ss.status = 'temporary_closed_pending_review', FALSE) AS temporary_closed_pending_review,
+          COALESCE(
+            ss.status IN (
+              'temporary_closed_pending_review',
+              'temporary_handover_started',
+              'manager_review_required'
+            ),
+            FALSE
+          ) AS unresolved_review_pending,
+          ROW_NUMBER() OVER (
+            PARTITION BY h.shift_session_id
+            ORDER BY h.generated_at DESC, h.id DESC
+          ) AS shift_snapshot_rank
+        FROM eos_report_header h
+        LEFT JOIN eos_report_summary rs
+          ON rs.report_header_id = h.id
+        LEFT JOIN eos_shift_session ss
+          ON ss.id = h.shift_session_id
+        ${REPORT_HEADER_LIST_FILTER_SQL}
+      )
       SELECT
-        h.id::text AS report_header_id,
-        h.shift_session_id::text AS shift_session_id,
-        h.location_code,
-        h.clinic_code,
-        h.department_code,
-        h.report_start_at::text AS report_start_at,
-        h.report_end_at::text AS report_end_at,
-        h.generated_at::text AS generated_at,
-        h.generated_by,
-        h.report_type,
-        h.status,
-        h.accounting_period_id::text AS accounting_period_id,
-        COALESCE(ABS(rs.discrepancy_total) > 0.00001, FALSE) AS discrepancy_present,
-        COALESCE(rs.manager_alert_created, FALSE) AS manager_alert_created,
-        COALESCE(ss.status = 'temporary_closed_pending_review', FALSE) AS temporary_closed_pending_review,
-        COALESCE(
-          ss.status IN (
-            'temporary_closed_pending_review',
-            'temporary_handover_started',
-            'manager_review_required'
-          ),
-          FALSE
-        ) AS unresolved_review_pending
-      FROM eos_report_header h
-      LEFT JOIN eos_report_summary rs
-        ON rs.report_header_id = h.id
-      LEFT JOIN eos_shift_session ss
-        ON ss.id = h.shift_session_id
-      ${REPORT_HEADER_LIST_FILTER_SQL}
-      ORDER BY h.generated_at DESC, h.id DESC
-      LIMIT $11 OFFSET $12
+        report_header_id,
+        shift_session_id,
+        location_code,
+        clinic_code,
+        department_code,
+        report_start_at,
+        report_end_at,
+        generated_at::text AS generated_at,
+        generated_by,
+        report_type,
+        status,
+        accounting_period_id,
+        discrepancy_present,
+        manager_alert_created,
+        temporary_closed_pending_review,
+        unresolved_review_pending,
+        (shift_snapshot_rank = 1) AS is_latest_for_shift
+      FROM filtered
+      WHERE ($11::boolean IS TRUE OR shift_snapshot_rank = 1)
+      ORDER BY generated_at DESC, report_header_id DESC
+      LIMIT $12 OFFSET $13
     `,
     [
       ...filterValues,
+      filters.include_all_snapshots,
       filters.limit,
       filters.offset
     ]
@@ -591,11 +626,25 @@ const countReportHeaders = async (
   const filterValues = buildReportListFilterParams(filters);
   const result = await client.query<ReportListCountRow>(
     `
+      WITH filtered AS (
+        SELECT
+          h.shift_session_id,
+          ROW_NUMBER() OVER (
+            PARTITION BY h.shift_session_id
+            ORDER BY h.generated_at DESC, h.id DESC
+          ) AS shift_snapshot_rank
+        FROM eos_report_header h
+        LEFT JOIN eos_report_summary rs
+          ON rs.report_header_id = h.id
+        LEFT JOIN eos_shift_session ss
+          ON ss.id = h.shift_session_id
+        ${REPORT_HEADER_LIST_FILTER_SQL}
+      )
       SELECT COUNT(*)::int AS total_count
-      FROM eos_report_header h
-      ${REPORT_HEADER_LIST_FILTER_SQL}
+      FROM filtered
+      WHERE ($11::boolean IS TRUE OR shift_snapshot_rank = 1)
     `,
-    filterValues
+    [...filterValues, filters.include_all_snapshots]
   );
 
   return result.rows[0] ? Number(result.rows[0].total_count || 0) : 0;
@@ -1055,9 +1104,10 @@ export const handleListReportsRequest = async (
     // TODO: Harden management-report retrieval with the final shared auth/access layer.
     // Current implementation is read-only and intentionally does not enforce the
     // planned management-only retrieval role until auth is wired centrally.
-    // TODO: Append-only snapshots can later add snapshot_kind, snapshot_version,
-    // and is_latest_for_shift so management browsing can distinguish repeated
-    // drafts from submitted or locked business outcomes more clearly.
+    // Listing now defaults to the latest report_header snapshot per shift_session_id
+    // (is_latest_for_shift), so repeated Save Draft/Submit snapshots for the same shift
+    // no longer read as duplicate rows in management browsing. Pass
+    // include_all_snapshots=true to see the full append-only history for a shift.
     const filters = parseReportListFilters(req);
     client = await pg.connect();
     const [items, total_count] = await Promise.all([
