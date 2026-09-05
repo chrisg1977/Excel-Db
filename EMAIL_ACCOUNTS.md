@@ -86,15 +86,19 @@ run of `TRANSIENT_FAILURE_THRESHOLD` (3) consecutive failures do.
 
 ## Required environment variables
 
-None of these existed before this feature — set them wherever the rest of
-Directus's env vars live (`docker-compose.prod.yml` / the deployment's env
-file):
+Set these wherever the real deployment keeps secrets. The committed
+`docker-compose.prod.yml` must keep only `${VAR:?message}` references and
+must not contain concrete production values.
 
 | Variable | Purpose |
 |---|---|
+| `POSTGRES_PASSWORD` | PostgreSQL container password for the database service. |
+| `DIRECTUS_DB_PASSWORD` | Password Directus uses for its PostgreSQL application user. |
+| `DIRECTUS_ADMIN_EMAIL` / `DIRECTUS_ADMIN_PASSWORD` | Initial/admin Directus login used by deployment and scheduled admin-only checks. |
+| `DIRECTUS_KEY` / `DIRECTUS_SECRET` | Directus signing secrets. Keep stable per deployment unless rotating deliberately. |
 | `EMAIL_ACCOUNTS_ENCRYPTION_KEY` | 32-byte key, base64-encoded (`openssl rand -base64 32`). Encrypts refresh tokens at rest. Losing/rotating this without a migration plan orphans every connected account (they'll show as `error` / undecryptable and need reconnecting). |
 | `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | From a Google Cloud OAuth 2.0 Client ID (type: Web application). |
-| `GOOGLE_OAUTH_REDIRECT_URI` | Must exactly match an authorized redirect URI on that OAuth client, e.g. `https://<directus-host>/email-accounts/oauth/callback`. |
+| `GOOGLE_OAUTH_REDIRECT_URI` | Must exactly match an authorized redirect URI on that OAuth client, using the real Directus host and `/email-accounts/oauth/callback`. |
 
 The scheduled job additionally reuses the existing SMTP alert variables from
 `SCHEDULED_SOURCE_CHECKS.md` (`SMTP_HOST`, `SMTP_PORT`, `SMTP_SSL`,
@@ -108,7 +112,8 @@ The scheduled job additionally reuses the existing SMTP alert variables from
 2. Create an OAuth 2.0 Client ID (Web application) with an authorized
    redirect URI matching `GOOGLE_OAUTH_REDIRECT_URI` above.
 3. Set the three `GOOGLE_OAUTH_*` env vars and `EMAIL_ACCOUNTS_ENCRYPTION_KEY`
-   on the Directus deployment, and restart it.
+   on the Directus deployment, set the other required deployment secrets, and
+   restart it.
 4. In the Directus admin, open the **Email Accounts** panel → **Connect New
    Account** → sign in as `drchrisgauci@gmail.com` and grant read-only Gmail
    access. The panel polls back and shows the account once connected.
@@ -118,15 +123,43 @@ password) uses the same flow via each row's **Reconnect** button — it
 updates the same `email_accounts.id` in place, so nothing tied to that
 account (import history, feature flags) is lost.
 
+## Live verification before invoice import
+
+PR #3 was merged on 2026-09-03, but the OAuth flow still needs one real live
+verification because the sandbox build could not use the production Google
+OAuth client or browser consent flow.
+
+Complete these checks before any invoice-import work starts reading mail:
+
+1. Apply `sql/email_accounts_schema.sql` in LIVE and confirm
+   `vw_email_accounts_admin` exists.
+2. Confirm every required environment variable above is set in the live
+   deployment secret store or host environment, not committed in source.
+3. Confirm `GOOGLE_OAUTH_REDIRECT_URI` exactly matches the Google Cloud
+   authorized redirect URI and resolves to the live Directus host.
+4. Restart Directus and confirm the extension loads without env-var errors.
+5. From the Directus **Email Accounts** panel, connect
+   `drchrisgauci@gmail.com` and confirm the callback reports success.
+6. Confirm the account row appears with `has_credentials = true`, no encrypted
+   token value exposed, and `invoice_import` still controlled by the feature
+   flag UI.
+7. Run **Check now** and confirm the account is healthy (`active`,
+   `needs_reauth = false`) after a successful refresh-token check.
+8. Run `scripts/check-email-accounts.ps1` against LIVE using an admin
+   Directus login and confirm the scheduled health-check endpoint succeeds.
+9. If reconnecting an already-connected mailbox, verify the same
+   `email_accounts.id` is updated rather than a duplicate mailbox row being
+   created.
+
 ## Scheduled health check
 
 Mirrors `SCHEDULED_SOURCE_CHECKS.md`'s existing pattern exactly — same
 script shape, same SMTP alerting, just a different endpoint:
 
 ```powershell
-$env:DIRECTUS_BASE_URL = "http://localhost:8055"
-$env:DIRECTUS_EMAIL = "admin@example.com"
-$env:DIRECTUS_PASSWORD = "your-admin-password"
+$env:DIRECTUS_BASE_URL = "https://<directus-host>"
+$env:DIRECTUS_EMAIL = "<admin-email>"
+$env:DIRECTUS_PASSWORD = "<admin-password>"
 .\scripts\check-email-accounts.ps1
 ```
 
