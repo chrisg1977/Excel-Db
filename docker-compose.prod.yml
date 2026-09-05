@@ -4,7 +4,7 @@ services:
     container_name: pg_excel
     environment:
       POSTGRES_USER: excel
-      POSTGRES_PASSWORD: excelpass
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the deployment environment}
       POSTGRES_DB: exceldb
     ports:
       - "55432:5432"
@@ -33,22 +33,19 @@ services:
       DB_PORT: 5432
       DB_DATABASE: exceldb
       DB_USER: app_directus
-      DB_PASSWORD: TempPass123!
+      DB_PASSWORD: ${DIRECTUS_DB_PASSWORD:?Set DIRECTUS_DB_PASSWORD in the deployment environment}
       DB_SCHEMA: public
       DB_SEARCH_PATH: public,directus
-      ADMIN_EMAIL: drchrisgauci@gmail.com
-      ADMIN_PASSWORD: Crz6@6@6@!
-      KEY: change-me-32-chars-minimum-xxxxxxxxxxxx
-      SECRET: change-me-32-chars-minimum-xxxxxxxxx
-      # Email account management (see EMAIL_ACCOUNTS.md). Generate with:
-      #   openssl rand -base64 32
-      EMAIL_ACCOUNTS_ENCRYPTION_KEY: change-me-base64-32-bytes-xxxxxxxxxxxxxxxxxxxxxxxx
-      GOOGLE_OAUTH_CLIENT_ID: change-me.apps.googleusercontent.com
-      GOOGLE_OAUTH_CLIENT_SECRET: change-me-google-oauth-client-secret
-      GOOGLE_OAUTH_REDIRECT_URI: http://localhost:8055/email-accounts/oauth/callback
+      ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL:?Set DIRECTUS_ADMIN_EMAIL in the deployment environment}
+      ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD:?Set DIRECTUS_ADMIN_PASSWORD in the deployment environment}
+      KEY: ${DIRECTUS_KEY:?Set DIRECTUS_KEY in the deployment environment}
+      SECRET: ${DIRECTUS_SECRET:?Set DIRECTUS_SECRET in the deployment environment}
+      EMAIL_ACCOUNTS_ENCRYPTION_KEY: ${EMAIL_ACCOUNTS_ENCRYPTION_KEY:?Set EMAIL_ACCOUNTS_ENCRYPTION_KEY in the deployment environment}
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:?Set GOOGLE_OAUTH_CLIENT_ID in the deployment environment}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:?Set GOOGLE_OAUTH_CLIENT_SECRET in the deployment environment}
+      GOOGLE_OAUTH_REDIRECT_URI: ${GOOGLE_OAUTH_REDIRECT_URI:?Set GOOGLE_OAUTH_REDIRECT_URI in the deployment environment}
     volumes:
       - ./directus-uploads:/directus/uploads
 
 volumes:
   pg_excel_data:
-
