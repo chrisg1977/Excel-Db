@@ -1,0 +1,81 @@
+name: Basic CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-guard:
+    name: Build and Guard
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            od-importer/package-lock.json
+            dashboard/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Build Directus extension
+        run: npm run build
+
+      - name: Install OD importer dependencies
+        run: npm ci
+        working-directory: od-importer
+
+      - name: Build OD importer
+        run: npm run build
+        working-directory: od-importer
+
+      - name: Install dashboard dependencies
+        run: npm ci
+        working-directory: dashboard
+
+      - name: Verify production compose uses environment references
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const text = fs.readFileSync('docker-compose.prod.yml', 'utf8');
+          const required = {
+            POSTGRES_PASSWORD: 'POSTGRES_PASSWORD',
+            DB_PASSWORD: 'DIRECTUS_DB_PASSWORD',
+            ADMIN_EMAIL: 'DIRECTUS_ADMIN_EMAIL',
+            ADMIN_PASSWORD: 'DIRECTUS_ADMIN_PASSWORD',
+            KEY: 'DIRECTUS_KEY',
+            SECRET: 'DIRECTUS_SECRET',
+            EMAIL_ACCOUNTS_ENCRYPTION_KEY: 'EMAIL_ACCOUNTS_ENCRYPTION_KEY',
+            GOOGLE_OAUTH_CLIENT_ID: 'GOOGLE_OAUTH_CLIENT_ID',
+            GOOGLE_OAUTH_CLIENT_SECRET: 'GOOGLE_OAUTH_CLIENT_SECRET',
+            GOOGLE_OAUTH_REDIRECT_URI: 'GOOGLE_OAUTH_REDIRECT_URI',
+          };
+
+          const missing = Object.entries(required).filter(([key, envName]) => {
+            const pattern = new RegExp(`${key}:\\s*\\$\\{${envName}(?::[^}]*)?\\}`);
+            return !pattern.test(text);
+          }).map(([key, envName]) => `${key}: \${${envName}:?...}`);
+
+          if (missing.length) {
+            console.error('docker-compose.prod.yml must reference deployment environment variables for:');
+            for (const name of missing) console.error(`- ${name}`);
+            process.exit(1);
+          }
+          NODE
+
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
