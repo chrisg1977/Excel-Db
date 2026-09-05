@@ -95,3 +95,65 @@ from this mailbox foundation.
 3. Gmail scope is `gmail.readonly`. Fine for reading messages/attachments;
    revisit (and re-consent every connected account) if a future feature
    needs to mutate mailbox state (labels, read/unread).
+
+---
+
+## Repository Safety Gate — Main Branch
+
+**Status**: GitHub `main` was observed unprotected on 2026-09-05, with no
+required status checks or workflow runs on current head
+`727244572d2cb3fc5adfc9402f8bd0ed5fbf3114`.
+
+Main must not accept direct commits for runtime, payroll, invoice-import, or
+deployment changes. Keep the rule lightweight so normal Codex/Copilot/Claude
+branch work can continue, but require one pull request and basic validation
+before anything lands.
+
+### GitHub enforcement to enable
+
+Create a branch protection rule or ruleset targeting `main`:
+
+1. Require a pull request before merging.
+2. Require status checks to pass before merging.
+3. Require the branch to be up to date before merging.
+4. Require conversation resolution before merging.
+5. Block force pushes.
+6. Block branch deletion.
+7. Do not allow bypasses for routine work; include administrators if GitHub
+   exposes that option for this repository.
+
+### Required check
+
+After `.github/workflows/basic-ci.yml` has run once, select this required
+status check:
+
+- `Build and Guard`
+
+### Basic CI scope
+
+The required workflow should stay small and fast:
+
+- Install and build the active Directus extension from the root package.
+- Install and build `od-importer`.
+- Install `dashboard` dependencies so broken package locks are caught.
+- Verify `docker-compose.prod.yml` keeps secret-bearing production settings as
+  environment references.
+- Run a secret scan before merge.
+
+### Runtime-sensitive paths
+
+Changes under these paths should always go through the protected pull-request
+path:
+
+- `src/**`
+- `od-importer/**`
+- `dashboard/**`
+- `sql/**`
+- `scripts/**`
+- `docker-compose*.yml`
+- `docker/**`
+- `package*.json`
+- `.github/workflows/**`
+
+Documentation-only changes can use the same rule; no extra workflow is needed
+unless this becomes too slow or noisy in practice.
